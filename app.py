@@ -59,11 +59,11 @@ def generate_analysis(plan):
     
     # Demo users get limited analysis
     if plan == 'demo':
-        num_techniques = random.randint(3, 5)  # Fewer techniques
-        selected = random.sample(technique_list, num_techniques)
+        num_techniques = random.randint(3, 5)
     else:
         num_techniques = random.randint(8, 12)
-        selected = random.sample(technique_list, num_techniques)
+    
+    selected = random.sample(technique_list, num_techniques)
     
     for i, tech in enumerate(selected):
         start_time = random.randint(10, 240)
@@ -200,6 +200,7 @@ def home():
                         <li>• Unlimited videos</li>
                         <li>• Full analytics</li>
                         <li>• Progress tracking</li>
+                        <li>• Follow friends</li>
                     </ul>
                     <button onclick="subscribePlan('pro')" class="bg-blue-600 hover:bg-blue-700 text-white py-2 px-6 rounded-lg w-full">
                         Subscribe
@@ -263,7 +264,15 @@ def home():
     if user_plan == 'demo':
         html += '<span class="demo-badge">DEMO</span>'
     
-    html += '''</button>
+    html += '''</button>'''
+    
+    if user_plan in ['pro', 'elite']:
+        html += '''
+                <button onclick="showTab('friends')" class="tab-button px-4 py-2 rounded-lg text-white font-semibold">
+                    👥 Friends
+                </button>'''
+    
+    html += '''
             </div>
         </div>
     </div>
@@ -290,7 +299,7 @@ def home():
                     </div>
                 </div>'''
     elif user_plan == 'demo':
-        html += f'''<div class="bg-green-900 bg-opacity-50 rounded-lg p-6 text-center mb-6">
+        html += '''<div class="bg-green-900 bg-opacity-50 rounded-lg p-6 text-center mb-6">
                     <h3 class="text-xl font-bold text-white mb-2">🆓 Free Demo Upload</h3>
                     <p class="text-gray-300 mb-4">Try our AI analysis with 1 free upload! Limited breakdown included.</p>
                     <p class="text-yellow-300 text-sm">After this, use an elite access code or subscribe for unlimited uploads.</p>
@@ -477,7 +486,111 @@ def home():
                     </div>
                 </div>
             </div>
-        </div>
+        </div>'''
+        
+    if user_plan in ['pro', 'elite']:
+        html += '''
+        <!-- Friends Tab -->
+        <div id="friends-tab" class="tab-content">
+            <div class="glass rounded-xl p-8">
+                <h2 class="text-2xl font-bold text-white mb-6">👥 Friends & Community</h2>
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+                    <div class="bg-white bg-opacity-10 rounded-lg p-6">
+                        <h3 class="text-xl font-bold text-white mb-4">Add Friends</h3>
+                        <div class="space-y-4">
+                            <input type="text" placeholder="Enter friend's username" 
+                                   class="w-full p-3 rounded-lg bg-white bg-opacity-20 text-white placeholder-gray-300">
+                            <button class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg w-full font-bold">
+                                🔍 Search & Add Friend
+                            </button>
+                        </div>
+                    </div>
+                    <div class="bg-white bg-opacity-10 rounded-lg p-6">
+                        <h3 class="text-xl font-bold text-white mb-4">Friend Requests</h3>
+                        <div class="space-y-3">
+                            <div class="flex justify-between items-center bg-white bg-opacity-10 rounded p-3">
+                                <span class="text-white">@mikehook23</span>
+                                <div class="space-x-2">
+                                    <button class="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded text-sm">Accept</button>
+                                    <button class="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded text-sm">Decline</button>
+                                </div>
+                            </div>
+                            <div class="flex justify-between items-center bg-white bg-opacity-10 rounded p-3">
+                                <span class="text-white">@guardgirl</span>
+                                <div class="space-x-2">
+                                    <button class="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded text-sm">Accept</button>
+                                    <button class="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded text-sm">Decline</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="bg-white bg-opacity-10 rounded-lg p-6 mb-8">
+                    <h3 class="text-xl font-bold text-white mb-4">🏆 Leaderboard</h3>
+                    <div class="space-y-3">
+                        <div class="flex justify-between items-center bg-gradient-to-r from-yellow-600 to-yellow-700 rounded p-3">
+                            <div class="flex items-center space-x-3">
+                                <span class="text-2xl">🥇</span>
+                                <span class="text-white font-bold">@submachine92</span>
+                            </div>
+                            <span class="text-white font-bold">2,847 pts</span>
+                        </div>
+                        <div class="flex justify-between items-center bg-gradient-to-r from-gray-400 to-gray-500 rounded p-3">
+                            <div class="flex items-center space-x-3">
+                                <span class="text-2xl">🥈</span>
+                                <span class="text-white font-bold">@triangletrap</span>
+                            </div>
+                            <span class="text-white font-bold">2,103 pts</span>
+                        </div>
+                        <div class="flex justify-between items-center bg-gradient-to-r from-orange-600 to-orange-700 rounded p-3">
+                            <div class="flex items-center space-x-3">
+                                <span class="text-2xl">🥉</span>
+                                <span class="text-white font-bold">@sweepking</span>
+                            </div>
+                            <span class="text-white font-bold">1,978 pts</span>
+                        </div>
+                        <div class="flex justify-between items-center bg-white bg-opacity-10 rounded p-3 border-2 border-blue-400">
+                            <div class="flex items-center space-x-3">
+                                <span class="text-lg">4️⃣</span>
+                                <span class="text-blue-300 font-bold">You</span>
+                            </div>
+                            <span class="text-blue-300 font-bold">1,654 pts</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="bg-white bg-opacity-10 rounded-lg p-6">
+                    <h3 class="text-xl font-bold text-white mb-4">📊 Friends Activity</h3>
+                    <div class="space-y-4">
+                        <div class="bg-white bg-opacity-10 rounded p-4">
+                            <div class="flex items-center space-x-3 mb-2">
+                                <span class="text-green-400 font-bold">@mikehook23</span>
+                                <span class="text-gray-300 text-sm">2 hours ago</span>
+                            </div>
+                            <p class="text-gray-300 text-sm">Analyzed a training session • 12 techniques detected</p>
+                            <div class="flex space-x-4 mt-2 text-xs">
+                                <span class="text-blue-400">🎯 4 submissions</span>
+                                <span class="text-yellow-400">🌊 3 sweeps</span>
+                            </div>
+                        </div>
+                        <div class="bg-white bg-opacity-10 rounded p-4">
+                            <div class="flex items-center space-x-3 mb-2">
+                                <span class="text-green-400 font-bold">@guardgirl</span>
+                                <span class="text-gray-300 text-sm">1 day ago</span>
+                            </div>
+                            <p class="text-gray-300 text-sm">Hit a new personal record • 95% confidence armbar</p>
+                            <div class="flex space-x-4 mt-2 text-xs">
+                                <span class="text-red-400">🔥 New PB!</span>
+                                <span class="text-purple-400">⚡ Elite timing</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>'''
+    
+    html += '''
     </div>
 
     <div class="text-center py-8 mt-8">
@@ -543,350 +656,4 @@ def home():
         }
 
         function subscribePlan(plan) {
-            alert(`🚀 Subscribing to ${plan.toUpperCase()}!\\n\\nPayment integration would go here.\\n\\nFor demo: use BJJ2024FREE for elite access`);
-        }
-
-        async function analyzeVideo() {
-            const fileInput = document.getElementById('videoFile');
-            if (!fileInput.files[0]) return alert('Select a video first!');
-
-            document.getElementById('progress-section').classList.remove('hidden');
-
-            let progress = 0;
-            const progressBar = document.getElementById('progress-bar');
-            
-            const interval = setInterval(() => {
-                progress += Math.random() * 15;
-                if (progress > 100) progress = 100;
-                progressBar.style.width = progress + '%';
-                
-                if (progress >= 100) {
-                    clearInterval(interval);
-                    performAnalysis();
-                }
-            }, 300);
-        }
-
-        async function performAnalysis() {
-            try {
-                const formData = new FormData();
-                formData.append('video', document.getElementById('videoFile').files[0]);
-
-                const response = await fetch('/api/analyze', {
-                    method: 'POST',
-                    body: formData
-                });
-
-                const results = await response.json();
-                if (results.error) {
-                    alert('❌ ' + results.error);
-                    resetApp();
-                    return;
-                }
-                
-                displayResults(results);
-            } catch (error) {
-                alert('Analysis failed: ' + error.message);
-                resetApp();
-            }
-        }
-
-        function displayResults(results) {
-            document.getElementById('progress-section').classList.add('hidden');
-            document.getElementById('results-section').classList.remove('hidden');
-
-            document.getElementById('total-count').textContent = results.total_techniques_detected;
-            document.getElementById('avg-confidence').textContent = Math.round(results.average_confidence * 100) + '%';
-            document.getElementById('video-duration').textContent = results.video_duration + 's';
-            
-            const submissionCount = results.detected_techniques.filter(t => t.category === 'submission').length;
-            document.getElementById('submission-count').textContent = submissionCount;
-
-            displayTechniques(results.detected_techniques);
-            displayInsights(results.insights);
-        }
-
-        function displayTechniques(techniques) {
-            const techniquesList = document.getElementById('techniques-list');
-            techniquesList.innerHTML = '';
-
-            techniques.forEach(technique => {
-                const categoryColors = {
-                    'submission': 'border-l-red-500 bg-red-900',
-                    'sweep': 'border-l-blue-500 bg-blue-900',
-                    'guard_pass': 'border-l-green-500 bg-green-900',
-                    'takedown': 'border-l-yellow-500 bg-yellow-900',
-                    'position': 'border-l-purple-500 bg-purple-900'
-                };
-
-                const qualityColors = {
-                    'excellent': 'text-green-400',
-                    'good': 'text-yellow-400',
-                    'fair': 'text-orange-400'
-                };
-
-                const categoryColor = categoryColors[technique.category] || 'border-l-gray-500 bg-gray-900';
-                const qualityColor = qualityColors[technique.quality] || 'text-gray-400';
-
-                const techniqueDiv = document.createElement('div');
-                techniqueDiv.className = `${categoryColor} bg-opacity-30 border-l-4 rounded-lg p-4`;
-                
-                let timestampHTML = '';
-                if (technique.has_timestamp) {
-                    timestampHTML = `
-                        <button onclick="jumpToTime(${technique.start_time})" 
-                                class="bg-blue-600 hover:bg-blue-700 text-white px-2 py-1 rounded text-xs ml-2">
-                            🎬 ${formatTime(technique.start_time)}
-                        </button>
-                    `;
-                }
-
-                techniqueDiv.innerHTML = `
-                    <div class="flex justify-between items-center">
-                        <div class="flex-1">
-                            <div class="flex items-center space-x-2 mb-1">
-                                <h4 class="text-lg font-bold text-white">${formatTechniqueName(technique.technique)}</h4>
-                                <span class="px-2 py-1 bg-white bg-opacity-20 rounded text-xs text-gray-300">
-                                    ${technique.category.replace('_', ' ').toUpperCase()}
-                                </span>
-                                ${timestampHTML}
-                            </div>
-                            <p class="text-gray-300 text-sm">
-                                Time: ${formatTime(technique.start_time)} - ${formatTime(technique.end_time)} | 
-                                Position: ${technique.position}
-                            </p>
-                        </div>
-                        <div class="text-right">
-                            <div class="text-white font-bold text-lg">${Math.round(technique.confidence * 100)}%</div>
-                            <div class="text-sm ${qualityColor} font-semibold">${technique.quality.toUpperCase()}</div>
-                        </div>
-                    </div>
-                `;
-                
-                techniquesList.appendChild(techniqueDiv);
-            });
-        }
-
-        function jumpToTime(seconds) {
-            alert(`🎬 Elite Feature: Jump to ${formatTime(seconds)}\\n\\nIn full app, this would seek video to exact moment!`);
-        }
-
-        function displayInsights(insights) {
-            const insightsList = document.getElementById('insights-list');
-            insightsList.innerHTML = '';
-
-            insights.forEach(insight => {
-                const insightDiv = document.createElement('div');
-                insightDiv.className = 'bg-white bg-opacity-10 rounded p-3 mb-2';
-                insightDiv.innerHTML = `<p class="text-gray-300">${insight}</p>`;
-                insightsList.appendChild(insightDiv);
-            });
-        }
-
-        function initSubmissionChart() {
-            const ctx = document.getElementById('submission-chart');
-            if (!ctx || ctx.chart) return;
-
-            ctx.chart = new Chart(ctx, {
-                type: 'doughnut',
-                data: {
-                    labels: ['Armbar', 'Triangle', 'RNC', 'Kimura', 'Heel Hook'],
-                    datasets: [{
-                        data: [87, 72, 95, 65, 81],
-                        backgroundColor: ['#ef4444', '#3b82f6', '#10b981', '#f59e0b', '#8b5cf6']
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    plugins: {
-                        legend: { labels: { color: 'white' } }
-                    }
-                }
-            });
-        }
-
-        function initSweepChart() {
-            const ctx = document.getElementById('sweep-chart');
-            if (!ctx || ctx.chart) return;
-
-            ctx.chart = new Chart(ctx, {
-                type: 'bar',
-                data: {
-                    labels: ['Tripod', 'Scissor', 'Butterfly', 'Flower', 'DLR'],
-                    datasets: [{
-                        label: 'Success Rate %',
-                        data: [92, 68, 81, 55, 73],
-                        backgroundColor: '#3b82f6'
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    scales: {
-                        y: { ticks: { color: 'white' } },
-                        x: { ticks: { color: 'white' } }
-                    },
-                    plugins: {
-                        legend: { labels: { color: 'white' } }
-                    }
-                }
-            });
-        }
-
-        function initPassChart() {
-            const ctx = document.getElementById('pass-chart');
-            if (!ctx || ctx.chart) return;
-
-            ctx.chart = new Chart(ctx, {
-                type: 'polarArea',
-                data: {
-                    labels: ['Knee Cut', 'Toreando', 'Leg Drag', 'Stack'],
-                    datasets: [{
-                        data: [82, 75, 88, 60],
-                        backgroundColor: ['#ef4444', '#3b82f6', '#10b981', '#f59e0b']
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    plugins: {
-                        legend: { labels: { color: 'white' } }
-                    },
-                    scales: {
-                        r: { ticks: { color: 'white' } }
-                    }
-                }
-            });
-        }
-
-        function initTakedownChart() {
-            const ctx = document.getElementById('takedown-chart');
-            if (!ctx || ctx.chart) return;
-
-            ctx.chart = new Chart(ctx, {
-                type: 'radar',
-                data: {
-                    labels: ['Double Leg', 'Single Leg', 'Hip Toss', 'Foot Sweep'],
-                    datasets: [{
-                        label: 'Success Rate',
-                        data: [70, 55, 45, 38],
-                        borderColor: '#3b82f6',
-                        backgroundColor: 'rgba(59, 130, 246, 0.2)'
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    plugins: {
-                        legend: { labels: { color: 'white' } }
-                    },
-                    scales: {
-                        r: { 
-                            ticks: { color: 'white' },
-                            pointLabels: { color: 'white' }
-                        }
-                    }
-                }
-            });
-        }
-
-        function formatTechniqueName(name) {
-            return name.replace(/_/g, ' ')
-                      .split(' ')
-                      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-                      .join(' ');
-        }
-
-        function formatTime(seconds) {
-            const mins = Math.floor(seconds / 60);
-            const secs = Math.floor(seconds % 60);
-            return `${mins}:${secs.toString().padStart(2, '0')}`;
-        }
-
-        function resetApp() {
-            document.getElementById('progress-section').classList.add('hidden');
-            document.getElementById('results-section').classList.add('hidden');
-            document.getElementById('videoFile').value = '';
-        }
-
-        // Initialize first chart
-        document.addEventListener('DOMContentLoaded', function() {
-            setTimeout(initSubmissionChart, 500);
-        });
-    </script>
-</body>
-</html>'''
-    
-    return html
-
-@app.route('/api/redeem-code', methods=['POST'])
-def redeem_code():
-    user_id = get_user_id()
-    data = request.get_json()
-    code = data.get('code', '').upper()
-    
-    if code in access_codes and access_codes[code]['uses'] > 0:
-        access_codes[code]['uses'] -= 1
-        users[user_id]['plan'] = access_codes[code]['plan']
-        return jsonify({'success': True, 'message': f'Elite access activated! You now have unlimited uploads with full analysis.'})
-    else:
-        return jsonify({'success': False, 'message': 'Invalid or expired access code'})
-
-@app.route('/api/analyze', methods=['POST'])
-def analyze():
-    user_id = get_user_id()
-    user_plan = users[user_id]['plan']
-    
-    # Demo users get 1 free upload
-    if user_plan == 'demo':
-        demo_uploads_used = len(user_videos.get(user_id, []))
-        if demo_uploads_used >= 1:
-            return jsonify({'error': 'Demo limit reached! Use elite access code or subscribe for unlimited uploads.'}), 403
-    
-    # Check monthly limit for free users (if we had a free plan)
-    if user_plan == 'free':
-        current_month = datetime.now().strftime('%Y-%m')
-        monthly_videos = [v for v in user_videos.get(user_id, []) if v.get('timestamp', '').startswith(current_month)]
-        if len(monthly_videos) >= 1:
-            return jsonify({'error': 'Free plan limit: 1 video per month. Upgrade to Pro!'}), 403
-    
-    # Simulate processing
-    time.sleep(3)
-    
-    # Generate analysis
-    analysis_result = generate_analysis(user_plan)
-    
-    # Store the analysis
-    analysis_result['id'] = f"analysis_{len(user_videos.get(user_id, []))}"
-    analysis_result['timestamp'] = datetime.now().isoformat()
-    
-    if user_id not in user_videos:
-        user_videos[user_id] = []
-    user_videos[user_id].append(analysis_result)
-    
-    users[user_id]['videos_count'] += 1
-    
-    return jsonify(analysis_result)
-
-@app.route('/api/stats')
-def get_stats():
-    user_id = get_user_id()
-    user_plan = users[user_id]['plan']
-    
-    if user_plan == 'demo':
-        return jsonify(demo_stats)
-    
-    videos = user_videos.get(user_id, [])
-    if not videos:
-        return jsonify({'message': 'Upload videos to see real stats'})
-    
-    return jsonify({
-        'total_videos': len(videos),
-        'plan': user_plan,
-        'latest_analysis': videos[-1] if videos else None
-    })
-
-@app.route('/health')
-def health():
-    return jsonify({'status': 'running', 'message': 'BJJ AI Analyzer Pro is online!'})
-
-if __name__ == '__main__':
-    port = int(os.environ.get('PORT', 5000))
-    app.run(host='0.0.0.0', port=port, debug=False)
+            alert(`🚀 Subscribing to ${plan.toUpperCase()}!\\n\\nPayment integration would go here.\\n\\nFor demo: use BJJ

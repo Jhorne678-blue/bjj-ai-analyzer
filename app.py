@@ -29,9 +29,9 @@ def get_user_id():
 def generate_analysis(plan):
     techniques = []
     
-    # Comprehensive technique list for basic analysis
+    # Comprehensive technique list
     technique_list = [
-        # Submissions (expanded)
+        # Submissions
         {'name': 'armbar_from_guard', 'cat': 'submission'},
         {'name': 'triangle_choke', 'cat': 'submission'},
         {'name': 'rear_naked_choke', 'cat': 'submission'},
@@ -53,7 +53,7 @@ def generate_analysis(plan):
         {'name': 'anaconda_choke', 'cat': 'submission'},
         {'name': 'peruvian_necktie', 'cat': 'submission'},
         
-        # Sweeps (expanded)
+        # Sweeps
         {'name': 'scissor_sweep', 'cat': 'sweep'},
         {'name': 'butterfly_sweep', 'cat': 'sweep'},
         {'name': 'tripod_sweep', 'cat': 'sweep'},
@@ -73,7 +73,7 @@ def generate_analysis(plan):
         {'name': 'knee_tap_sweep', 'cat': 'sweep'},
         {'name': 'electric_chair_sweep', 'cat': 'sweep'},
         
-        # Guard Passes (expanded)
+        # Guard Passes
         {'name': 'knee_cut_pass', 'cat': 'guard_pass'},
         {'name': 'toreando_pass', 'cat': 'guard_pass'},
         {'name': 'leg_drag', 'cat': 'guard_pass'},
@@ -89,7 +89,7 @@ def generate_analysis(plan):
         {'name': 'standing_pass', 'cat': 'guard_pass'},
         {'name': 'leg_weave_pass', 'cat': 'guard_pass'},
         
-        # Takedowns (expanded)
+        # Takedowns
         {'name': 'double_leg_takedown', 'cat': 'takedown'},
         {'name': 'single_leg_takedown', 'cat': 'takedown'},
         {'name': 'hip_toss', 'cat': 'takedown'},
@@ -107,7 +107,7 @@ def generate_analysis(plan):
         {'name': 'inside_trip', 'cat': 'takedown'},
         {'name': 'outside_trip', 'cat': 'takedown'},
         
-        # New categories
+        # Escapes
         {'name': 'mount_escape', 'cat': 'escape'},
         {'name': 'side_control_escape', 'cat': 'escape'},
         {'name': 'back_escape', 'cat': 'escape'},
@@ -115,12 +115,14 @@ def generate_analysis(plan):
         {'name': 'bridge_and_roll', 'cat': 'escape'},
         {'name': 'knee_on_belly_escape', 'cat': 'escape'},
         
+        # Transitions
         {'name': 'guard_to_mount', 'cat': 'transition'},
         {'name': 'side_control_to_mount', 'cat': 'transition'},
         {'name': 'mount_to_back', 'cat': 'transition'},
         {'name': 'knee_on_belly_transition', 'cat': 'transition'},
         {'name': 'scramble', 'cat': 'transition'},
         
+        # Guard Retention
         {'name': 'hip_escape', 'cat': 'guard_retention'},
         {'name': 'shrimping', 'cat': 'guard_retention'},
         {'name': 'knee_shield', 'cat': 'guard_retention'},
@@ -128,7 +130,7 @@ def generate_analysis(plan):
         {'name': 'inversion', 'cat': 'guard_retention'}
     ]
     
-    num_techniques = random.randint(8, 15)  # Increased from 6-10
+    num_techniques = random.randint(8, 15)
     selected = random.sample(technique_list, min(num_techniques, len(technique_list)))
     
     for tech in selected:
@@ -174,565 +176,11 @@ def generate_analysis(plan):
         'user_plan': plan
     }
 
-def analyze_video_content(video_file, user_plan):
-    """
-    Smart video analysis that examines file properties and metadata
-    """
-    try:
-        # Read video file properties
-        video_bytes = video_file.read()
-        file_size = len(video_bytes)
-        filename = video_file.filename.lower()
-        
-        # Reset file pointer for potential future reads
-        video_file.seek(0)
-        
-        # Analyze file characteristics to determine content
-        video_duration = estimate_duration_from_size(file_size)
-        
-        # Smart technique detection based on file analysis
-        detected_techniques = smart_technique_detection(file_size, video_duration, filename)
-        
-        # Generate realistic success percentages
-        technique_stats = calculate_realistic_stats(detected_techniques)
-        
-        return {
-            'total_techniques_detected': len(detected_techniques),
-            'detected_techniques': detected_techniques,
-            'video_duration': video_duration,
-            'techniques_per_minute': round(len(detected_techniques) / (video_duration / 60), 1) if video_duration > 0 else 0,
-            'average_confidence': technique_stats['avg_confidence'],
-            'analysis_timestamp': datetime.now().isoformat(),
-            'user_plan': user_plan,
-            'real_analysis': True,
-            'file_size_mb': round(file_size / (1024*1024), 2),
-            'technique_breakdown': technique_stats['breakdown'],
-            'insights': generate_insights_from_analysis(detected_techniques, user_plan)
-        }
-        
-    except Exception as e:
-        print(f"Video analysis error: {e}")
-        return generate_fallback_analysis(user_plan)
-
-def estimate_duration_from_size(file_size_bytes):
-    """Estimate video duration based on file size (rough approximation)"""
-    # Typical BJJ training videos: ~1MB per 10-15 seconds of footage
-    size_mb = file_size_bytes / (1024 * 1024)
-    
-    if size_mb < 5:
-        return random.randint(30, 90)  # Short clip
-    elif size_mb < 20:
-        return random.randint(90, 300)  # Medium session
-    elif size_mb < 50:
-        return random.randint(300, 600)  # Long session
-    else:
-        return random.randint(600, 1800)  # Full training session
-
-def smart_technique_detection(file_size, duration, filename):
-    """Intelligent technique detection based on video characteristics"""
-    techniques = []
-    
-    # Base number of techniques on video length
-    base_techniques = max(3, int(duration / 45))  # ~1 technique per 45 seconds
-    
-    # Adjust based on file size (higher quality = more detectable techniques)
-    size_mb = file_size / (1024 * 1024)
-    if size_mb > 20:
-        base_techniques = int(base_techniques * 1.3)  # HD video = better detection
-    elif size_mb < 5:
-        base_techniques = max(2, int(base_techniques * 0.7))  # Lower quality = fewer detections
-    
-    # Comprehensive technique pools with realistic distributions
-    submission_techniques = [
-        # Chokes
-        'rear_naked_choke', 'triangle_choke', 'guillotine', 'darce_choke', 'anaconda_choke',
-        'north_south_choke', 'bow_and_arrow_choke', 'loop_choke', 'ezekiel_choke', 
-        'baseball_choke', 'peruvian_necktie', 'brabo_choke', 'japanese_necktie',
-        'ninja_choke', 'von_flue_choke', 'clock_choke', 'paper_cutter_choke',
-        
-        # Armlocks
-        'armbar_from_guard', 'armbar_from_mount', 'armbar_from_side_control', 
-        'kimura', 'americana', 'straight_armbar', 'inverted_armbar', 'belly_down_armbar',
-        'flying_armbar', 'rolling_armbar', 'armbar_from_triangle',
-        
-        # Shoulder locks
-        'omoplata', 'reverse_omoplata', 'monoplata', 'baratoplata', 'gogoplata',
-        'rubber_guard_omoplata', 'rolling_omoplata',
-        
-        # Leg locks
-        'heel_hook', 'toe_hold', 'ankle_lock', 'calf_slicer', 'knee_bar',
-        'straight_ankle_lock', 'inside_heel_hook', 'outside_heel_hook',
-        '50_50_heel_hook', 'saddle_heel_hook', 'estima_lock',
-        
-        # Other submissions
-        'wrist_lock', 'spine_lock', 'twister', 'neck_crank', 'can_opener'
-    ]
-    
-    sweep_techniques = [
-        # Basic sweeps
-        'scissor_sweep', 'butterfly_sweep', 'tripod_sweep', 'flower_sweep', 
-        'hook_sweep', 'pendulum_sweep', 'sit_up_sweep', 'hip_bump_sweep',
-        
-        # Guard sweeps
-        'spider_guard_sweep', 'lasso_guard_sweep', 'de_la_riva_sweep',
-        'reverse_de_la_riva_sweep', 'x_guard_sweep', 'single_x_sweep',
-        'berimbolo', 'kiss_of_the_dragon', 'tornado_sweep', 'balloon_sweep',
-        
-        # Half guard sweeps
-        'old_school_sweep', 'knee_tap_sweep', 'homer_simpson_sweep',
-        'electric_chair_sweep', 'john_wayne_sweep', 'lockdown_sweep',
-        
-        # Butterfly guard sweeps
-        'butterfly_hook_sweep', 'arm_drag_sweep', 'butterfly_guard_back_take',
-        'butterfly_elevator_sweep', 'butterfly_arm_bar_sweep',
-        
-        # Other sweeps
-        'collar_drag_sweep', 'ankle_pick_sweep', 'duck_under_sweep',
-        'technical_standup', 'granby_roll', 'imanari_roll'
-    ]
-    
-    takedown_techniques = [
-        # Wrestling takedowns
-        'double_leg_takedown', 'single_leg_takedown', 'high_crotch', 'low_single',
-        'ankle_pick', 'duck_under', 'arm_drag_takedown', 'snap_down',
-        'fireman_carry', 'blast_double', 'penetration_step', 'underhooks_takedown',
-        
-        # Judo throws
-        'hip_toss', 'foot_sweep', 'osoto_gari', 'ouchi_gari', 'kouchi_gari',
-        'uchi_mata', 'harai_goshi', 'seoi_nage', 'ippon_seoi_nage',
-        'morote_seoi_nage', 'tai_otoshi', 'tomoe_nage', 'sumi_gaeshi',
-        'sasae_tsurikomi_ashi', 'deashi_harai', 'okuri_ashi_harai',
-        
-        # Sacrifice throws
-        'sacrifice_throw', 'rolling_takedown', 'flying_knee_tap',
-        'cartwheel_takedown', 'imanari_roll_entry',
-        
-        # Trips and sweeps
-        'inside_trip', 'outside_trip', 'reaping_throw', 'leg_pick',
-        'collar_tie_snap', 'russian_tie_takedown', 'whizzer_throw'
-    ]
-    
-    guard_pass_techniques = [
-        # Pressure passes
-        'knee_cut_pass', 'over_under_pass', 'stack_pass', 'smash_pass',
-        'headquarters_pass', 'knee_slide_pass', 'knee_through_pass',
-        'cross_knee_pass', 'shoulder_pressure_pass',
-        
-        # Speed passes
-        'toreando_pass', 'leg_drag', 'bullfighter_pass', 'matador_pass',
-        'x_pass', 'long_step_pass', 'around_the_world_pass',
-        
-        # Standing passes
-        'standing_pass', 'combat_base_pass', 'leg_weave_pass',
-        'standing_toreando', 'cartwheel_pass', 'backflip_pass',
-        
-        # Specific guard passes
-        'spider_guard_pass', 'de_la_riva_pass', 'lasso_guard_pass',
-        'butterfly_guard_pass', 'half_guard_pass', 'rubber_guard_pass',
-        'z_guard_pass', 'lockdown_pass', 'deep_half_pass',
-        
-        # Advanced passes
-        'leg_pin_pass', 'bodylock_pass', 'staple_pass', 'folding_pass',
-        'double_under_pass', 'knee_cut_to_mount', 'sprawl_pass'
-    ]
-    
-    # New categories
-    guard_retention_techniques = [
-        'hip_escape', 'shrimping', 'granby_roll', 'inversion', 'knee_shield',
-        'frames', 'collar_sleeve_guard', 'shin_to_shin', 'butterfly_hooks',
-        'de_la_riva_hook', 'lasso_control', 'spider_guard_grips'
-    ]
-    
-    transitions_techniques = [
-        'guard_to_mount', 'side_control_to_mount', 'mount_to_back',
-        'knee_on_belly_transition', 'north_south_transition', 'scramble',
-        'guard_recovery', 'turtle_to_guard', 'stand_up_in_base'
-    ]
-    
-    escapes_techniques = [
-        'mount_escape', 'side_control_escape', 'back_escape', 'turtle_escape',
-        'knee_on_belly_escape', 'north_south_escape', 'submission_escape',
-        'guard_escape', 'pin_escape', 'bridge_and_roll'
-    ]
-    
-    # Generate realistic technique mix with new categories
-    num_submissions = random.randint(1, max(1, base_techniques // 2))
-    num_sweeps = random.randint(0, max(1, base_techniques // 3))
-    num_takedowns = random.randint(0, max(1, base_techniques // 4))
-    num_passes = random.randint(0, max(1, base_techniques // 4))
-    num_escapes = random.randint(0, max(1, base_techniques // 5))
-    num_transitions = random.randint(0, max(1, base_techniques // 5))
-    num_retention = max(0, base_techniques - num_submissions - num_sweeps - num_takedowns - num_passes - num_escapes - num_transitions)
-    
-    # Add detected techniques with realistic timing
-    current_time = random.randint(10, 30)
-    
-    # Add submissions
-    for _ in range(num_submissions):
-        technique = random.choice(submission_techniques)
-        confidence = generate_realistic_confidence('submission')
-        techniques.append(create_technique_detection(technique, 'submission', current_time, confidence))
-        current_time += random.randint(30, 90)
-    
-    # Add sweeps
-    for _ in range(num_sweeps):
-        technique = random.choice(sweep_techniques)
-        confidence = generate_realistic_confidence('sweep')
-        techniques.append(create_technique_detection(technique, 'sweep', current_time, confidence))
-        current_time += random.randint(25, 70)
-    
-    # Add takedowns
-    for _ in range(num_takedowns):
-        technique = random.choice(takedown_techniques)
-        confidence = generate_realistic_confidence('takedown')
-        techniques.append(create_technique_detection(technique, 'takedown', current_time, confidence))
-        current_time += random.randint(40, 80)
-    
-    # Add guard passes
-    for _ in range(num_passes):
-        technique = random.choice(guard_pass_techniques)
-        confidence = generate_realistic_confidence('guard_pass')
-        techniques.append(create_technique_detection(technique, 'guard_pass', current_time, confidence))
-        current_time += random.randint(35, 75)
-    
-    # Add escapes
-    for _ in range(num_escapes):
-        technique = random.choice(escapes_techniques)
-        confidence = generate_realistic_confidence('escape')
-        techniques.append(create_technique_detection(technique, 'escape', current_time, confidence))
-        current_time += random.randint(20, 50)
-    
-    # Add transitions
-    for _ in range(num_transitions):
-        technique = random.choice(transitions_techniques)
-        confidence = generate_realistic_confidence('transition')
-        techniques.append(create_technique_detection(technique, 'transition', current_time, confidence))
-        current_time += random.randint(15, 40)
-    
-    # Add guard retention
-    for _ in range(num_retention):
-        technique = random.choice(guard_retention_techniques)
-        confidence = generate_realistic_confidence('guard_retention')
-        techniques.append(create_technique_detection(technique, 'guard_retention', current_time, confidence))
-        current_time += random.randint(10, 30)
-    
-    # Sort by timestamp
-    techniques.sort(key=lambda x: x['start_time'])
-    
-    return techniques
-
-def generate_realistic_confidence(technique_type):
-    """Generate realistic confidence scores based on technique difficulty"""
-    base_confidence = {
-        'submission': random.uniform(0.72, 0.94),
-        'sweep': random.uniform(0.68, 0.91),
-        'takedown': random.uniform(0.65, 0.88),
-        'guard_pass': random.uniform(0.70, 0.89),
-        'escape': random.uniform(0.60, 0.85),
-        'transition': random.uniform(0.65, 0.88),
-        'guard_retention': random.uniform(0.70, 0.90)
-    }
-    
-    return round(base_confidence.get(technique_type, 0.75), 2)
-
-def create_technique_detection(technique_name, category, start_time, confidence):
-    """Create a technique detection object"""
-    if confidence >= 0.85:
-        quality = 'excellent'
-    elif confidence >= 0.70:
-        quality = 'good'
-    else:
-        quality = 'fair'
-    
-    positions = {
-        'submission': ['guard', 'mount', 'side_control', 'back_control', 'half_guard', 'knee_on_belly'],
-        'sweep': ['guard', 'half_guard', 'butterfly_guard', 'spider_guard', 'de_la_riva'],
-        'takedown': ['standing', 'sprawl', 'collar_tie', 'underhooks'],
-        'guard_pass': ['guard', 'half_guard', 'combat_base', 'standing'],
-        'escape': ['mount', 'side_control', 'back_control', 'turtle', 'knee_on_belly'],
-        'transition': ['side_control', 'mount', 'guard', 'turtle', 'scramble'],
-        'guard_retention': ['guard', 'half_guard', 'butterfly_guard', 'open_guard']
-    }
-    
-    return {
-        'technique': technique_name,
-        'category': category,
-        'confidence': confidence,
-        'start_time': start_time,
-        'end_time': start_time + random.randint(5, 15),
-        'quality': quality,
-        'position': random.choice(positions.get(category, ['guard'])),
-        'has_timestamp': True,  # Always provide timestamps now
-        'has_breakdown': True   # Always provide breakdowns now
-    }
-
-def calculate_realistic_stats(techniques):
-    """Calculate realistic performance statistics"""
-    if not techniques:
-        return {'avg_confidence': 0.0, 'breakdown': {}}
-    
-    # Calculate averages by category
-    categories = {}
-    for tech in techniques:
-        cat = tech['category']
-        if cat not in categories:
-            categories[cat] = []
-        categories[cat].append(tech['confidence'])
-    
-    breakdown = {}
-    total_confidence = 0
-    
-    for category, confidences in categories.items():
-        avg_conf = sum(confidences) / len(confidences)
-        success_rate = int(avg_conf * 100)
-        
-        breakdown[category] = {
-            'count': len(confidences),
-            'average_confidence': round(avg_conf, 2),
-            'success_rate': success_rate,
-            'techniques': [t['technique'] for t in techniques if t['category'] == category]
-        }
-        total_confidence += avg_conf
-    
-    overall_avg = total_confidence / len(categories) if categories else 0
-    
-    return {
-        'avg_confidence': round(overall_avg, 2),
-        'breakdown': breakdown
-    }
-
-def generate_insights_from_analysis(techniques, user_plan):
-    """Generate insights based on detected techniques"""
-    insights = [
-        "🎯 Great technique diversity! You're showing skills across multiple categories.",
-        "🔥 High execution quality detected in your submissions.",
-        "🌊 Strong guard game - you're comfortable working from bottom.",
-        "📈 Consistent performance across different positions.",
-        "💪 Your timing on transitions is improving significantly.",
-        "🎭 Developing a well-rounded game across all positions."
-    ]
-    
-    # Add technique-specific insights
-    submission_count = sum(1 for t in techniques if t['category'] == 'submission')
-    if submission_count >= 3:
-        insights.append("🎯 Strong submission game detected - you're a finishing threat!")
-    
-    sweep_count = sum(1 for t in techniques if t['category'] == 'sweep')
-    if sweep_count >= 2:
-        insights.append("🌊 Excellent sweep technique - great bottom game control!")
-    
-    return random.sample(insights, min(3, len(insights)))
-
-def generate_fallback_analysis(user_plan):
-    """Fallback analysis if video processing completely fails"""
-    return {
-        'total_techniques_detected': 0,
-        'detected_techniques': [],
-        'video_duration': 0,
-        'techniques_per_minute': 0,
-        'average_confidence': 0,
-        'insights': ["⚠️ Video analysis temporarily unavailable. Please try again."],
-        'analysis_timestamp': datetime.now().isoformat(),
-        'user_plan': user_plan,
-        'error': 'Video analysis temporarily unavailable. Please try again.',
-        'real_analysis': False
-    }
-
-def generate_analysis_with_learning(user_plan, user_id):
-    """Generate analysis with AI learning integration"""
-    # Get user's AI learning data
-    user = users.get(user_id, {})
-    ai_data = user.get('ai_learning_data', {})
-    favorite_techniques = ai_data.get('favorite_techniques', [])
-    
-    techniques = []
-    
-    # Expanded technique list for learning system
-    technique_list = [
-        # Submissions
-        {'name': 'armbar_from_guard', 'cat': 'submission'},
-        {'name': 'triangle_choke', 'cat': 'submission'},
-        {'name': 'rear_naked_choke', 'cat': 'submission'},
-        {'name': 'kimura', 'cat': 'submission'},
-        {'name': 'guillotine', 'cat': 'submission'},
-        {'name': 'darce_choke', 'cat': 'submission'},
-        {'name': 'omoplata', 'cat': 'submission'},
-        {'name': 'americana', 'cat': 'submission'},
-        {'name': 'heel_hook', 'cat': 'submission'},
-        {'name': 'ankle_lock', 'cat': 'submission'},
-        {'name': 'ezekiel_choke', 'cat': 'submission'},
-        {'name': 'loop_choke', 'cat': 'submission'},
-        {'name': 'bow_and_arrow_choke', 'cat': 'submission'},
-        {'name': 'baseball_choke', 'cat': 'submission'},
-        {'name': 'knee_bar', 'cat': 'submission'},
-        
-        # Sweeps
-        {'name': 'scissor_sweep', 'cat': 'sweep'},
-        {'name': 'butterfly_sweep', 'cat': 'sweep'},
-        {'name': 'tripod_sweep', 'cat': 'sweep'},
-        {'name': 'flower_sweep', 'cat': 'sweep'},
-        {'name': 'hook_sweep', 'cat': 'sweep'},
-        {'name': 'pendulum_sweep', 'cat': 'sweep'},
-        {'name': 'spider_guard_sweep', 'cat': 'sweep'},
-        {'name': 'de_la_riva_sweep', 'cat': 'sweep'},
-        {'name': 'x_guard_sweep', 'cat': 'sweep'},
-        {'name': 'berimbolo', 'cat': 'sweep'},
-        {'name': 'old_school_sweep', 'cat': 'sweep'},
-        {'name': 'hip_bump_sweep', 'cat': 'sweep'},
-        
-        # Guard Passes
-        {'name': 'knee_cut_pass', 'cat': 'guard_pass'},
-        {'name': 'toreando_pass', 'cat': 'guard_pass'},
-        {'name': 'leg_drag', 'cat': 'guard_pass'},
-        {'name': 'stack_pass', 'cat': 'guard_pass'},
-        {'name': 'over_under_pass', 'cat': 'guard_pass'},
-        {'name': 'x_pass', 'cat': 'guard_pass'},
-        {'name': 'long_step_pass', 'cat': 'guard_pass'},
-        {'name': 'smash_pass', 'cat': 'guard_pass'},
-        
-        # Takedowns
-        {'name': 'double_leg_takedown', 'cat': 'takedown'},
-        {'name': 'single_leg_takedown', 'cat': 'takedown'},
-        {'name': 'hip_toss', 'cat': 'takedown'},
-        {'name': 'foot_sweep', 'cat': 'takedown'},
-        {'name': 'ankle_pick', 'cat': 'takedown'},
-        {'name': 'duck_under', 'cat': 'takedown'},
-        {'name': 'arm_drag_takedown', 'cat': 'takedown'},
-        {'name': 'osoto_gari', 'cat': 'takedown'},
-        {'name': 'seoi_nage', 'cat': 'takedown'},
-        {'name': 'uchi_mata', 'cat': 'takedown'},
-        
-        # Escapes
-        {'name': 'mount_escape', 'cat': 'escape'},
-        {'name': 'side_control_escape', 'cat': 'escape'},
-        {'name': 'back_escape', 'cat': 'escape'},
-        {'name': 'turtle_escape', 'cat': 'escape'},
-        {'name': 'bridge_and_roll', 'cat': 'escape'},
-        
-        # Transitions
-        {'name': 'guard_to_mount', 'cat': 'transition'},
-        {'name': 'side_control_to_mount', 'cat': 'transition'},
-        {'name': 'mount_to_back', 'cat': 'transition'},
-        {'name': 'knee_on_belly_transition', 'cat': 'transition'},
-        
-        # Guard Retention
-        {'name': 'hip_escape', 'cat': 'guard_retention'},
-        {'name': 'shrimping', 'cat': 'guard_retention'},
-        {'name': 'knee_shield', 'cat': 'guard_retention'},
-        {'name': 'frames', 'cat': 'guard_retention'}
-    ]
-    
-    num_techniques = random.randint(8, 15)  # Increased from 6-10
-    selected = random.sample(technique_list, min(num_techniques, len(technique_list)))
-    
-    for tech in selected:
-        start_time = random.randint(10, 240)
-        
-        # AI Learning: Boost confidence for user's favorite techniques
-        base_confidence = random.uniform(0.75, 0.98)
-        if tech['name'] in favorite_techniques:
-            base_confidence = min(0.98, base_confidence + 0.1)  # Boost familiar techniques
-        
-        techniques.append({
-            'technique': tech['name'],
-            'category': tech['cat'],
-            'confidence': round(base_confidence, 2),
-            'start_time': start_time,
-            'end_time': start_time + random.randint(8, 20),
-            'quality': random.choice(['excellent', 'good', 'fair']),
-            'position': random.choice(['guard', 'mount', 'side_control', 'standing', 'half_guard', 'back_control']),
-            'has_timestamp': (user_plan in ['pro', 'blackbelt']),
-            'has_breakdown': (user_plan in ['pro', 'blackbelt'])
-        })
-    
-    # AI Learning: Personalized insights
-    insights = [
-        "🎯 Great technique diversity! You're showing skills across multiple categories.",
-        "🔥 High execution quality detected in your submissions.",
-        "🌊 Strong guard game - you're comfortable working from bottom.",
-        "📈 Consistent performance across different positions.",
-        "💪 Your timing on transitions is improving significantly.",
-        "🎭 Developing a well-rounded game across all positions.",
-        "🥋 Your defensive fundamentals are getting stronger.",
-        "⚡ Quick transitions detected - great scrambling ability!",
-        "🎪 Advanced techniques showing up - you're leveling up!",
-        "🏆 Competition-ready techniques detected in your game."
-    ]
-    
-    # Add personalized insights if user has history
-    if len(user_videos.get(user_id, [])) > 2:
-        insights.append("🧠 AI Notice: Your submission success rate has improved 12% over your last 3 sessions!")
-        insights.append("📊 Your favorite guard position appears to be closed guard based on your training history.")
-    
-    return {
-        'total_techniques_detected': len(techniques),
-        'detected_techniques': techniques,
-        'video_duration': random.randint(180, 300),
-        'techniques_per_minute': round(len(techniques) / 4, 1),
-        'average_confidence': round(sum(t['confidence'] for t in techniques) / len(techniques), 2),
-        'insights': random.sample(insights, 3),
-        'analysis_timestamp': datetime.now().isoformat(),
-        'user_plan': user_plan,
-        'ai_learning_applied': len(favorite_techniques) > 0
-    }user_id, [])) > 2:
-        insights.append("🧠 AI Notice: Your submission success rate has improved 12% over your last 3 sessions!")
-        insights.append("📊 Your favorite guard position appears to be closed guard based on your training history.")
-    
-    return {
-        'total_techniques_detected': len(techniques),
-        'detected_techniques': techniques,
-        'video_duration': random.randint(180, 300),
-        'techniques_per_minute': round(len(techniques) / 4, 1),
-        'average_confidence': round(sum(t['confidence'] for t in techniques) / len(techniques), 2),
-        'insights': random.sample(insights, 3),
-        'analysis_timestamp': datetime.now().isoformat(),
-        'user_plan': user_plan,
-        'ai_learning_applied': len(favorite_techniques) > 0
-    }
-
-def update_ai_learning(user_id, analysis_result):
-    if user_id not in users:
-        return
-    
-    user = users[user_id]
-    if 'ai_learning_data' not in user:
-        user['ai_learning_data'] = {
-            'favorite_techniques': [],
-            'weak_areas': [],
-            'improvement_trends': [],
-            'style_profile': 'balanced'
-        }
-    
-    ai_data = user['ai_learning_data']
-    
-    # Learn favorite techniques (high confidence techniques)
-    for technique in analysis_result['detected_techniques']:
-        if technique['confidence'] > 0.9:
-            if technique['technique'] not in ai_data['favorite_techniques']:
-                ai_data['favorite_techniques'].append(technique['technique'])
-    
-    # Keep only top 5 favorite techniques
-    ai_data['favorite_techniques'] = ai_data['favorite_techniques'][:5]
-    
-    # Determine style profile based on technique categories
-    submissions = sum(1 for t in analysis_result['detected_techniques'] if t['category'] == 'submission')
-    sweeps = sum(1 for t in analysis_result['detected_techniques'] if t['category'] == 'sweep')
-    passes = sum(1 for t in analysis_result['detected_techniques'] if t['category'] == 'guard_pass')
-    
-    if submissions > sweeps and submissions > passes:
-        ai_data['style_profile'] = 'submission_hunter'
-    elif sweeps > submissions and sweeps > passes:
-        ai_data['style_profile'] = 'guard_player'
-    elif passes > submissions and passes > sweeps:
-        ai_data['style_profile'] = 'pressure_passer'
-    else:
-        ai_data['style_profile'] = 'well_rounded'
-
 @app.route('/')
 def home():
     user_id = get_user_id()
     
-    # CRITICAL FIX: Ensure user exists
+    # Ensure user exists
     if user_id not in users:
         users[user_id] = {
             'plan': 'free',
@@ -911,13 +359,6 @@ def home():
                 <button onclick="showTab('analytics')" class="tab-button px-6 py-3 rounded-lg text-white font-semibold text-lg">
                     📊 Analytics
                 </button>
-                {"" if user_plan == "free" else '''
-                <button onclick="showTab('challenges')" class="tab-button px-6 py-3 rounded-lg text-white font-semibold text-lg">
-                    🏆 Challenges
-                </button>
-                <button onclick="showTab('social')" class="tab-button px-6 py-3 rounded-lg text-white font-semibold text-lg">
-                    👥 Social
-                </button>'''}
             </div>
         </div>
     </div>
@@ -927,30 +368,6 @@ def home():
         <div id="upload-tab" class="tab-content active">
             <div class="glass rounded-xl p-8">
                 <h2 class="text-3xl font-bold text-white mb-8 text-center">Upload Your BJJ Video</h2>
-                
-                {"" if user_plan != "blackbelt" else '''
-                <!-- Black Belt Premium Features -->
-                <div class="bg-gradient-to-r from-yellow-600 to-orange-600 rounded-xl p-6 mb-8">
-                    <h3 class="text-2xl font-bold text-white mb-4">👑 Black Belt Premium Features</h3>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <button onclick="showCompetitionAnalytics()" class="bg-white bg-opacity-20 hover:bg-opacity-30 rounded-lg p-4 text-left">
-                            <div class="text-lg font-bold text-white">🏆 Competition Analytics</div>
-                            <div class="text-yellow-100 text-sm">Tournament performance tracking</div>
-                        </button>
-                        <button onclick="showPrivateCoaching()" class="bg-white bg-opacity-20 hover:bg-opacity-30 rounded-lg p-4 text-left">
-                            <div class="text-lg font-bold text-white">👨‍🏫 Private Coaching</div>
-                            <div class="text-yellow-100 text-sm">Personalized insights & recommendations</div>
-                        </button>
-                        <button onclick="showAdvancedBreakdowns()" class="bg-white bg-opacity-20 hover:bg-opacity-30 rounded-lg p-4 text-left">
-                            <div class="text-lg font-bold text-white">📊 3D Analysis</div>
-                            <div class="text-yellow-100 text-sm">Biomechanical movement tracking</div>
-                        </button>
-                        <button onclick="generateTrainingPlan()" class="bg-white bg-opacity-20 hover:bg-opacity-30 rounded-lg p-4 text-left">
-                            <div class="text-lg font-bold text-white">📋 AI Training Plans</div>
-                            <div class="text-yellow-100 text-sm">Personalized weekly programs</div>
-                        </button>
-                    </div>
-                </div>'''}
 
                 <div class="bg-gradient-to-r from-green-600 to-blue-600 rounded-xl p-8 text-center">
                     <h3 class="text-2xl font-bold text-white mb-4">🎥 Ready to Analyze Your Game?</h3>
@@ -1010,74 +427,34 @@ def home():
             </div>
         </div>
 
-        <!-- Submissions Tab -->
+        <!-- Other tabs would go here -->
         <div id="submissions-tab" class="tab-content">
             <div class="glass rounded-xl p-8">
                 <h2 class="text-3xl font-bold text-white mb-8 text-center">🎯 Submission Analysis</h2>
-                
-                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
-                    <div class="bg-gradient-to-br from-red-500 to-red-700 rounded-xl p-6">
-                        <h3 class="text-xl font-bold text-white mb-4">📊 Submission Stats</h3>
-                        <div class="space-y-4">
-                            <div class="flex justify-between">
-                                <span class="text-red-100">Success Rate</span>
-                                <span class="text-white font-bold">78%</span>
-                            </div>
-                            <div class="flex justify-between">
-                                <span class="text-red-100">Avg Setup Time</span>
-                                <span class="text-white font-bold">12.4s</span>
-                            </div>
-                            <div class="flex justify-between">
-                                <span class="text-red-100">Favorite Position</span>
-                                <span class="text-white font-bold">Guard</span>
-                            </div>
-                            <div class="flex justify-between">
-                                <span class="text-red-100">Total Attempts</span>
-                                <span class="text-white font-bold">47</span>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="bg-white bg-opacity-10 rounded-xl p-6">
-                        <h3 class="text-xl font-bold text-white mb-4">🏆 Top Submissions</h3>
-                        <div class="space-y-3">
-                            <div class="flex justify-between items-center bg-white bg-opacity-10 rounded-lg p-3">
-                                <span class="text-white">Armbar from Guard</span>
-                                <span class="text-green-400 font-bold">92%</span>
-                            </div>
-                            <div class="flex justify-between items-center bg-white bg-opacity-10 rounded-lg p-3">
-                                <span class="text-white">Rear Naked Choke</span>
-                                <span class="text-green-400 font-bold">87%</span>
-                            </div>
-                            <div class="flex justify-between items-center bg-white bg-opacity-10 rounded-lg p-3">
-                                <span class="text-white">Triangle Choke</span>
-                                <span class="text-yellow-400 font-bold">74%</span>
-                            </div>
-                            <div class="flex justify-between items-center bg-white bg-opacity-10 rounded-lg p-3">
-                                <span class="text-white">Kimura</span>
-                                <span class="text-yellow-400 font-bold">68%</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="bg-white bg-opacity-10 rounded-xl p-6">
-                    <h3 class="text-xl font-bold text-white mb-4">🎯 AI Recommendations</h3>
-                    <div class="space-y-3">
-                        <div class="bg-blue-900 bg-opacity-50 rounded-lg p-4">
-                            <div class="text-white font-bold mb-2">🔧 Focus Area: Triangle Setup</div>
-                            <p class="text-gray-300 text-sm">Your triangle attempts show 74% success. Work on hip movement and angle adjustments to improve finishing rate.</p>
-                        </div>
-                        <div class="bg-green-900 bg-opacity-50 rounded-lg p-4">
-                            <div class="text-white font-bold mb-2">💪 Strength: Armbar Mastery</div>
-                            <p class="text-gray-300 text-sm">Excellent 92% success rate on armbars. Consider teaching this technique to training partners.</p>
-                        </div>
-                    </div>
-                </div>
+                <p class="text-white text-center">Upload videos to see your submission analytics!</p>
             </div>
         </div>
 
-        <!-- Continue with other tabs... -->
+        <div id="sweeps-tab" class="tab-content">
+            <div class="glass rounded-xl p-8">
+                <h2 class="text-3xl font-bold text-white mb-8 text-center">🌊 Sweep Analysis</h2>
+                <p class="text-white text-center">Upload videos to see your sweep analytics!</p>
+            </div>
+        </div>
+
+        <div id="takedowns-tab" class="tab-content">
+            <div class="glass rounded-xl p-8">
+                <h2 class="text-3xl font-bold text-white mb-8 text-center">🤼 Takedown Analysis</h2>
+                <p class="text-white text-center">Upload videos to see your takedown analytics!</p>
+            </div>
+        </div>
+
+        <div id="analytics-tab" class="tab-content">
+            <div class="glass rounded-xl p-8">
+                <h2 class="text-3xl font-bold text-white mb-8 text-center">📊 Your BJJ Analytics</h2>
+                <p class="text-white text-center">Upload videos to see detailed analytics!</p>
+            </div>
+        </div>
     </div>
 
     <script>
@@ -1086,7 +463,6 @@ def home():
         const maxUploads = {1 if user_plan == "free" else (4 if user_plan == "pro" else 999)};
         const userEmail = "{user_email or ''}";
 
-        // Account Creation
         function createAccount() {{
             var email = document.getElementById('userEmail').value.trim();
             var name = document.getElementById('userName').value.trim();
@@ -1146,7 +522,6 @@ def home():
             
             if (confirmUpgrade) {{
                 alert(`🎉 Welcome to ${{planNames[plan]}}!\\n\\nYour account has been upgraded.`);
-                // In real app, this would process payment and reload
                 location.reload();
             }}
         }}
@@ -1342,15 +717,8 @@ def analyze():
     # Simulate processing time
     time.sleep(2)
     
-    # Get the uploaded video file
-    video_file = request.files.get('video')
-    
-    if video_file:
-        # Use smart video analysis
-        analysis_result = analyze_video_content(video_file, user_plan)
-    else:
-        # Fallback to basic analysis
-        analysis_result = generate_analysis_with_learning(user_plan, user_id)
+    # Generate analysis
+    analysis_result = generate_analysis(user_plan)
     
     # Store the analysis
     if user_id not in user_videos:
@@ -1360,9 +728,6 @@ def analyze():
     # Update counters
     user['monthly_uploads'] += 1
     users[user_id]['videos_count'] += 1
-    
-    # Update AI learning data
-    update_ai_learning(user_id, analysis_result)
     
     return jsonify(analysis_result)
 

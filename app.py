@@ -108,11 +108,96 @@ def home():
     user_id = get_user_id()
     user_plan = users[user_id]['plan']
     video_count = len(user_videos.get(user_id, []))
+    demo_uploads_used = video_count if user_plan == 'demo' else 0
     
-    # Build HTML in parts to avoid string issues
-    html_parts = []
+    # Status section
+    if user_plan != 'demo':
+        status_html = '<span class="bg-green-600 text-white px-4 py-2 rounded-lg">✅ {} MEMBER • {} Videos</span>'.format(user_plan.upper(), video_count)
+    else:
+        status_html = '''<div class="space-x-4">
+            <span class="bg-orange-600 text-white px-3 py-2 rounded-lg text-sm">🆓 DEMO • {}/1 Free Upload Used</span>
+            <button onclick="showAccessCode()" class="bg-yellow-600 hover:bg-yellow-700 text-white px-4 py-2 rounded-lg font-bold">🎁 Elite Access Code?</button>
+            <button onclick="showPricing()" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-bold">🚀 SUBSCRIBE NOW</button>
+        </div>'''.format(demo_uploads_used)
     
-    html_parts.append("""<!DOCTYPE html>
+    # Navigation badges
+    demo_badge = '<span class="demo-badge">DEMO</span>' if user_plan == 'demo' else ''
+    
+    # Friends tab
+    friends_tab = '''<button onclick="showTab('friends')" class="tab-button px-4 py-2 rounded-lg text-white font-semibold">👥 Friends</button>''' if user_plan in ['pro', 'elite'] else ''
+    
+    # Upload section
+    if user_plan == 'demo' and demo_uploads_used >= 1:
+        upload_section = '''<div class="bg-orange-900 bg-opacity-50 rounded-lg p-6 text-center mb-6">
+                    <h3 class="text-xl font-bold text-white mb-2">🆓 Free Upload Used</h3>
+                    <p class="text-gray-300 mb-4">You've used your 1 free demo upload. Get elite access or subscribe for unlimited uploads!</p>
+                    <div class="space-x-4">
+                        <button onclick="showAccessCode()" class="bg-yellow-600 hover:bg-yellow-700 text-white font-bold py-2 px-4 rounded-lg">🎁 Use Elite Code</button>
+                        <button onclick="showPricing()" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded-lg">Subscribe</button>
+                    </div>
+                </div>'''
+    elif user_plan == 'demo':
+        upload_section = '''<div class="bg-green-900 bg-opacity-50 rounded-lg p-6 text-center mb-6">
+                    <h3 class="text-xl font-bold text-white mb-2">🆓 Free Demo Upload</h3>
+                    <p class="text-gray-300 mb-4">Try our AI analysis with 1 free upload! Limited breakdown included.</p>
+                    <p class="text-yellow-300 text-sm">After this, use an elite access code or subscribe for unlimited uploads.</p>
+                </div>
+                <div class="text-center">
+                    <input type="file" id="videoFile" accept="video/*" class="mb-4 text-white">
+                    <br>
+                    <p class="text-orange-300 text-sm mb-4">🆓 Demo Plan - Basic analysis (upgrade for full features)</p>
+                    <button onclick="analyzeVideo()" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-8 rounded-lg">🤖 Try AI Analysis</button>
+                </div>'''
+    else:
+        elite_note = '<p class="text-purple-300 text-xs mt-2">🎬 Elite: Video timestamps included!</p>' if user_plan == 'elite' else ''
+        upload_section = '''<div class="text-center">
+                    <input type="file" id="videoFile" accept="video/*" class="mb-4 text-white">
+                    <br>
+                    <p class="text-green-300 text-sm mb-4">✅ {} Plan - Full analysis</p>
+                    <button onclick="analyzeVideo()" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-8 rounded-lg">🤖 Analyze Techniques</button>
+                    {}
+                </div>'''.format(user_plan.title(), elite_note)
+    
+    # Friends content
+    friends_content = '''
+        <!-- Friends Tab -->
+        <div id="friends-tab" class="tab-content">
+            <div class="glass rounded-xl p-8">
+                <h2 class="text-2xl font-bold text-white mb-6">👥 Friends & Community</h2>
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+                    <div class="bg-white bg-opacity-10 rounded-lg p-6">
+                        <h3 class="text-xl font-bold text-white mb-4">Add Friends</h3>
+                        <div class="space-y-4">
+                            <input type="text" placeholder="Enter friend's username" 
+                                   class="w-full p-3 rounded-lg bg-white bg-opacity-20 text-white placeholder-gray-300">
+                            <button class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg w-full font-bold">🔍 Search & Add Friend</button>
+                        </div>
+                    </div>
+                    <div class="bg-white bg-opacity-10 rounded-lg p-6">
+                        <h3 class="text-xl font-bold text-white mb-4">Leaderboard</h3>
+                        <div class="space-y-3">
+                            <div class="flex justify-between items-center bg-gradient-to-r from-yellow-600 to-yellow-700 rounded p-3">
+                                <div class="flex items-center space-x-3">
+                                    <span class="text-2xl">🥇</span>
+                                    <span class="text-white font-bold">@submachine92</span>
+                                </div>
+                                <span class="text-white font-bold">2,847 pts</span>
+                            </div>
+                            <div class="flex justify-between items-center bg-white bg-opacity-10 rounded p-3 border-2 border-blue-400">
+                                <div class="flex items-center space-x-3">
+                                    <span class="text-lg">4️⃣</span>
+                                    <span class="text-blue-300 font-bold">You</span>
+                                </div>
+                                <span class="text-blue-300 font-bold">1,654 pts</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>''' if user_plan in ['pro', 'elite'] else ''
+    
+    # Build the complete HTML
+    html = '''<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -121,39 +206,19 @@ def home():
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        body { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
-        .glass { background: rgba(255, 255, 255, 0.1); backdrop-filter: blur(10px); }
-        .tab-content { display: none; }
-        .tab-content.active { display: block; }
-        .tab-button.active { background: rgba(255, 255, 255, 0.2); }
-        .demo-badge { position: absolute; top: 5px; right: 5px; background: rgba(255, 193, 7, 0.9); color: black; padding: 2px 6px; border-radius: 3px; font-size: 10px; }
+        body {{ background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }}
+        .glass {{ background: rgba(255, 255, 255, 0.1); backdrop-filter: blur(10px); }}
+        .tab-content {{ display: none; }}
+        .tab-content.active {{ display: block; }}
+        .tab-button.active {{ background: rgba(255, 255, 255, 0.2); }}
+        .demo-badge {{ position: absolute; top: 5px; right: 5px; background: rgba(255, 193, 7, 0.9); color: black; padding: 2px 6px; border-radius: 3px; font-size: 10px; }}
     </style>
 </head>
 <body class="min-h-screen">
     <div class="text-center py-8">
         <h1 class="text-5xl font-bold text-white mb-4">🥋 BJJ AI Analyzer Pro</h1>
         <p class="text-xl text-gray-200">Complete BJJ Analytics Platform</p>
-        <div class="mt-4">""")
-    
-    if user_plan != 'demo':
-        html_parts.append(f"""<span class="bg-green-600 text-white px-4 py-2 rounded-lg">
-            ✅ {user_plan.upper()} MEMBER • {video_count} Videos
-        </span>""")
-    else:
-        demo_uploads_used = video_count
-        html_parts.append(f"""<div class="space-x-4">
-            <span class="bg-orange-600 text-white px-3 py-2 rounded-lg text-sm">
-                🆓 DEMO • {demo_uploads_used}/1 Free Upload Used
-            </span>
-            <button onclick="showAccessCode()" class="bg-yellow-600 hover:bg-yellow-700 text-white px-4 py-2 rounded-lg font-bold">
-                🎁 Elite Access Code?
-            </button>
-            <button onclick="showPricing()" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-bold">
-                🚀 SUBSCRIBE NOW
-            </button>
-        </div>""")
-    
-    html_parts.append("""</div>
+        <div class="mt-4">{status_html}</div>
     </div>
 
     <!-- Access Code Modal -->
@@ -164,12 +229,8 @@ def home():
             <input type="text" id="access-code-input" placeholder="Enter elite access code" 
                    class="w-full p-3 rounded-lg bg-white bg-opacity-20 text-white placeholder-gray-300 mb-4">
             <div class="space-x-4">
-                <button onclick="redeemCode()" class="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg font-bold">
-                    Redeem Elite
-                </button>
-                <button onclick="hideAccessCode()" class="bg-gray-600 hover:bg-gray-700 text-white px-6 py-2 rounded-lg">
-                    Cancel
-                </button>
+                <button onclick="redeemCode()" class="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg font-bold">Redeem Elite</button>
+                <button onclick="hideAccessCode()" class="bg-gray-600 hover:bg-gray-700 text-white px-6 py-2 rounded-lg">Cancel</button>
             </div>
             <p class="text-gray-300 text-sm mt-4">Try: BJJ2024FREE, GUARD2024, SWEEP2024</p>
         </div>
@@ -191,9 +252,7 @@ def home():
                         <li>• Limited analysis</li>
                         <li>• Demo data view</li>
                     </ul>
-                    <button onclick="alert('You are already on Demo!')" class="bg-gray-600 text-white py-2 px-4 rounded-lg w-full">
-                        Current Plan
-                    </button>
+                    <button onclick="alert('You are already on Demo!')" class="bg-gray-600 text-white py-2 px-4 rounded-lg w-full">Current Plan</button>
                 </div>
                 <div class="bg-blue-600 bg-opacity-20 rounded-lg p-6 text-center border-2 border-blue-400">
                     <div class="bg-blue-500 text-white px-3 py-1 rounded-full text-xs mb-2">POPULAR</div>
@@ -205,9 +264,7 @@ def home():
                         <li>• Progress tracking</li>
                         <li>• Follow friends</li>
                     </ul>
-                    <button onclick="subscribePlan('pro')" class="bg-blue-600 hover:bg-blue-700 text-white py-2 px-6 rounded-lg w-full">
-                        Subscribe
-                    </button>
+                    <button onclick="subscribePlan('pro')" class="bg-blue-600 hover:bg-blue-700 text-white py-2 px-6 rounded-lg w-full">Subscribe</button>
                 </div>
                 <div class="bg-purple-600 bg-opacity-20 rounded-lg p-6 text-center border-2 border-purple-400">
                     <div class="bg-purple-500 text-white px-3 py-1 rounded-full text-xs mb-2">ELITE</div>
@@ -218,9 +275,7 @@ def home():
                         <li>• Video timestamps</li>
                         <li>• Competition tools</li>
                     </ul>
-                    <button onclick="subscribePlan('elite')" class="bg-purple-600 hover:bg-purple-700 text-white py-2 px-6 rounded-lg w-full">
-                        Subscribe
-                    </button>
+                    <button onclick="subscribePlan('elite')" class="bg-purple-600 hover:bg-purple-700 text-white py-2 px-6 rounded-lg w-full">Subscribe</button>
                 </div>
             </div>
         </div>
@@ -230,52 +285,13 @@ def home():
     <div class="container mx-auto px-4 max-w-6xl mb-8">
         <div class="glass rounded-xl p-2">
             <div class="flex flex-wrap justify-center space-x-2">
-                <button onclick="showTab('upload')" class="tab-button active px-4 py-2 rounded-lg text-white font-semibold">
-                    📹 Upload
-                </button>
-                <button onclick="showTab('submissions')" class="tab-button px-4 py-2 rounded-lg text-white font-semibold relative">
-                    🎯 Submissions""")
-    
-    if user_plan == 'demo':
-        html_parts.append('<span class="demo-badge">DEMO</span>')
-    
-    html_parts.append("""</button>
-                <button onclick="showTab('sweeps')" class="tab-button px-4 py-2 rounded-lg text-white font-semibold relative">
-                    🌊 Sweeps""")
-    
-    if user_plan == 'demo':
-        html_parts.append('<span class="demo-badge">DEMO</span>')
-    
-    html_parts.append("""</button>
-                <button onclick="showTab('passes')" class="tab-button px-4 py-2 rounded-lg text-white font-semibold relative">
-                    🛡️ Passes""")
-    
-    if user_plan == 'demo':
-        html_parts.append('<span class="demo-badge">DEMO</span>')
-    
-    html_parts.append("""</button>
-                <button onclick="showTab('takedowns')" class="tab-button px-4 py-2 rounded-lg text-white font-semibold relative">
-                    🤼 Takedowns""")
-    
-    if user_plan == 'demo':
-        html_parts.append('<span class="demo-badge">DEMO</span>')
-    
-    html_parts.append("""</button>
-                <button onclick="showTab('analytics')" class="tab-button px-4 py-2 rounded-lg text-white font-semibold relative">
-                    📊 Analytics""")
-    
-    if user_plan == 'demo':
-        html_parts.append('<span class="demo-badge">DEMO</span>')
-    
-    html_parts.append('</button>')
-    
-    if user_plan in ['pro', 'elite']:
-        html_parts.append("""
-                <button onclick="showTab('friends')" class="tab-button px-4 py-2 rounded-lg text-white font-semibold">
-                    👥 Friends
-                </button>""")
-    
-    html_parts.append("""
+                <button onclick="showTab('upload')" class="tab-button active px-4 py-2 rounded-lg text-white font-semibold">📹 Upload</button>
+                <button onclick="showTab('submissions')" class="tab-button px-4 py-2 rounded-lg text-white font-semibold relative">🎯 Submissions{demo_badge}</button>
+                <button onclick="showTab('sweeps')" class="tab-button px-4 py-2 rounded-lg text-white font-semibold relative">🌊 Sweeps{demo_badge}</button>
+                <button onclick="showTab('passes')" class="tab-button px-4 py-2 rounded-lg text-white font-semibold relative">🛡️ Passes{demo_badge}</button>
+                <button onclick="showTab('takedowns')" class="tab-button px-4 py-2 rounded-lg text-white font-semibold relative">🤼 Takedowns{demo_badge}</button>
+                <button onclick="showTab('analytics')" class="tab-button px-4 py-2 rounded-lg text-white font-semibold relative">📊 Analytics{demo_badge}</button>
+                {friends_tab}
             </div>
         </div>
     </div>
@@ -284,53 +300,9 @@ def home():
         <!-- Upload Tab -->
         <div id="upload-tab" class="tab-content active">
             <div class="glass rounded-xl p-8 mb-8">
-                <h2 class="text-2xl font-bold text-white mb-6 text-center">Upload Your BJJ Video</h2>""")
-    
-    demo_uploads_used = video_count if user_plan == 'demo' else 0
-    
-    if user_plan == 'demo' and demo_uploads_used >= 1:
-        html_parts.append("""<div class="bg-orange-900 bg-opacity-50 rounded-lg p-6 text-center mb-6">
-                    <h3 class="text-xl font-bold text-white mb-2">🆓 Free Upload Used</h3>
-                    <p class="text-gray-300 mb-4">You've used your 1 free demo upload. Get elite access or subscribe for unlimited uploads!</p>
-                    <div class="space-x-4">
-                        <button onclick="showAccessCode()" class="bg-yellow-600 hover:bg-yellow-700 text-white font-bold py-2 px-4 rounded-lg">
-                            🎁 Use Elite Code
-                        </button>
-                        <button onclick="showPricing()" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded-lg">
-                            Subscribe
-                        </button>
-                    </div>
-                </div>""")
-    elif user_plan == 'demo':
-        html_parts.append("""<div class="bg-green-900 bg-opacity-50 rounded-lg p-6 text-center mb-6">
-                    <h3 class="text-xl font-bold text-white mb-2">🆓 Free Demo Upload</h3>
-                    <p class="text-gray-300 mb-4">Try our AI analysis with 1 free upload! Limited breakdown included.</p>
-                    <p class="text-yellow-300 text-sm">After this, use an elite access code or subscribe for unlimited uploads.</p>
-                </div>
-                <div class="text-center">
-                    <input type="file" id="videoFile" accept="video/*" class="mb-4 text-white">
-                    <br>
-                    <p class="text-orange-300 text-sm mb-4">🆓 Demo Plan - Basic analysis (upgrade for full features)</p>
-                    <button onclick="analyzeVideo()" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-8 rounded-lg">
-                        🤖 Try AI Analysis
-                    </button>
-                </div>""")
-    else:
-        html_parts.append(f"""<div class="text-center">
-                    <input type="file" id="videoFile" accept="video/*" class="mb-4 text-white">
-                    <br>
-                    <p class="text-green-300 text-sm mb-4">✅ {user_plan.title()} Plan - Full analysis</p>
-                    <button onclick="analyzeVideo()" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-8 rounded-lg">
-                        🤖 Analyze Techniques
-                    </button>""")
-        
-        if user_plan == 'elite':
-            html_parts.append('<p class="text-purple-300 text-xs mt-2">🎬 Elite: Video timestamps included!</p>')
-        
-        html_parts.append('</div>')
-    
-    # Add the rest of the HTML content
-    html_parts.append(f"""</div>
+                <h2 class="text-2xl font-bold text-white mb-6 text-center">Upload Your BJJ Video</h2>
+                {upload_section}
+            </div>
 
             <!-- Progress Section -->
             <div id="progress-section" class="glass rounded-xl p-6 mb-8 hidden">
@@ -368,14 +340,12 @@ def home():
                     <div id="insights-list"></div>
                 </div>
                 <div class="text-center">
-                    <button onclick="resetApp()" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-6 rounded-lg">
-                        📹 Analyze Another Video
-                    </button>
+                    <button onclick="resetApp()" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-6 rounded-lg">📹 Analyze Another Video</button>
                 </div>
             </div>
         </div>
 
-        <!-- Other tabs content here -->
+        <!-- Other tabs -->
         <div id="submissions-tab" class="tab-content">
             <div class="glass rounded-xl p-8">
                 <h2 class="text-2xl font-bold text-white mb-6">🎯 Submission Analytics</h2>
@@ -434,50 +404,9 @@ def home():
                     </div>
                 </div>
             </div>
-        </div>""")
-        
-    if user_plan in ['pro', 'elite']:
-        html_parts.append("""
-        <!-- Friends Tab -->
-        <div id="friends-tab" class="tab-content">
-            <div class="glass rounded-xl p-8">
-                <h2 class="text-2xl font-bold text-white mb-6">👥 Friends & Community</h2>
-                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
-                    <div class="bg-white bg-opacity-10 rounded-lg p-6">
-                        <h3 class="text-xl font-bold text-white mb-4">Add Friends</h3>
-                        <div class="space-y-4">
-                            <input type="text" placeholder="Enter friend's username" 
-                                   class="w-full p-3 rounded-lg bg-white bg-opacity-20 text-white placeholder-gray-300">
-                            <button class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg w-full font-bold">
-                                🔍 Search & Add Friend
-                            </button>
-                        </div>
-                    </div>
-                    <div class="bg-white bg-opacity-10 rounded-lg p-6">
-                        <h3 class="text-xl font-bold text-white mb-4">Leaderboard</h3>
-                        <div class="space-y-3">
-                            <div class="flex justify-between items-center bg-gradient-to-r from-yellow-600 to-yellow-700 rounded p-3">
-                                <div class="flex items-center space-x-3">
-                                    <span class="text-2xl">🥇</span>
-                                    <span class="text-white font-bold">@submachine92</span>
-                                </div>
-                                <span class="text-white font-bold">2,847 pts</span>
-                            </div>
-                            <div class="flex justify-between items-center bg-white bg-opacity-10 rounded p-3 border-2 border-blue-400">
-                                <div class="flex items-center space-x-3">
-                                    <span class="text-lg">4️⃣</span>
-                                    <span class="text-blue-300 font-bold">You</span>
-                                </div>
-                                <span class="text-blue-300 font-bold">1,654 pts</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>""")
-    
-    # Add JavaScript
-    html_parts.append(f"""
+        </div>
+
+        {friends_content}
     </div>
 
     <script>
@@ -543,4 +472,211 @@ def home():
             
             const interval = setInterval(() => {{
                 progress += Math.random() * 15;
-                if (progress >
+                if (progress > 100) progress = 100;
+                progressBar.style.width = progress + '%';
+                
+                if (progress >= 100) {{
+                    clearInterval(interval);
+                    performAnalysis();
+                }}
+            }}, 300);
+        }}
+
+        async function performAnalysis() {{
+            try {{
+                const formData = new FormData();
+                formData.append('video', document.getElementById('videoFile').files[0]);
+
+                const response = await fetch('/api/analyze', {{
+                    method: 'POST',
+                    body: formData
+                }});
+
+                const results = await response.json();
+                if (results.error) {{
+                    alert('❌ ' + results.error);
+                    resetApp();
+                    return;
+                }}
+                
+                displayResults(results);
+            }} catch (error) {{
+                alert('Analysis failed: ' + error.message);
+                resetApp();
+            }}
+        }}
+
+        function displayResults(results) {{
+            document.getElementById('progress-section').classList.add('hidden');
+            document.getElementById('results-section').classList.remove('hidden');
+
+            document.getElementById('total-count').textContent = results.total_techniques_detected;
+            document.getElementById('avg-confidence').textContent = Math.round(results.average_confidence * 100) + '%';
+            document.getElementById('video-duration').textContent = results.video_duration + 's';
+            
+            const submissionCount = results.detected_techniques.filter(t => t.category === 'submission').length;
+            document.getElementById('submission-count').textContent = submissionCount;
+
+            displayTechniques(results.detected_techniques);
+            displayInsights(results.insights);
+        }}
+
+        function displayTechniques(techniques) {{
+            const techniquesList = document.getElementById('techniques-list');
+            techniquesList.innerHTML = '';
+
+            techniques.forEach(technique => {{
+                const techniqueDiv = document.createElement('div');
+                techniqueDiv.className = 'bg-white bg-opacity-10 rounded-lg p-4 mb-3';
+                
+                let timestampHTML = '';
+                if (technique.has_timestamp) {{
+                    timestampHTML = `<button onclick="alert('🎬 Elite Feature: Jump to time!')" 
+                                    class="bg-blue-600 hover:bg-blue-700 text-white px-2 py-1 rounded text-xs ml-2">
+                        🎬 ${{Math.floor(technique.start_time/60)}}:${{(technique.start_time%60).toString().padStart(2, '0')}}
+                    </button>`;
+                }}
+
+                techniqueDiv.innerHTML = `
+                    <div class="flex justify-between items-center">
+                        <div class="flex-1">
+                            <div class="flex items-center space-x-2 mb-1">
+                                <h4 class="text-lg font-bold text-white">${{technique.technique.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}}</h4>
+                                <span class="px-2 py-1 bg-white bg-opacity-20 rounded text-xs text-gray-300">
+                                    ${{technique.category.replace('_', ' ').toUpperCase()}}
+                                </span>
+                                ${{timestampHTML}}
+                            </div>
+                            <p class="text-gray-300 text-sm">Position: ${{technique.position}} | Quality: ${{technique.quality}}</p>
+                        </div>
+                        <div class="text-right">
+                            <div class="text-white font-bold text-lg">${{Math.round(technique.confidence * 100)}}%</div>
+                        </div>
+                    </div>
+                `;
+                
+                techniquesList.appendChild(techniqueDiv);
+            }});
+        }}
+
+        function displayInsights(insights) {{
+            const insightsList = document.getElementById('insights-list');
+            insightsList.innerHTML = '';
+
+            insights.forEach(insight => {{
+                const insightDiv = document.createElement('div');
+                insightDiv.className = 'bg-white bg-opacity-10 rounded p-3 mb-2';
+                insightDiv.innerHTML = `<p class="text-gray-300">${{insight}}</p>`;
+                insightsList.appendChild(insightDiv);
+            }});
+        }}
+
+        function resetApp() {{
+            document.getElementById('progress-section').classList.add('hidden');
+            document.getElementById('results-section').classList.add('hidden');
+            document.getElementById('videoFile').value = '';
+        }}
+
+        // Initialize chart if needed
+        setTimeout(() => {{
+            const ctx = document.getElementById('submission-chart');
+            if (ctx && window.Chart) {{
+                new Chart(ctx, {{
+                    type: 'doughnut',
+                    data: {{
+                        labels: ['Armbar', 'Triangle', 'RNC', 'Kimura', 'Heel Hook'],
+                        datasets: [{{
+                            data: [87, 72, 95, 65, 81],
+                            backgroundColor: ['#ef4444', '#3b82f6', '#10b981', '#f59e0b', '#8b5cf6']
+                        }}]
+                    }},
+                    options: {{
+                        responsive: true,
+                        plugins: {{
+                            legend: {{ labels: {{ color: 'white' }} }}
+                        }}
+                    }}
+                }});
+            }}
+        }}, 1000);
+    </script>
+</body>
+</html>'''.format(
+        status_html=status_html,
+        demo_badge=demo_badge,
+        friends_tab=friends_tab,
+        upload_section=upload_section,
+        friends_content=friends_content,
+        video_count=video_count,
+        user_plan=user_plan
+    )
+    
+    return html
+
+@app.route('/api/redeem-code', methods=['POST'])
+def redeem_code():
+    user_id = get_user_id()
+    data = request.get_json()
+    code = data.get('code', '').upper()
+    
+    if code in access_codes and access_codes[code]['uses'] > 0:
+        access_codes[code]['uses'] -= 1
+        users[user_id]['plan'] = access_codes[code]['plan']
+        return jsonify({'success': True, 'message': f'Elite access activated! You now have unlimited uploads with full analysis.'})
+    else:
+        return jsonify({'success': False, 'message': 'Invalid or expired access code'})
+
+@app.route('/api/analyze', methods=['POST'])
+def analyze():
+    user_id = get_user_id()
+    user_plan = users[user_id]['plan']
+    
+    # Demo users get 1 free upload
+    if user_plan == 'demo':
+        demo_uploads_used = len(user_videos.get(user_id, []))
+        if demo_uploads_used >= 1:
+            return jsonify({'error': 'Demo limit reached! Use elite access code or subscribe for unlimited uploads.'}), 403
+    
+    # Simulate processing
+    time.sleep(3)
+    
+    # Generate analysis
+    analysis_result = generate_analysis(user_plan)
+    
+    # Store the analysis
+    analysis_result['id'] = f"analysis_{len(user_videos.get(user_id, []))}"
+    analysis_result['timestamp'] = datetime.now().isoformat()
+    
+    if user_id not in user_videos:
+        user_videos[user_id] = []
+    user_videos[user_id].append(analysis_result)
+    
+    users[user_id]['videos_count'] += 1
+    
+    return jsonify(analysis_result)
+
+@app.route('/api/stats')
+def get_stats():
+    user_id = get_user_id()
+    user_plan = users[user_id]['plan']
+    
+    if user_plan == 'demo':
+        return jsonify(demo_stats)
+    
+    videos = user_videos.get(user_id, [])
+    if not videos:
+        return jsonify({'message': 'Upload videos to see real stats'})
+    
+    return jsonify({
+        'total_videos': len(videos),
+        'plan': user_plan,
+        'latest_analysis': videos[-1] if videos else None
+    })
+
+@app.route('/health')
+def health():
+    return jsonify({'status': 'running', 'message': 'BJJ AI Analyzer Pro is online!'})
+
+if __name__ == '__main__':
+    port = int(os.environ.get('PORT', 5000))
+    app.run(host='0.0.0.0', port=port, debug=False)

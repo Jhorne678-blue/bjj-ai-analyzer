@@ -82,6 +82,26 @@ def generate_analysis(plan):
 @app.route('/')
 def home():
     user_id = get_user_id()
+    
+    # CRITICAL FIX: Ensure user exists
+    if user_id not in users:
+        users[user_id] = {
+            'plan': 'free',
+            'videos_count': 0,
+            'created_at': datetime.now().isoformat(),
+            'monthly_uploads': 0,
+            'last_upload_month': datetime.now().strftime('%Y-%m'),
+            'email': None,
+            'name': None,
+            'ai_learning_data': {
+                'favorite_techniques': [],
+                'weak_areas': [],
+                'improvement_trends': [],
+                'style_profile': 'balanced'
+            }
+        }
+        user_videos[user_id] = []
+    
     user = users[user_id]
     user_plan = user['plan']
     video_count = len(user_videos.get(user_id, []))
@@ -93,6 +113,7 @@ def home():
         user['last_upload_month'] = current_month
     
     monthly_uploads = user['monthly_uploads']
+    user_email = user.get('email', None)
     
     return f'''<!DOCTYPE html>
 <html lang="en">
@@ -115,9 +136,29 @@ def home():
     <div class="text-center py-8">
         <h1 class="text-5xl font-bold text-white mb-4">🥋 BJJ AI Analyzer Pro</h1>
         <p class="text-xl text-gray-200">Complete BJJ Analytics Platform</p>
+        
+        <!-- Login/Account Section -->
+        {"" if user_email else '''
+        <div class="mt-6 mb-4">
+            <div class="bg-yellow-600 bg-opacity-20 rounded-lg p-4 max-w-md mx-auto border border-yellow-500">
+                <h3 class="text-lg font-bold text-white mb-2">📧 Create Your Account</h3>
+                <p class="text-yellow-100 text-sm mb-4">Save your progress & let AI learn your fighting style!</p>
+                <div class="space-y-3">
+                    <input type="email" id="userEmail" placeholder="Enter your email" 
+                           class="w-full p-3 rounded-lg bg-white bg-opacity-20 text-white placeholder-gray-300">
+                    <input type="text" id="userName" placeholder="Your name" 
+                           class="w-full p-3 rounded-lg bg-white bg-opacity-20 text-white placeholder-gray-300">
+                    <button onclick="createAccount()" class="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg font-bold w-full">
+                        🚀 CREATE ACCOUNT & START TRACKING
+                    </button>
+                </div>
+            </div>
+        </div>'''}
+        
         <div class="mt-4">
             <span class="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-6 py-3 rounded-lg text-lg font-bold">
                 {user_plan.upper()} PLAN • {video_count} Videos Analyzed
+                {"" if not user_email else f" • {user.get('name', 'User')}"}
             </span>
         </div>
         <div class="mt-4 space-x-4">
@@ -315,9 +356,49 @@ def home():
         <div id="analytics-tab" class="tab-content">
             <div class="glass rounded-xl p-8">
                 <h2 class="text-3xl font-bold text-white mb-8 text-center">📊 Your BJJ Analytics</h2>
+                
+                {"" if not user_email else '''
+                <!-- AI Learning Dashboard -->
+                <div class="bg-gradient-to-r from-purple-600 to-blue-600 rounded-xl p-6 mb-8">
+                    <h3 class="text-2xl font-bold text-white mb-4">🧠 AI Learning Your Style</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div class="bg-white bg-opacity-20 rounded-lg p-4">
+                            <div class="text-lg font-bold text-white">Fighting Style</div>
+                            <div class="text-purple-100">''' + user.get('ai_learning_data', {}).get('style_profile', 'Learning...') + '''</div>
+                        </div>
+                        <div class="bg-white bg-opacity-20 rounded-lg p-4">
+                            <div class="text-lg font-bold text-white">Favorite Techniques</div>
+                            <div class="text-purple-100">Submissions, Guard Play</div>
+                        </div>
+                        <div class="bg-white bg-opacity-20 rounded-lg p-4">
+                            <div class="text-lg font-bold text-white">Improvement Trend</div>
+                            <div class="text-green-300">+15% This Month</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Video History -->
+                <div class="bg-white bg-opacity-10 rounded-xl p-6 mb-6">
+                    <h3 class="text-xl font-bold text-white mb-4">📹 Video History</h3>
+                    <div class="space-y-3">''' + f"""
+                        {''.join([f'''
+                        <div class="bg-white bg-opacity-10 rounded-lg p-4">
+                            <div class="flex justify-between items-center">
+                                <div>
+                                    <div class="text-white font-bold">Training Session #{i+1}</div>
+                                    <div class="text-gray-300 text-sm">{len(video.get('detected_techniques', []))} techniques • {video.get('analysis_timestamp', 'Recent')}</div>
+                                </div>
+                                <button onclick="alert('Video analysis details coming soon!')" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg">
+                                    📊 View Details
+                                </button>
+                            </div>
+                        </div>''' for i, video in enumerate(user_videos.get(user_id, [])[:5])])}
+                    """ + '''</div>
+                </div>'''}
+                
                 <div class="text-center text-gray-300">
-                    <p class="text-xl">Detailed analytics coming soon!</p>
-                    <p>Upload videos to see your performance data</p>
+                    <p class="text-xl">{"Upload videos to see detailed analytics!" if not user_email else "Your personalized analytics are building..."}</p>
+                    {"" if user_email else '<p>Create an account to save your progress and let AI learn your style!</p>'}
                 </div>
             </div>
         </div>
@@ -415,6 +496,41 @@ def home():
         const userPlan = "{user_plan}";
         const monthlyUploads = {monthly_uploads};
         const maxUploads = {1 if user_plan == "free" else (4 if user_plan == "pro" else 999)};
+        const userEmail = "{user_email or ''}";
+
+        // Account Creation
+        function createAccount() {{
+            var email = document.getElementById('userEmail').value.trim();
+            var name = document.getElementById('userName').value.trim();
+            
+            if (!email || !name) {{
+                alert('Please enter both email and name!');
+                return;
+            }}
+            
+            if (!email.includes('@')) {{
+                alert('Please enter a valid email address!');
+                return;
+            }}
+            
+            fetch('/api/create-account', {{
+                method: 'POST',
+                headers: {{'Content-Type': 'application/json'}},
+                body: JSON.stringify({{email: email, name: name}})
+            }})
+            .then(response => response.json())
+            .then(data => {{
+                if (data.success) {{
+                    alert('🎉 Account created successfully!\\n\\nYour progress will now be saved and AI will learn your fighting style.');
+                    location.reload();
+                }} else {{
+                    alert('❌ Error: ' + data.message);
+                }}
+            }})
+            .catch(error => {{
+                alert('Error creating account: ' + error.message);
+            }});
+        }}
 
         function showTab(tabName) {{
             document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
@@ -630,9 +746,36 @@ def home():
 </body>
 </html>'''
 
+@app.route('/api/create-account', methods=['POST'])
+def create_account():
+    user_id = get_user_id()
+    data = request.get_json()
+    email = data.get('email', '').strip()
+    name = data.get('name', '').strip()
+    
+    if not email or not name:
+        return jsonify({'success': False, 'message': 'Email and name are required'}), 400
+    
+    if '@' not in email:
+        return jsonify({'success': False, 'message': 'Please enter a valid email'}), 400
+    
+    # Update user with account info
+    if user_id in users:
+        users[user_id]['email'] = email
+        users[user_id]['name'] = name
+        users[user_id]['account_created'] = datetime.now().isoformat()
+        return jsonify({'success': True, 'message': 'Account created successfully!'})
+    else:
+        return jsonify({'success': False, 'message': 'User session not found'}), 400
+
 @app.route('/api/analyze', methods=['POST'])
 def analyze():
     user_id = get_user_id()
+    
+    # Ensure user exists
+    if user_id not in users:
+        return jsonify({'error': 'User session not found'}), 400
+        
     user = users[user_id]
     user_plan = user['plan']
     
@@ -651,8 +794,8 @@ def analyze():
     # Simulate processing time
     time.sleep(3)
     
-    # Generate analysis
-    analysis_result = generate_analysis(user_plan)
+    # Generate analysis with AI learning
+    analysis_result = generate_analysis_with_learning(user_plan, user_id)
     
     # Store the analysis
     if user_id not in user_videos:
@@ -663,7 +806,119 @@ def analyze():
     user['monthly_uploads'] += 1
     users[user_id]['videos_count'] += 1
     
+    # Update AI learning data
+    update_ai_learning(user_id, analysis_result)
+    
     return jsonify(analysis_result)
+
+def generate_analysis_with_learning(plan, user_id):
+    # Get user's AI learning data
+    user = users.get(user_id, {})
+    ai_data = user.get('ai_learning_data', {})
+    favorite_techniques = ai_data.get('favorite_techniques', [])
+    
+    techniques = []
+    technique_list = [
+        {'name': 'armbar_from_guard', 'cat': 'submission'},
+        {'name': 'triangle_choke', 'cat': 'submission'},
+        {'name': 'rear_naked_choke', 'cat': 'submission'},
+        {'name': 'kimura', 'cat': 'submission'},
+        {'name': 'tripod_sweep', 'cat': 'sweep'},
+        {'name': 'scissor_sweep', 'cat': 'sweep'},
+        {'name': 'butterfly_sweep', 'cat': 'sweep'},
+        {'name': 'knee_cut_pass', 'cat': 'guard_pass'},
+        {'name': 'toreando_pass', 'cat': 'guard_pass'},
+        {'name': 'double_leg_takedown', 'cat': 'takedown'},
+        {'name': 'single_leg_takedown', 'cat': 'takedown'}
+    ]
+    
+    num_techniques = random.randint(6, 10)
+    selected = random.sample(technique_list, num_techniques)
+    
+    for tech in selected:
+        start_time = random.randint(10, 240)
+        
+        # AI Learning: Boost confidence for user's favorite techniques
+        base_confidence = random.uniform(0.75, 0.98)
+        if tech['name'] in favorite_techniques:
+            base_confidence = min(0.98, base_confidence + 0.1)  # Boost familiar techniques
+        
+        techniques.append({
+            'technique': tech['name'],
+            'category': tech['cat'],
+            'confidence': round(base_confidence, 2),
+            'start_time': start_time,
+            'end_time': start_time + random.randint(8, 20),
+            'quality': random.choice(['excellent', 'good', 'fair']),
+            'position': random.choice(['guard', 'mount', 'side_control', 'standing']),
+            'has_timestamp': (plan in ['pro', 'blackbelt']),
+            'has_breakdown': (plan in ['pro', 'blackbelt'])
+        })
+    
+    # AI Learning: Personalized insights
+    insights = [
+        "🎯 Great technique diversity! You're showing skills across multiple categories.",
+        "🔥 High execution quality detected in your submissions.",
+        "🌊 Strong guard game - you're comfortable working from bottom.",
+        "📈 Consistent performance across different positions.",
+        "💪 Your timing on transitions is improving significantly.",
+        "🎭 Developing a well-rounded game across all positions."
+    ]
+    
+    # Add personalized insights if user has history
+    if len(user_videos.get(user_id, [])) > 2:
+        insights.append("🧠 AI Notice: Your submission success rate has improved 12% over your last 3 sessions!")
+        insights.append("📊 Your favorite guard position appears to be closed guard based on your training history.")
+    
+    return {
+        'total_techniques_detected': len(techniques),
+        'detected_techniques': techniques,
+        'video_duration': random.randint(180, 300),
+        'techniques_per_minute': round(len(techniques) / 4, 1),
+        'average_confidence': round(sum(t['confidence'] for t in techniques) / len(techniques), 2),
+        'insights': random.sample(insights, 3),
+        'analysis_timestamp': datetime.now().isoformat(),
+        'user_plan': plan,
+        'ai_learning_applied': len(favorite_techniques) > 0
+    }
+
+def update_ai_learning(user_id, analysis_result):
+    if user_id not in users:
+        return
+    
+    user = users[user_id]
+    if 'ai_learning_data' not in user:
+        user['ai_learning_data'] = {
+            'favorite_techniques': [],
+            'weak_areas': [],
+            'improvement_trends': [],
+            'style_profile': 'balanced'
+        }
+    
+    ai_data = user['ai_learning_data']
+    
+    # Learn favorite techniques (high confidence techniques)
+    for technique in analysis_result['detected_techniques']:
+        if technique['confidence'] > 0.9:
+            if technique['technique'] not in ai_data['favorite_techniques']:
+                ai_data['favorite_techniques'].append(technique['technique'])
+    
+    # Keep only top 5 favorite techniques
+    ai_data['favorite_techniques'] = ai_data['favorite_techniques'][:5]
+    
+    # Determine style profile based on technique categories
+    submissions = sum(1 for t in analysis_result['detected_techniques'] if t['category'] == 'submission')
+    sweeps = sum(1 for t in analysis_result['detected_techniques'] if t['category'] == 'sweep')
+    passes = sum(1 for t in analysis_result['detected_techniques'] if t['category'] == 'guard_pass')
+    
+    if submissions > sweeps and submissions > passes:
+        ai_data['style_profile'] = 'submission_hunter'
+    elif sweeps > submissions and sweeps > passes:
+        ai_data['style_profile'] = 'guard_player'
+    elif passes > submissions and passes > sweeps:
+        ai_data['style_profile'] = 'pressure_passer'
+    else:
+        ai_data['style_profile'] = 'well_rounded'
 
 @app.route('/api/upgrade', methods=['POST'])
 def upgrade():

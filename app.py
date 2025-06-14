@@ -656,4 +656,273 @@ def home():
         }
 
         function subscribePlan(plan) {
-            alert(`🚀 Subscribing to ${plan.toUpperCase()}!\\n\\nPayment integration would go here.\\n\\nFor demo: use BJJ
+            alert(`🚀 Subscribing to ${plan.toUpperCase()}!\\n\\nPayment integration would go here.\\n\\nFor demo: use BJJ2024FREE for elite access`);
+        }
+
+        async function analyzeVideo() {
+            const fileInput = document.getElementById('videoFile');
+            if (!fileInput.files[0]) return alert('Select a video first!');
+
+            document.getElementById('progress-section').classList.remove('hidden');
+
+            let progress = 0;
+            const progressBar = document.getElementById('progress-bar');
+            
+            const interval = setInterval(() => {
+                progress += Math.random() * 15;
+                if (progress > 100) progress = 100;
+                progressBar.style.width = progress + '%';
+                
+                if (progress >= 100) {
+                    clearInterval(interval);
+                    performAnalysis();
+                }
+            }, 300);
+        }
+
+        async function performAnalysis() {
+            try {
+                const formData = new FormData();
+                formData.append('video', document.getElementById('videoFile').files[0]);
+
+                const response = await fetch('/api/analyze', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const results = await response.json();
+                if (results.error) {
+                    alert('❌ ' + results.error);
+                    resetApp();
+                    return;
+                }
+                
+                displayResults(results);
+            } catch (error) {
+                alert('Analysis failed: ' + error.message);
+                resetApp();
+            }
+        }
+
+        function displayResults(results) {
+            document.getElementById('progress-section').classList.add('hidden');
+            document.getElementById('results-section').classList.remove('hidden');
+
+            document.getElementById('total-count').textContent = results.total_techniques_detected;
+            document.getElementById('avg-confidence').textContent = Math.round(results.average_confidence * 100) + '%';
+            document.getElementById('video-duration').textContent = results.video_duration + 's';
+            
+            const submissionCount = results.detected_techniques.filter(t => t.category === 'submission').length;
+            document.getElementById('submission-count').textContent = submissionCount;
+
+            displayTechniques(results.detected_techniques);
+            displayInsights(results.insights);
+        }
+
+        function displayTechniques(techniques) {
+            const techniquesList = document.getElementById('techniques-list');
+            techniquesList.innerHTML = '';
+
+            techniques.forEach(technique => {
+                const categoryColors = {
+                    'submission': 'border-l-red-500 bg-red-900',
+                    'sweep': 'border-l-blue-500 bg-blue-900',
+                    'guard_pass': 'border-l-green-500 bg-green-900',
+                    'takedown': 'border-l-yellow-500 bg-yellow-900',
+                    'position': 'border-l-purple-500 bg-purple-900'
+                };
+
+                const qualityColors = {
+                    'excellent': 'text-green-400',
+                    'good': 'text-yellow-400',
+                    'fair': 'text-orange-400'
+                };
+
+                const categoryColor = categoryColors[technique.category] || 'border-l-gray-500 bg-gray-900';
+                const qualityColor = qualityColors[technique.quality] || 'text-gray-400';
+
+                const techniqueDiv = document.createElement('div');
+                techniqueDiv.className = `${categoryColor} bg-opacity-30 border-l-4 rounded-lg p-4`;
+                
+                let timestampHTML = '';
+                if (technique.has_timestamp) {
+                    timestampHTML = `
+                        <button onclick="jumpToTime(${technique.start_time})" 
+                                class="bg-blue-600 hover:bg-blue-700 text-white px-2 py-1 rounded text-xs ml-2">
+                            🎬 ${formatTime(technique.start_time)}
+                        </button>
+                    `;
+                }
+
+                techniqueDiv.innerHTML = `
+                    <div class="flex justify-between items-center">
+                        <div class="flex-1">
+                            <div class="flex items-center space-x-2 mb-1">
+                                <h4 class="text-lg font-bold text-white">${formatTechniqueName(technique.technique)}</h4>
+                                <span class="px-2 py-1 bg-white bg-opacity-20 rounded text-xs text-gray-300">
+                                    ${technique.category.replace('_', ' ').toUpperCase()}
+                                </span>
+                                ${timestampHTML}
+                            </div>
+                            <p class="text-gray-300 text-sm">
+                                Time: ${formatTime(technique.start_time)} - ${formatTime(technique.end_time)} | 
+                                Position: ${technique.position}
+                            </p>
+                        </div>
+                        <div class="text-right">
+                            <div class="text-white font-bold text-lg">${Math.round(technique.confidence * 100)}%</div>
+                            <div class="text-sm ${qualityColor} font-semibold">${technique.quality.toUpperCase()}</div>
+                        </div>
+                    </div>
+                `;
+                
+                techniquesList.appendChild(techniqueDiv);
+            });
+        }
+
+        function jumpToTime(seconds) {
+            alert(`🎬 Elite Feature: Jump to ${formatTime(seconds)}\\n\\nIn full app, this would seek video to exact moment!`);
+        }
+
+        function displayInsights(insights) {
+            const insightsList = document.getElementById('insights-list');
+            insightsList.innerHTML = '';
+
+            insights.forEach(insight => {
+                const insightDiv = document.createElement('div');
+                insightDiv.className = 'bg-white bg-opacity-10 rounded p-3 mb-2';
+                insightDiv.innerHTML = `<p class="text-gray-300">${insight}</p>`;
+                insightsList.appendChild(insightDiv);
+            });
+        }
+
+        function initSubmissionChart() {
+            const ctx = document.getElementById('submission-chart');
+            if (!ctx || ctx.chart) return;
+
+            ctx.chart = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Armbar', 'Triangle', 'RNC', 'Kimura', 'Heel Hook'],
+                    datasets: [{
+                        data: [87, 72, 95, 65, 81],
+                        backgroundColor: ['#ef4444', '#3b82f6', '#10b981', '#f59e0b', '#8b5cf6']
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: { labels: { color: 'white' } }
+                    }
+                }
+            });
+        }
+
+        function initSweepChart() {
+            const ctx = document.getElementById('sweep-chart');
+            if (!ctx || ctx.chart) return;
+
+            ctx.chart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: ['Tripod', 'Scissor', 'Butterfly', 'Flower', 'DLR'],
+                    datasets: [{
+                        label: 'Success Rate %',
+                        data: [92, 68, 81, 55, 73],
+                        backgroundColor: '#3b82f6'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: { ticks: { color: 'white' } },
+                        x: { ticks: { color: 'white' } }
+                    },
+                    plugins: {
+                        legend: { labels: { color: 'white' } }
+                    }
+                }
+            });
+        }
+
+        function initPassChart() {
+            const ctx = document.getElementById('pass-chart');
+            if (!ctx || ctx.chart) return;
+
+            ctx.chart = new Chart(ctx, {
+                type: 'polarArea',
+                data: {
+                    labels: ['Knee Cut', 'Toreando', 'Leg Drag', 'Stack'],
+                    datasets: [{
+                        data: [82, 75, 88, 60],
+                        backgroundColor: ['#ef4444', '#3b82f6', '#10b981', '#f59e0b']
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: { labels: { color: 'white' } }
+                    },
+                    scales: {
+                        r: { ticks: { color: 'white' } }
+                    }
+                }
+            });
+        }
+
+        function initTakedownChart() {
+            const ctx = document.getElementById('takedown-chart');
+            if (!ctx || ctx.chart) return;
+
+            ctx.chart = new Chart(ctx, {
+                type: 'radar',
+                data: {
+                    labels: ['Double Leg', 'Single Leg', 'Hip Toss', 'Foot Sweep'],
+                    datasets: [{
+                        label: 'Success Rate',
+                        data: [70, 55, 45, 38],
+                        borderColor: '#3b82f6',
+                        backgroundColor: 'rgba(59, 130, 246, 0.2)'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: { labels: { color: 'white' } }
+                    },
+                    scales: {
+                        r: { 
+                            ticks: { color: 'white' },
+                            pointLabels: { color: 'white' }
+                        }
+                    }
+                }
+            });
+        }
+
+        function formatTechniqueName(name) {
+            return name.replace(/_/g, ' ')
+                      .split(' ')
+                      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+                      .join(' ');
+        }
+
+        function formatTime(seconds) {
+            const mins = Math.floor(seconds / 60);
+            const secs = Math.floor(seconds % 60);
+            return `${mins}:${secs.toString().padStart(2, '0')}`;
+        }
+
+        function resetApp() {
+            document.getElementById('progress-section').classList.add('hidden');
+            document.getElementById('results-section').classList.add('hidden');
+            document.getElementById('videoFile').value = '';
+        }
+
+        // Initialize first chart
+        document.addEventListener('DOMContentLoaded', function() {
+            setTimeout(initSubmissionChart, 500);
+        });
+    </script>
+</body>
+</html>

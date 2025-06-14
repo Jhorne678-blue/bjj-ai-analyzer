@@ -415,6 +415,19 @@ def analyze():
     
     return jsonify(analysis_result)
 
+@app.route('/api/redeem-code', methods=['POST'])
+def redeem_code():
+    user_id = get_user_id()
+    data = request.get_json()
+    code = data.get('code', '').upper()
+    
+    if code in access_codes and access_codes[code]['uses'] > 0:
+        access_codes[code]['uses'] -= 1
+        users[user_id]['plan'] = access_codes[code]['plan']
+        return jsonify({'success': True, 'message': 'Elite access activated!'})
+    else:
+        return jsonify({'success': False, 'message': 'Invalid or expired access code'})
+
 @app.route('/health')
 def health():
     return jsonify({'status': 'running'})

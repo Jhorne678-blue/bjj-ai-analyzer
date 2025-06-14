@@ -28,22 +28,108 @@ def get_user_id():
 
 def generate_analysis(plan):
     techniques = []
+    
+    # Comprehensive technique list for basic analysis
     technique_list = [
+        # Submissions (expanded)
         {'name': 'armbar_from_guard', 'cat': 'submission'},
         {'name': 'triangle_choke', 'cat': 'submission'},
         {'name': 'rear_naked_choke', 'cat': 'submission'},
         {'name': 'kimura', 'cat': 'submission'},
-        {'name': 'tripod_sweep', 'cat': 'sweep'},
+        {'name': 'guillotine', 'cat': 'submission'},
+        {'name': 'darce_choke', 'cat': 'submission'},
+        {'name': 'omoplata', 'cat': 'submission'},
+        {'name': 'americana', 'cat': 'submission'},
+        {'name': 'heel_hook', 'cat': 'submission'},
+        {'name': 'ankle_lock', 'cat': 'submission'},
+        {'name': 'ezekiel_choke', 'cat': 'submission'},
+        {'name': 'loop_choke', 'cat': 'submission'},
+        {'name': 'bow_and_arrow_choke', 'cat': 'submission'},
+        {'name': 'baseball_choke', 'cat': 'submission'},
+        {'name': 'knee_bar', 'cat': 'submission'},
+        {'name': 'toe_hold', 'cat': 'submission'},
+        {'name': 'calf_slicer', 'cat': 'submission'},
+        {'name': 'north_south_choke', 'cat': 'submission'},
+        {'name': 'anaconda_choke', 'cat': 'submission'},
+        {'name': 'peruvian_necktie', 'cat': 'submission'},
+        
+        # Sweeps (expanded)
         {'name': 'scissor_sweep', 'cat': 'sweep'},
         {'name': 'butterfly_sweep', 'cat': 'sweep'},
+        {'name': 'tripod_sweep', 'cat': 'sweep'},
+        {'name': 'flower_sweep', 'cat': 'sweep'},
+        {'name': 'hook_sweep', 'cat': 'sweep'},
+        {'name': 'pendulum_sweep', 'cat': 'sweep'},
+        {'name': 'spider_guard_sweep', 'cat': 'sweep'},
+        {'name': 'de_la_riva_sweep', 'cat': 'sweep'},
+        {'name': 'x_guard_sweep', 'cat': 'sweep'},
+        {'name': 'berimbolo', 'cat': 'sweep'},
+        {'name': 'old_school_sweep', 'cat': 'sweep'},
+        {'name': 'hip_bump_sweep', 'cat': 'sweep'},
+        {'name': 'sit_up_sweep', 'cat': 'sweep'},
+        {'name': 'lasso_guard_sweep', 'cat': 'sweep'},
+        {'name': 'balloon_sweep', 'cat': 'sweep'},
+        {'name': 'tornado_sweep', 'cat': 'sweep'},
+        {'name': 'knee_tap_sweep', 'cat': 'sweep'},
+        {'name': 'electric_chair_sweep', 'cat': 'sweep'},
+        
+        # Guard Passes (expanded)
         {'name': 'knee_cut_pass', 'cat': 'guard_pass'},
         {'name': 'toreando_pass', 'cat': 'guard_pass'},
+        {'name': 'leg_drag', 'cat': 'guard_pass'},
+        {'name': 'stack_pass', 'cat': 'guard_pass'},
+        {'name': 'over_under_pass', 'cat': 'guard_pass'},
+        {'name': 'x_pass', 'cat': 'guard_pass'},
+        {'name': 'long_step_pass', 'cat': 'guard_pass'},
+        {'name': 'smash_pass', 'cat': 'guard_pass'},
+        {'name': 'headquarters_pass', 'cat': 'guard_pass'},
+        {'name': 'knee_slide_pass', 'cat': 'guard_pass'},
+        {'name': 'bullfighter_pass', 'cat': 'guard_pass'},
+        {'name': 'cartwheel_pass', 'cat': 'guard_pass'},
+        {'name': 'standing_pass', 'cat': 'guard_pass'},
+        {'name': 'leg_weave_pass', 'cat': 'guard_pass'},
+        
+        # Takedowns (expanded)
         {'name': 'double_leg_takedown', 'cat': 'takedown'},
-        {'name': 'single_leg_takedown', 'cat': 'takedown'}
+        {'name': 'single_leg_takedown', 'cat': 'takedown'},
+        {'name': 'hip_toss', 'cat': 'takedown'},
+        {'name': 'foot_sweep', 'cat': 'takedown'},
+        {'name': 'ankle_pick', 'cat': 'takedown'},
+        {'name': 'duck_under', 'cat': 'takedown'},
+        {'name': 'arm_drag_takedown', 'cat': 'takedown'},
+        {'name': 'osoto_gari', 'cat': 'takedown'},
+        {'name': 'seoi_nage', 'cat': 'takedown'},
+        {'name': 'uchi_mata', 'cat': 'takedown'},
+        {'name': 'high_crotch', 'cat': 'takedown'},
+        {'name': 'fireman_carry', 'cat': 'takedown'},
+        {'name': 'tai_otoshi', 'cat': 'takedown'},
+        {'name': 'tomoe_nage', 'cat': 'takedown'},
+        {'name': 'inside_trip', 'cat': 'takedown'},
+        {'name': 'outside_trip', 'cat': 'takedown'},
+        
+        # New categories
+        {'name': 'mount_escape', 'cat': 'escape'},
+        {'name': 'side_control_escape', 'cat': 'escape'},
+        {'name': 'back_escape', 'cat': 'escape'},
+        {'name': 'turtle_escape', 'cat': 'escape'},
+        {'name': 'bridge_and_roll', 'cat': 'escape'},
+        {'name': 'knee_on_belly_escape', 'cat': 'escape'},
+        
+        {'name': 'guard_to_mount', 'cat': 'transition'},
+        {'name': 'side_control_to_mount', 'cat': 'transition'},
+        {'name': 'mount_to_back', 'cat': 'transition'},
+        {'name': 'knee_on_belly_transition', 'cat': 'transition'},
+        {'name': 'scramble', 'cat': 'transition'},
+        
+        {'name': 'hip_escape', 'cat': 'guard_retention'},
+        {'name': 'shrimping', 'cat': 'guard_retention'},
+        {'name': 'knee_shield', 'cat': 'guard_retention'},
+        {'name': 'frames', 'cat': 'guard_retention'},
+        {'name': 'inversion', 'cat': 'guard_retention'}
     ]
     
-    num_techniques = random.randint(6, 10)
-    selected = random.sample(technique_list, num_techniques)
+    num_techniques = random.randint(8, 15)  # Increased from 6-10
+    selected = random.sample(technique_list, min(num_techniques, len(technique_list)))
     
     for tech in selected:
         start_time = random.randint(10, 240)
@@ -54,7 +140,7 @@ def generate_analysis(plan):
             'start_time': start_time,
             'end_time': start_time + random.randint(8, 20),
             'quality': random.choice(['excellent', 'good', 'fair']),
-            'position': random.choice(['guard', 'mount', 'side_control', 'standing']),
+            'position': random.choice(['guard', 'mount', 'side_control', 'standing', 'half_guard', 'back_control', 'turtle', 'knee_on_belly']),
             'has_timestamp': (plan in ['pro', 'blackbelt']),
             'has_breakdown': (plan in ['pro', 'blackbelt'])
         })
@@ -65,7 +151,16 @@ def generate_analysis(plan):
         "🌊 Strong guard game - you're comfortable working from bottom.",
         "📈 Consistent performance across different positions.",
         "💪 Your timing on transitions is improving significantly.",
-        "🎭 Developing a well-rounded game across all positions."
+        "🎭 Developing a well-rounded game across all positions.",
+        "🥋 Your defensive fundamentals are getting stronger.",
+        "⚡ Quick transitions detected - great scrambling ability!",
+        "🎪 Advanced techniques showing up - you're leveling up!",
+        "🏆 Competition-ready techniques detected in your game.",
+        "🛡️ Excellent escape timing - hard to hold down!",
+        "🔄 Smooth position transitions - great flow!",
+        "🎨 Creative technique combinations detected.",
+        "📚 Textbook execution on fundamental techniques.",
+        "🚀 Explosive movements - great athletic ability!"
     ]
     
     return {
@@ -147,31 +242,127 @@ def smart_technique_detection(file_size, duration, filename):
     elif size_mb < 5:
         base_techniques = max(2, int(base_techniques * 0.7))  # Lower quality = fewer detections
     
-    # Technique pools with realistic distributions
+    # Comprehensive technique pools with realistic distributions
     submission_techniques = [
-        'armbar_from_guard', 'triangle_choke', 'rear_naked_choke', 'kimura', 
-        'guillotine', 'americana', 'darce_choke', 'omoplata'
+        # Chokes
+        'rear_naked_choke', 'triangle_choke', 'guillotine', 'darce_choke', 'anaconda_choke',
+        'north_south_choke', 'bow_and_arrow_choke', 'loop_choke', 'ezekiel_choke', 
+        'baseball_choke', 'peruvian_necktie', 'brabo_choke', 'japanese_necktie',
+        'ninja_choke', 'von_flue_choke', 'clock_choke', 'paper_cutter_choke',
+        
+        # Armlocks
+        'armbar_from_guard', 'armbar_from_mount', 'armbar_from_side_control', 
+        'kimura', 'americana', 'straight_armbar', 'inverted_armbar', 'belly_down_armbar',
+        'flying_armbar', 'rolling_armbar', 'armbar_from_triangle',
+        
+        # Shoulder locks
+        'omoplata', 'reverse_omoplata', 'monoplata', 'baratoplata', 'gogoplata',
+        'rubber_guard_omoplata', 'rolling_omoplata',
+        
+        # Leg locks
+        'heel_hook', 'toe_hold', 'ankle_lock', 'calf_slicer', 'knee_bar',
+        'straight_ankle_lock', 'inside_heel_hook', 'outside_heel_hook',
+        '50_50_heel_hook', 'saddle_heel_hook', 'estima_lock',
+        
+        # Other submissions
+        'wrist_lock', 'spine_lock', 'twister', 'neck_crank', 'can_opener'
     ]
     
     sweep_techniques = [
+        # Basic sweeps
         'scissor_sweep', 'butterfly_sweep', 'tripod_sweep', 'flower_sweep', 
-        'hook_sweep', 'pendulum_sweep', 'spider_guard_sweep'
+        'hook_sweep', 'pendulum_sweep', 'sit_up_sweep', 'hip_bump_sweep',
+        
+        # Guard sweeps
+        'spider_guard_sweep', 'lasso_guard_sweep', 'de_la_riva_sweep',
+        'reverse_de_la_riva_sweep', 'x_guard_sweep', 'single_x_sweep',
+        'berimbolo', 'kiss_of_the_dragon', 'tornado_sweep', 'balloon_sweep',
+        
+        # Half guard sweeps
+        'old_school_sweep', 'knee_tap_sweep', 'homer_simpson_sweep',
+        'electric_chair_sweep', 'john_wayne_sweep', 'lockdown_sweep',
+        
+        # Butterfly guard sweeps
+        'butterfly_hook_sweep', 'arm_drag_sweep', 'butterfly_guard_back_take',
+        'butterfly_elevator_sweep', 'butterfly_arm_bar_sweep',
+        
+        # Other sweeps
+        'collar_drag_sweep', 'ankle_pick_sweep', 'duck_under_sweep',
+        'technical_standup', 'granby_roll', 'imanari_roll'
     ]
     
     takedown_techniques = [
-        'double_leg_takedown', 'single_leg_takedown', 'hip_toss', 'foot_sweep',
-        'ankle_pick', 'duck_under', 'arm_drag_takedown'
+        # Wrestling takedowns
+        'double_leg_takedown', 'single_leg_takedown', 'high_crotch', 'low_single',
+        'ankle_pick', 'duck_under', 'arm_drag_takedown', 'snap_down',
+        'fireman_carry', 'blast_double', 'penetration_step', 'underhooks_takedown',
+        
+        # Judo throws
+        'hip_toss', 'foot_sweep', 'osoto_gari', 'ouchi_gari', 'kouchi_gari',
+        'uchi_mata', 'harai_goshi', 'seoi_nage', 'ippon_seoi_nage',
+        'morote_seoi_nage', 'tai_otoshi', 'tomoe_nage', 'sumi_gaeshi',
+        'sasae_tsurikomi_ashi', 'deashi_harai', 'okuri_ashi_harai',
+        
+        # Sacrifice throws
+        'sacrifice_throw', 'rolling_takedown', 'flying_knee_tap',
+        'cartwheel_takedown', 'imanari_roll_entry',
+        
+        # Trips and sweeps
+        'inside_trip', 'outside_trip', 'reaping_throw', 'leg_pick',
+        'collar_tie_snap', 'russian_tie_takedown', 'whizzer_throw'
     ]
     
     guard_pass_techniques = [
-        'knee_cut_pass', 'toreando_pass', 'leg_drag', 'stack_pass', 'over_under_pass'
+        # Pressure passes
+        'knee_cut_pass', 'over_under_pass', 'stack_pass', 'smash_pass',
+        'headquarters_pass', 'knee_slide_pass', 'knee_through_pass',
+        'cross_knee_pass', 'shoulder_pressure_pass',
+        
+        # Speed passes
+        'toreando_pass', 'leg_drag', 'bullfighter_pass', 'matador_pass',
+        'x_pass', 'long_step_pass', 'around_the_world_pass',
+        
+        # Standing passes
+        'standing_pass', 'combat_base_pass', 'leg_weave_pass',
+        'standing_toreando', 'cartwheel_pass', 'backflip_pass',
+        
+        # Specific guard passes
+        'spider_guard_pass', 'de_la_riva_pass', 'lasso_guard_pass',
+        'butterfly_guard_pass', 'half_guard_pass', 'rubber_guard_pass',
+        'z_guard_pass', 'lockdown_pass', 'deep_half_pass',
+        
+        # Advanced passes
+        'leg_pin_pass', 'bodylock_pass', 'staple_pass', 'folding_pass',
+        'double_under_pass', 'knee_cut_to_mount', 'sprawl_pass'
     ]
     
-    # Generate realistic technique mix
+    # New categories
+    guard_retention_techniques = [
+        'hip_escape', 'shrimping', 'granby_roll', 'inversion', 'knee_shield',
+        'frames', 'collar_sleeve_guard', 'shin_to_shin', 'butterfly_hooks',
+        'de_la_riva_hook', 'lasso_control', 'spider_guard_grips'
+    ]
+    
+    transitions_techniques = [
+        'guard_to_mount', 'side_control_to_mount', 'mount_to_back',
+        'knee_on_belly_transition', 'north_south_transition', 'scramble',
+        'guard_recovery', 'turtle_to_guard', 'stand_up_in_base'
+    ]
+    
+    escapes_techniques = [
+        'mount_escape', 'side_control_escape', 'back_escape', 'turtle_escape',
+        'knee_on_belly_escape', 'north_south_escape', 'submission_escape',
+        'guard_escape', 'pin_escape', 'bridge_and_roll'
+    ]
+    
+    # Generate realistic technique mix with new categories
     num_submissions = random.randint(1, max(1, base_techniques // 2))
     num_sweeps = random.randint(0, max(1, base_techniques // 3))
     num_takedowns = random.randint(0, max(1, base_techniques // 4))
-    num_passes = max(0, base_techniques - num_submissions - num_sweeps - num_takedowns)
+    num_passes = random.randint(0, max(1, base_techniques // 4))
+    num_escapes = random.randint(0, max(1, base_techniques // 5))
+    num_transitions = random.randint(0, max(1, base_techniques // 5))
+    num_retention = max(0, base_techniques - num_submissions - num_sweeps - num_takedowns - num_passes - num_escapes - num_transitions)
     
     # Add detected techniques with realistic timing
     current_time = random.randint(10, 30)
@@ -204,6 +395,27 @@ def smart_technique_detection(file_size, duration, filename):
         techniques.append(create_technique_detection(technique, 'guard_pass', current_time, confidence))
         current_time += random.randint(35, 75)
     
+    # Add escapes
+    for _ in range(num_escapes):
+        technique = random.choice(escapes_techniques)
+        confidence = generate_realistic_confidence('escape')
+        techniques.append(create_technique_detection(technique, 'escape', current_time, confidence))
+        current_time += random.randint(20, 50)
+    
+    # Add transitions
+    for _ in range(num_transitions):
+        technique = random.choice(transitions_techniques)
+        confidence = generate_realistic_confidence('transition')
+        techniques.append(create_technique_detection(technique, 'transition', current_time, confidence))
+        current_time += random.randint(15, 40)
+    
+    # Add guard retention
+    for _ in range(num_retention):
+        technique = random.choice(guard_retention_techniques)
+        confidence = generate_realistic_confidence('guard_retention')
+        techniques.append(create_technique_detection(technique, 'guard_retention', current_time, confidence))
+        current_time += random.randint(10, 30)
+    
     # Sort by timestamp
     techniques.sort(key=lambda x: x['start_time'])
     
@@ -215,7 +427,10 @@ def generate_realistic_confidence(technique_type):
         'submission': random.uniform(0.72, 0.94),
         'sweep': random.uniform(0.68, 0.91),
         'takedown': random.uniform(0.65, 0.88),
-        'guard_pass': random.uniform(0.70, 0.89)
+        'guard_pass': random.uniform(0.70, 0.89),
+        'escape': random.uniform(0.60, 0.85),
+        'transition': random.uniform(0.65, 0.88),
+        'guard_retention': random.uniform(0.70, 0.90)
     }
     
     return round(base_confidence.get(technique_type, 0.75), 2)
@@ -230,10 +445,13 @@ def create_technique_detection(technique_name, category, start_time, confidence)
         quality = 'fair'
     
     positions = {
-        'submission': ['guard', 'mount', 'side_control', 'back_control'],
-        'sweep': ['guard', 'half_guard', 'butterfly_guard'],
-        'takedown': ['standing', 'sprawl'],
-        'guard_pass': ['guard', 'half_guard']
+        'submission': ['guard', 'mount', 'side_control', 'back_control', 'half_guard', 'knee_on_belly'],
+        'sweep': ['guard', 'half_guard', 'butterfly_guard', 'spider_guard', 'de_la_riva'],
+        'takedown': ['standing', 'sprawl', 'collar_tie', 'underhooks'],
+        'guard_pass': ['guard', 'half_guard', 'combat_base', 'standing'],
+        'escape': ['mount', 'side_control', 'back_control', 'turtle', 'knee_on_belly'],
+        'transition': ['side_control', 'mount', 'guard', 'turtle', 'scramble'],
+        'guard_retention': ['guard', 'half_guard', 'butterfly_guard', 'open_guard']
     }
     
     return {
@@ -328,22 +546,84 @@ def generate_analysis_with_learning(user_plan, user_id):
     favorite_techniques = ai_data.get('favorite_techniques', [])
     
     techniques = []
+    
+    # Expanded technique list for learning system
     technique_list = [
+        # Submissions
         {'name': 'armbar_from_guard', 'cat': 'submission'},
         {'name': 'triangle_choke', 'cat': 'submission'},
         {'name': 'rear_naked_choke', 'cat': 'submission'},
         {'name': 'kimura', 'cat': 'submission'},
-        {'name': 'tripod_sweep', 'cat': 'sweep'},
+        {'name': 'guillotine', 'cat': 'submission'},
+        {'name': 'darce_choke', 'cat': 'submission'},
+        {'name': 'omoplata', 'cat': 'submission'},
+        {'name': 'americana', 'cat': 'submission'},
+        {'name': 'heel_hook', 'cat': 'submission'},
+        {'name': 'ankle_lock', 'cat': 'submission'},
+        {'name': 'ezekiel_choke', 'cat': 'submission'},
+        {'name': 'loop_choke', 'cat': 'submission'},
+        {'name': 'bow_and_arrow_choke', 'cat': 'submission'},
+        {'name': 'baseball_choke', 'cat': 'submission'},
+        {'name': 'knee_bar', 'cat': 'submission'},
+        
+        # Sweeps
         {'name': 'scissor_sweep', 'cat': 'sweep'},
         {'name': 'butterfly_sweep', 'cat': 'sweep'},
+        {'name': 'tripod_sweep', 'cat': 'sweep'},
+        {'name': 'flower_sweep', 'cat': 'sweep'},
+        {'name': 'hook_sweep', 'cat': 'sweep'},
+        {'name': 'pendulum_sweep', 'cat': 'sweep'},
+        {'name': 'spider_guard_sweep', 'cat': 'sweep'},
+        {'name': 'de_la_riva_sweep', 'cat': 'sweep'},
+        {'name': 'x_guard_sweep', 'cat': 'sweep'},
+        {'name': 'berimbolo', 'cat': 'sweep'},
+        {'name': 'old_school_sweep', 'cat': 'sweep'},
+        {'name': 'hip_bump_sweep', 'cat': 'sweep'},
+        
+        # Guard Passes
         {'name': 'knee_cut_pass', 'cat': 'guard_pass'},
         {'name': 'toreando_pass', 'cat': 'guard_pass'},
+        {'name': 'leg_drag', 'cat': 'guard_pass'},
+        {'name': 'stack_pass', 'cat': 'guard_pass'},
+        {'name': 'over_under_pass', 'cat': 'guard_pass'},
+        {'name': 'x_pass', 'cat': 'guard_pass'},
+        {'name': 'long_step_pass', 'cat': 'guard_pass'},
+        {'name': 'smash_pass', 'cat': 'guard_pass'},
+        
+        # Takedowns
         {'name': 'double_leg_takedown', 'cat': 'takedown'},
-        {'name': 'single_leg_takedown', 'cat': 'takedown'}
+        {'name': 'single_leg_takedown', 'cat': 'takedown'},
+        {'name': 'hip_toss', 'cat': 'takedown'},
+        {'name': 'foot_sweep', 'cat': 'takedown'},
+        {'name': 'ankle_pick', 'cat': 'takedown'},
+        {'name': 'duck_under', 'cat': 'takedown'},
+        {'name': 'arm_drag_takedown', 'cat': 'takedown'},
+        {'name': 'osoto_gari', 'cat': 'takedown'},
+        {'name': 'seoi_nage', 'cat': 'takedown'},
+        {'name': 'uchi_mata', 'cat': 'takedown'},
+        
+        # Escapes
+        {'name': 'mount_escape', 'cat': 'escape'},
+        {'name': 'side_control_escape', 'cat': 'escape'},
+        {'name': 'back_escape', 'cat': 'escape'},
+        {'name': 'turtle_escape', 'cat': 'escape'},
+        {'name': 'bridge_and_roll', 'cat': 'escape'},
+        
+        # Transitions
+        {'name': 'guard_to_mount', 'cat': 'transition'},
+        {'name': 'side_control_to_mount', 'cat': 'transition'},
+        {'name': 'mount_to_back', 'cat': 'transition'},
+        {'name': 'knee_on_belly_transition', 'cat': 'transition'},
+        
+        # Guard Retention
+        {'name': 'hip_escape', 'cat': 'guard_retention'},
+        {'name': 'shrimping', 'cat': 'guard_retention'},
+        {'name': 'knee_shield', 'cat': 'guard_retention'},
+        {'name': 'frames', 'cat': 'guard_retention'}
     ]
     
-    num_techniques = random.randint(6, 10)
-    selected = random.sample(technique_list, num_techniques)
+    num_techniques = random.randint(8, 15)  # Increased from 6-10
+    selected = random.sample(technique_list, min(num_techniques, len(technique_list)))
     
     for tech in selected:
         start_time = random.randint(10, 240)
@@ -360,7 +640,7 @@ def generate_analysis_with_learning(user_plan, user_id):
             'start_time': start_time,
             'end_time': start_time + random.randint(8, 20),
             'quality': random.choice(['excellent', 'good', 'fair']),
-            'position': random.choice(['guard', 'mount', 'side_control', 'standing']),
+            'position': random.choice(['guard', 'mount', 'side_control', 'standing', 'half_guard', 'back_control']),
             'has_timestamp': (user_plan in ['pro', 'blackbelt']),
             'has_breakdown': (user_plan in ['pro', 'blackbelt'])
         })
@@ -372,11 +652,29 @@ def generate_analysis_with_learning(user_plan, user_id):
         "🌊 Strong guard game - you're comfortable working from bottom.",
         "📈 Consistent performance across different positions.",
         "💪 Your timing on transitions is improving significantly.",
-        "🎭 Developing a well-rounded game across all positions."
+        "🎭 Developing a well-rounded game across all positions.",
+        "🥋 Your defensive fundamentals are getting stronger.",
+        "⚡ Quick transitions detected - great scrambling ability!",
+        "🎪 Advanced techniques showing up - you're leveling up!",
+        "🏆 Competition-ready techniques detected in your game."
     ]
     
     # Add personalized insights if user has history
     if len(user_videos.get(user_id, [])) > 2:
+        insights.append("🧠 AI Notice: Your submission success rate has improved 12% over your last 3 sessions!")
+        insights.append("📊 Your favorite guard position appears to be closed guard based on your training history.")
+    
+    return {
+        'total_techniques_detected': len(techniques),
+        'detected_techniques': techniques,
+        'video_duration': random.randint(180, 300),
+        'techniques_per_minute': round(len(techniques) / 4, 1),
+        'average_confidence': round(sum(t['confidence'] for t in techniques) / len(techniques), 2),
+        'insights': random.sample(insights, 3),
+        'analysis_timestamp': datetime.now().isoformat(),
+        'user_plan': user_plan,
+        'ai_learning_applied': len(favorite_techniques) > 0
+    }user_id, [])) > 2:
         insights.append("🧠 AI Notice: Your submission success rate has improved 12% over your last 3 sessions!")
         insights.append("📊 Your favorite guard position appears to be closed guard based on your training history.")
     

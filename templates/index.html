@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>BJJ AI Analyzer Pro</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gradient-to-b from-purple-700 to-indigo-900 text-white min-h-screen">
+
+  <div class="text-center py-10">
+    <h1 class="text-4xl font-bold">🥋 BJJ AI Analyzer Pro</h1>
+    <p class="text-lg mt-2">Complete BJJ Analytics Platform</p>
+  </div>
+
+  <div class="flex justify-center space-x-4 mb-6">
+    <button onclick="alert('Coming soon!')" class="bg-yellow-500 text-black font-bold px-4 py-2 rounded">Elite Access Code?</button>
+    <button onclick="alert('Pricing coming soon!')" class="bg-blue-600 px-4 py-2 rounded">SUBSCRIBE NOW</button>
+  </div>
+
+  <div class="flex justify-center mb-4">
+    <button onclick="showTab('upload')" class="bg-gray-700 px-4 py-2 rounded">Upload</button>
+    <button onclick="alert('Submissions tab coming!')" class="bg-gray-700 px-4 py-2 rounded">Submissions</button>
+    <button onclick="alert('Sweeps tab coming!')" class="bg-gray-700 px-4 py-2 rounded">Sweeps</button>
+  </div>
+
+  <div id="upload" class="mx-auto max-w-md bg-white text-black p-6 rounded shadow-md">
+    <h2 class="text-xl font-semibold mb-4">Upload Your BJJ Video</h2>
+    <input type="file" id="videoInput" accept="video/*" class="mb-4 w-full"/>
+    <button id="analyzeBtn" class="bg-green-600 text-white px-4 py-2 rounded">Try AI Analysis</button>
+    <div id="result" class="mt-4 text-sm text-white"></div>
+  </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const analyzeBtn = document.getElementById('analyzeBtn');
+      const videoInput = document.getElementById('videoInput');
+      const result = document.getElementById('result');
+
+      analyzeBtn.addEventListener('click', async () => {
+        const file = videoInput.files[0];
+        if (!file) {
+          result.textContent = "Please upload a video first.";
+          return;
+        }
+
+        const formData = new FormData();
+        formData.append('video', file);
+
+        try {
+          const res = await fetch('/analyze', {
+            method: 'POST',
+            body: formData,
+          });
+
+          const data = await res.json();
+
+          if (data.status === 'success') {
+            result.textContent = `✅ Uploaded: ${data.filename}`;
+          } else {
+            result.textContent = `⚠️ Error: ${data.error}`;
+          }
+
+        } catch (err) {
+          console.error(err);
+          result.textContent = "Something went wrong with the upload.";
+        }
+      });
+
+      window.showTab = function(tab) {
+        alert(`${tab} tab not available yet`);
+      };
+    });
+  </script>
+</body>
+</html>

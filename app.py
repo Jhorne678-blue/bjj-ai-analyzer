@@ -8,12 +8,12 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        body {{ background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }}
-        .glass {{ background: rgba(255, 255, 255, 0.1); backdrop-filter: blur(10px); }}
-        .tab-content {{ display: none; }}
-        .tab-content.active {{ display: block; }}
-        .tab-button.active {{ background: rgba(255, 255, 255, 0.2); }}
-        .demo-badge {{ position: absolute; top: 5px; right: 5px; background: rgba(255, 193, 7, 0.9); color: black; padding: 2px 6px; border-radius: 3px; font-size: 10px; }}
+        body { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+        .glass { background: rgba(255, 255, 255, 0.1); backdrop-filter: blur(10px); }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        .tab-button.active { background: rgba(255, 255, 255, 0.2); }
+        .demo-badge { position: absolute; top: 5px; right: 5px; background: rgba(255, 193, 7, 0.9); color: black; padding: 2px 6px; border-radius: 3px; font-size: 10px; }
     </style>
 </head>
 <body class="min-h-screen">

@@ -174,31 +174,115 @@ def home():
         <div id="friends-tab" class="tab-content">
             <div class="glass rounded-xl p-8">
                 <h2 class="text-2xl font-bold text-white mb-6">👥 Friends & Community</h2>
+                
+                <!-- Facebook Connect Section -->
+                <div class="bg-blue-800 bg-opacity-30 rounded-lg p-6 mb-8 border border-blue-500">
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="flex items-center space-x-3">
+                            <span class="text-3xl">📘</span>
+                            <div>
+                                <h3 class="text-xl font-bold text-white">Connect Facebook Friends</h3>
+                                <p class="text-blue-200 text-sm">Find friends who also train BJJ and use our app</p>
+                            </div>
+                        </div>
+                        <button id="fb-connect-btn" onclick="connectFacebook()" 
+                                class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-bold">
+                            🔗 Connect Facebook
+                        </button>
+                    </div>
+                    <div id="fb-friends-list" class="hidden">
+                        <h4 class="text-white font-bold mb-3">Facebook Friends on BJJ AI Analyzer:</h4>
+                        <div id="fb-friends-container" class="space-y-2"></div>
+                    </div>
+                </div>
+
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
                     <div class="bg-white bg-opacity-10 rounded-lg p-6">
                         <h3 class="text-xl font-bold text-white mb-4">Add Friends</h3>
                         <div class="space-y-4">
-                            <input type="text" placeholder="Enter friend's username" 
+                            <input type="text" id="friend-search" placeholder="Enter friend's username" 
                                    class="w-full p-3 rounded-lg bg-white bg-opacity-20 text-white placeholder-gray-300">
-                            <button class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg w-full font-bold">🔍 Search & Add Friend</button>
+                            <button onclick="searchFriend()" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg w-full font-bold">🔍 Search & Add Friend</button>
                         </div>
                     </div>
                     <div class="bg-white bg-opacity-10 rounded-lg p-6">
-                        <h3 class="text-xl font-bold text-white mb-4">Leaderboard</h3>
-                        <div class="space-y-3">
-                            <div class="flex justify-between items-center bg-gradient-to-r from-yellow-600 to-yellow-700 rounded p-3">
-                                <div class="flex items-center space-x-3">
-                                    <span class="text-2xl">🥇</span>
-                                    <span class="text-white font-bold">@submachine92</span>
+                        <h3 class="text-xl font-bold text-white mb-4">Friend Requests</h3>
+                        <div id="friend-requests" class="space-y-3">
+                            <div class="flex justify-between items-center bg-white bg-opacity-10 rounded p-3">
+                                <span class="text-white">@mikehook23</span>
+                                <div class="space-x-2">
+                                    <button class="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded text-sm">Accept</button>
+                                    <button class="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded text-sm">Decline</button>
                                 </div>
-                                <span class="text-white font-bold">2,847 pts</span>
                             </div>
-                            <div class="flex justify-between items-center bg-white bg-opacity-10 rounded p-3 border-2 border-blue-400">
-                                <div class="flex items-center space-x-3">
-                                    <span class="text-lg">4️⃣</span>
-                                    <span class="text-blue-300 font-bold">You</span>
+                            <div class="flex justify-between items-center bg-white bg-opacity-10 rounded p-3">
+                                <span class="text-white">@guardgirl</span>
+                                <div class="space-x-2">
+                                    <button class="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded text-sm">Accept</button>
+                                    <button class="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded text-sm">Decline</button>
                                 </div>
-                                <span class="text-blue-300 font-bold">1,654 pts</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="bg-white bg-opacity-10 rounded-lg p-6 mb-8">
+                    <h3 class="text-xl font-bold text-white mb-4">🏆 Leaderboard</h3>
+                    <div class="space-y-3">
+                        <div class="flex justify-between items-center bg-gradient-to-r from-yellow-600 to-yellow-700 rounded p-3">
+                            <div class="flex items-center space-x-3">
+                                <span class="text-2xl">🥇</span>
+                                <span class="text-white font-bold">@submachine92</span>
+                            </div>
+                            <span class="text-white font-bold">2,847 pts</span>
+                        </div>
+                        <div class="flex justify-between items-center bg-gradient-to-r from-gray-400 to-gray-500 rounded p-3">
+                            <div class="flex items-center space-x-3">
+                                <span class="text-2xl">🥈</span>
+                                <span class="text-white font-bold">@triangletrap</span>
+                            </div>
+                            <span class="text-white font-bold">2,103 pts</span>
+                        </div>
+                        <div class="flex justify-between items-center bg-gradient-to-r from-orange-600 to-orange-700 rounded p-3">
+                            <div class="flex items-center space-x-3">
+                                <span class="text-2xl">🥉</span>
+                                <span class="text-white font-bold">@sweepking</span>
+                            </div>
+                            <span class="text-white font-bold">1,978 pts</span>
+                        </div>
+                        <div class="flex justify-between items-center bg-white bg-opacity-10 rounded p-3 border-2 border-blue-400">
+                            <div class="flex items-center space-x-3">
+                                <span class="text-lg">4️⃣</span>
+                                <span class="text-blue-300 font-bold">You</span>
+                            </div>
+                            <span class="text-blue-300 font-bold">1,654 pts</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="bg-white bg-opacity-10 rounded-lg p-6">
+                    <h3 class="text-xl font-bold text-white mb-4">📊 Friends Activity</h3>
+                    <div class="space-y-4">
+                        <div class="bg-white bg-opacity-10 rounded p-4">
+                            <div class="flex items-center space-x-3 mb-2">
+                                <span class="text-green-400 font-bold">@mikehook23</span>
+                                <span class="text-gray-300 text-sm">2 hours ago</span>
+                            </div>
+                            <p class="text-gray-300 text-sm">Analyzed a training session • 12 techniques detected</p>
+                            <div class="flex space-x-4 mt-2 text-xs">
+                                <span class="text-blue-400">🎯 4 submissions</span>
+                                <span class="text-yellow-400">🌊 3 sweeps</span>
+                            </div>
+                        </div>
+                        <div class="bg-white bg-opacity-10 rounded p-4">
+                            <div class="flex items-center space-x-3 mb-2">
+                                <span class="text-green-400 font-bold">@guardgirl</span>
+                                <span class="text-gray-300 text-sm">1 day ago</span>
+                            </div>
+                            <p class="text-gray-300 text-sm">Hit a new personal record • 95% confidence armbar</p>
+                            <div class="flex space-x-4 mt-2 text-xs">
+                                <span class="text-red-400">🔥 New PB!</span>
+                                <span class="text-purple-400">⚡ Elite timing</span>
                             </div>
                         </div>
                     </div>

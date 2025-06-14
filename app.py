@@ -358,7 +358,7 @@ def home():
                         <li>• Progress tracking</li>
                         <li>• Follow friends</li>
                     </ul>
-                    <button onclick="subscribePlan('pro')" class="bg-blue-600 hover:bg-blue-700 text-white py-2 px-6 rounded-lg w-full">Subscribe</button>
+                    <button onclick="subscribePlan('pro')" class="bg-blue-600 hover:bg-blue-700 text-white py-2 px-6 rounded-lg w-full">Subscribe with PayPal</button>
                 </div>
                 <div class="bg-purple-600 bg-opacity-20 rounded-lg p-6 text-center border-2 border-purple-400">
                     <div class="bg-purple-500 text-white px-3 py-1 rounded-full text-xs mb-2">ELITE</div>

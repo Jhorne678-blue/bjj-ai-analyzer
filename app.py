@@ -500,7 +500,7 @@ def home():
 
         {friends_content}
 
-        <!-- Challenges Tab -->
+        <!-- Challenges Tab -->''' + ('''
         <div id="challenges-tab" class="tab-content">
             <div class="glass rounded-xl p-8">
                 <h2 class="text-2xl font-bold text-white mb-6">🏆 Weekly Training Challenges</h2>
@@ -633,7 +633,7 @@ def home():
                     </div>
                 </div>
             </div>
-        </div>
+        </div>''' if user_plan in ['pro', 'elite'] else '') + '''
 
         {friends_content}
     </div>

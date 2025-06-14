@@ -106,6 +106,16 @@ def generate_analysis(plan):
 @app.route('/')
 def home():
     user_id = get_user_id()
+    
+    # Ensure user exists in users dict
+    if user_id not in users:
+        users[user_id] = {
+            'plan': 'demo',
+            'videos_count': 0,
+            'created_at': datetime.now().isoformat()
+        }
+        user_videos[user_id] = []
+    
     user_plan = users[user_id]['plan']
     video_count = len(user_videos.get(user_id, []))
     demo_uploads_used = video_count if user_plan == 'demo' else 0
@@ -541,7 +551,7 @@ def home():
                     <div class="flex justify-between items-center">
                         <div class="flex-1">
                             <div class="flex items-center space-x-2 mb-1">
-                                <h4 class="text-lg font-bold text-white">${{technique.technique.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}}</h4>
+                                <h4 class="text-lg font-bold text-white">${{technique.technique.replace(/_/g, ' ').replace(/\\b\\w/g, l => l.toUpperCase())}}</h4>
                                 <span class="px-2 py-1 bg-white bg-opacity-20 rounded text-xs text-gray-300">
                                     ${{technique.category.replace('_', ' ').toUpperCase()}}
                                 </span>
@@ -680,3 +690,4 @@ def health():
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
     app.run(host='0.0.0.0', port=port, debug=False)
+    

@@ -360,7 +360,10 @@ def home():
             <div class="glass rounded-xl p-8">
                 <h2 class="text-2xl font-bold text-white mb-6">🎯 Submission Analytics</h2>
                 <div class="bg-white bg-opacity-10 rounded-lg p-6">
-                    <canvas id="submission-chart" width="400" height="300"></canvas>
+                    <h3 class="text-xl font-bold text-white mb-4">Real Data From Your Videos</h3>
+                    <div id="real-submission-data" class="text-center text-gray-300">
+                        <p>Upload videos to see your real submission statistics</p>
+                    </div>
                 </div>
             </div>
         </div>
@@ -369,7 +372,10 @@ def home():
             <div class="glass rounded-xl p-8">
                 <h2 class="text-2xl font-bold text-white mb-6">🌊 Sweep Analytics</h2>
                 <div class="bg-white bg-opacity-10 rounded-lg p-6">
-                    <canvas id="sweep-chart" width="400" height="300"></canvas>
+                    <h3 class="text-xl font-bold text-white mb-4">Real Data From Your Videos</h3>
+                    <div id="real-sweep-data" class="text-center text-gray-300">
+                        <p>Upload videos to see your real sweep statistics</p>
+                    </div>
                 </div>
             </div>
         </div>
@@ -378,7 +384,10 @@ def home():
             <div class="glass rounded-xl p-8">
                 <h2 class="text-2xl font-bold text-white mb-6">🛡️ Guard Pass Analytics</h2>
                 <div class="bg-white bg-opacity-10 rounded-lg p-6">
-                    <canvas id="pass-chart" width="400" height="300"></canvas>
+                    <h3 class="text-xl font-bold text-white mb-4">Real Data From Your Videos</h3>
+                    <div id="real-pass-data" class="text-center text-gray-300">
+                        <p>Upload videos to see your real guard pass statistics</p>
+                    </div>
                 </div>
             </div>
         </div>
@@ -387,7 +396,10 @@ def home():
             <div class="glass rounded-xl p-8">
                 <h2 class="text-2xl font-bold text-white mb-6">🤼 Takedown Analytics</h2>
                 <div class="bg-white bg-opacity-10 rounded-lg p-6">
-                    <canvas id="takedown-chart" width="400" height="300"></canvas>
+                    <h3 class="text-xl font-bold text-white mb-4">Real Data From Your Videos</h3>
+                    <div id="real-takedown-data" class="text-center text-gray-300">
+                        <p>Upload videos to see your real takedown statistics</p>
+                    </div>
                 </div>
             </div>
         </div>
@@ -395,23 +407,9 @@ def home():
         <div id="analytics-tab" class="tab-content">
             <div class="glass rounded-xl p-8">
                 <h2 class="text-2xl font-bold text-white mb-6">📊 Complete Analytics</h2>
-                <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-                    <div class="bg-gradient-to-br from-blue-600 to-blue-800 rounded-lg p-6 text-center">
-                        <div class="text-3xl font-bold text-white">B+</div>
-                        <div class="text-blue-200">Overall Grade</div>
-                    </div>
-                    <div class="bg-gradient-to-br from-green-600 to-green-800 rounded-lg p-6 text-center">
-                        <div class="text-3xl font-bold text-white">78%</div>
-                        <div class="text-green-200">Success Rate</div>
-                    </div>
-                    <div class="bg-gradient-to-br from-purple-600 to-purple-800 rounded-lg p-6 text-center">
-                        <div class="text-3xl font-bold text-white">{video_count}</div>
-                        <div class="text-purple-200">Videos</div>
-                    </div>
-                    <div class="bg-gradient-to-br from-orange-600 to-orange-800 rounded-lg p-6 text-center">
-                        <div class="text-3xl font-bold text-white">+15%</div>
-                        <div class="text-orange-200">This Month</div>
-                    </div>
+                <div id="real-analytics-data" class="text-center text-gray-300">
+                    <p>Upload videos to see your real performance analytics</p>
+                    <p class="text-sm mt-2">All statistics are calculated from your actual BJJ footage</p>
                 </div>
             </div>
         </div>
@@ -529,6 +527,9 @@ def home():
 
             displayTechniques(results.detected_techniques);
             displayInsights(results.insights);
+            
+            // Update all tabs with real data (for non-demo users)
+            updateRealAnalytics(results);
         }}
 
         function displayTechniques(techniques) {{
@@ -541,9 +542,13 @@ def home():
                 
                 let timestampHTML = '';
                 if (technique.has_timestamp) {{
-                    timestampHTML = `<button onclick="alert('🎬 Elite Feature: Jump to time!')" 
+                    timestampHTML = `<button onclick="seekVideo(${{technique.start_time}})" 
                                     class="bg-blue-600 hover:bg-blue-700 text-white px-2 py-1 rounded text-xs ml-2">
                         🎬 ${{Math.floor(technique.start_time/60)}}:${{(technique.start_time%60).toString().padStart(2, '0')}}
+                    </button>
+                    <button onclick="extractClip(${{technique.start_time}}, ${{technique.end_time}}, '${{technique.technique}}')" 
+                            class="bg-purple-600 hover:bg-purple-700 text-white px-2 py-1 rounded text-xs ml-1">
+                        ✂️ Extract Clip
                     </button>`;
                 }}
 
@@ -569,6 +574,43 @@ def home():
             }});
         }}
 
+        // Video seeking functionality
+        let currentVideo = null;
+        
+        function seekVideo(timeInSeconds) {{
+            if (currentVideo) {{
+                currentVideo.currentTime = timeInSeconds;
+                currentVideo.play();
+            }} else {{
+                alert('🎬 Video seek ready! In full version, this would jump to ' + Math.floor(timeInSeconds/60) + ':' + (timeInSeconds%60).toString().padStart(2, '0'));
+            }}
+        }}
+
+        function extractClip(startTime, endTime, techniqueName) {{
+            // In production, this would extract the video clip
+            alert(`✂️ Extracting clip: "${{techniqueName.replace(/_/g, ' ')}}"\\nFrom: ${{Math.floor(startTime/60)}}:${{(startTime%60).toString().padStart(2, '0')}} to ${{Math.floor(endTime/60)}}:${{(endTime%60).toString().padStart(2, '0')}}\\n\\nIn full app, this would create a downloadable clip!`);
+        }}
+
+        // Set video reference when file is selected
+        document.addEventListener('DOMContentLoaded', function() {{
+            const videoInput = document.getElementById('videoFile');
+            if (videoInput) {{
+                videoInput.addEventListener('change', function(e) {{
+                    if (e.target.files[0]) {{
+                        // Create video element for seeking (hidden)
+                        if (currentVideo) {{
+                            document.body.removeChild(currentVideo);
+                        }}
+                        currentVideo = document.createElement('video');
+                        currentVideo.src = URL.createObjectURL(e.target.files[0]);
+                        currentVideo.style.display = 'none';
+                        document.body.appendChild(currentVideo);
+                    }}
+                }});
+            }}
+        }});
+        }}
+
         function displayInsights(insights) {{
             const insightsList = document.getElementById('insights-list');
             insightsList.innerHTML = '';
@@ -587,28 +629,100 @@ def home():
             document.getElementById('videoFile').value = '';
         }}
 
-        // Initialize chart if needed
+        // Initialize chart only for demo users
         setTimeout(() => {{
-            const ctx = document.getElementById('submission-chart');
-            if (ctx && window.Chart) {{
-                new Chart(ctx, {{
-                    type: 'doughnut',
-                    data: {{
-                        labels: ['Armbar', 'Triangle', 'RNC', 'Kimura', 'Heel Hook'],
-                        datasets: [{{
-                            data: [87, 72, 95, 65, 81],
-                            backgroundColor: ['#ef4444', '#3b82f6', '#10b981', '#f59e0b', '#8b5cf6']
-                        }}]
-                    }},
-                    options: {{
-                        responsive: true,
-                        plugins: {{
-                            legend: {{ labels: {{ color: 'white' }} }}
+            if (userPlan === 'demo') {{
+                const ctx = document.getElementById('submission-chart');
+                if (ctx && window.Chart) {{
+                    new Chart(ctx, {{
+                        type: 'doughnut',
+                        data: {{
+                            labels: ['Demo Data Only'],
+                            datasets: [{{
+                                data: [100],
+                                backgroundColor: ['#6b7280']
+                            }}]
+                        }},
+                        options: {{
+                            responsive: true,
+                            plugins: {{
+                                legend: {{ 
+                                    labels: {{ color: 'white' }},
+                                    display: true
+                                }}
+                            }}
                         }}
-                    }}
-                }});
+                    }});
+                }}
             }}
         }}, 1000);
+
+        // Update analytics with real data after analysis
+        function updateRealAnalytics(analysisData) {{
+            if (userPlan !== 'demo') {{
+                // Update submissions tab with real data
+                const submissionData = analysisData.detected_techniques.filter(t => t.category === 'submission');
+                document.getElementById('real-submission-data').innerHTML = `
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="text-center">
+                            <div class="text-2xl font-bold text-white">${{submissionData.length}}</div>
+                            <div class="text-gray-300">Total Submissions</div>
+                        </div>
+                        <div class="text-center">
+                            <div class="text-2xl font-bold text-white">${{submissionData.length > 0 ? Math.round(submissionData.reduce((a,b) => a + b.confidence, 0) / submissionData.length * 100) : 0}}%</div>
+                            <div class="text-gray-300">Avg Confidence</div>
+                        </div>
+                    </div>
+                `;
+
+                // Update other tabs with real data
+                const sweepData = analysisData.detected_techniques.filter(t => t.category === 'sweep');
+                document.getElementById('real-sweep-data').innerHTML = `
+                    <div class="text-center">
+                        <div class="text-2xl font-bold text-white">${{sweepData.length}}</div>
+                        <div class="text-gray-300">Sweeps Detected</div>
+                    </div>
+                `;
+
+                const passData = analysisData.detected_techniques.filter(t => t.category === 'guard_pass');
+                document.getElementById('real-pass-data').innerHTML = `
+                    <div class="text-center">
+                        <div class="text-2xl font-bold text-white">${{passData.length}}</div>
+                        <div class="text-gray-300">Guard Passes</div>
+                    </div>
+                `;
+
+                const takedownData = analysisData.detected_techniques.filter(t => t.category === 'takedown');
+                document.getElementById('real-takedown-data').innerHTML = `
+                    <div class="text-center">
+                        <div class="text-2xl font-bold text-white">${{takedownData.length}}</div>
+                        <div class="text-gray-300">Takedowns</div>
+                    </div>
+                `;
+
+                // Update analytics tab
+                document.getElementById('real-analytics-data').innerHTML = `
+                    <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+                        <div class="bg-gradient-to-br from-blue-600 to-blue-800 rounded-lg p-6 text-center">
+                            <div class="text-3xl font-bold text-white">${{analysisData.total_techniques_detected}}</div>
+                            <div class="text-blue-200">Total Techniques</div>
+                        </div>
+                        <div class="bg-gradient-to-br from-green-600 to-green-800 rounded-lg p-6 text-center">
+                            <div class="text-3xl font-bold text-white">${{Math.round(analysisData.average_confidence * 100)}}%</div>
+                            <div class="text-green-200">Avg Confidence</div>
+                        </div>
+                        <div class="bg-gradient-to-br from-purple-600 to-purple-800 rounded-lg p-6 text-center">
+                            <div class="text-3xl font-bold text-white">${{Math.round(analysisData.video_duration / 60)}}m</div>
+                            <div class="text-purple-200">Video Length</div>
+                        </div>
+                        <div class="bg-gradient-to-br from-orange-600 to-orange-800 rounded-lg p-6 text-center">
+                            <div class="text-3xl font-bold text-white">${{analysisData.techniques_per_minute}}</div>
+                            <div class="text-orange-200">Techniques/Min</div>
+                        </div>
+                    </div>
+                `;
+            }}
+        }}
     </script>
 </body>
 </html>'''.format(
@@ -690,4 +804,3 @@ def health():
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
     app.run(host='0.0.0.0', port=port, debug=False)
-    

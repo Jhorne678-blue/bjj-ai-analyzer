@@ -189,6 +189,10 @@ def home():
                         <li>✅ Friend challenges</li>
                         <li>🔥 Competition analytics</li>
                         <li>🔥 Private coaching insights</li>
+                        <li>🔥 3D movement analysis</li>
+                        <li>🔥 AI training plans</li>
+                        <li>🔥 Biomechanical scoring</li>
+                        <li>🔥 Tournament prep tools</li>
                     </ul>
                     <button onclick="selectPlan('blackbelt')" class="bg-yellow-500 hover:bg-yellow-600 text-black py-3 px-8 rounded-lg w-full font-bold text-lg">
                         👑 GO BLACK BELT
@@ -225,6 +229,30 @@ def home():
             <div class="glass rounded-xl p-8">
                 <h2 class="text-3xl font-bold text-white mb-8 text-center">Upload Your BJJ Video</h2>
                 
+                {"" if user_plan != "blackbelt" else '''
+                <!-- Black Belt Premium Features -->
+                <div class="bg-gradient-to-r from-yellow-600 to-orange-600 rounded-xl p-6 mb-8">
+                    <h3 class="text-2xl font-bold text-white mb-4">👑 Black Belt Premium Features</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <button onclick="showCompetitionAnalytics()" class="bg-white bg-opacity-20 hover:bg-opacity-30 rounded-lg p-4 text-left">
+                            <div class="text-lg font-bold text-white">🏆 Competition Analytics</div>
+                            <div class="text-yellow-100 text-sm">Tournament performance tracking</div>
+                        </button>
+                        <button onclick="showPrivateCoaching()" class="bg-white bg-opacity-20 hover:bg-opacity-30 rounded-lg p-4 text-left">
+                            <div class="text-lg font-bold text-white">👨‍🏫 Private Coaching</div>
+                            <div class="text-yellow-100 text-sm">Personalized insights & recommendations</div>
+                        </button>
+                        <button onclick="showAdvancedBreakdowns()" class="bg-white bg-opacity-20 hover:bg-opacity-30 rounded-lg p-4 text-left">
+                            <div class="text-lg font-bold text-white">📊 3D Analysis</div>
+                            <div class="text-yellow-100 text-sm">Biomechanical movement tracking</div>
+                        </button>
+                        <button onclick="generateTrainingPlan()" class="bg-white bg-opacity-20 hover:bg-opacity-30 rounded-lg p-4 text-left">
+                            <div class="text-lg font-bold text-white">📋 AI Training Plans</div>
+                            <div class="text-yellow-100 text-sm">Personalized weekly programs</div>
+                        </button>
+                    </div>
+                </div>'''}
+
                 <div class="bg-gradient-to-r from-green-600 to-blue-600 rounded-xl p-8 text-center">
                     <h3 class="text-2xl font-bold text-white mb-4">🎥 Ready to Analyze Your Game?</h3>
                     <p class="text-white mb-6">Upload your training footage and get instant AI-powered technique analysis</p>
@@ -560,26 +588,43 @@ def home():
         }}
 
         function connectFacebook() {
-            const confirm = window.confirm('Connect with Facebook to find BJJ friends and training partners?\\n\\nWe only access your friends list to find other users.');
-            if (confirm) {
+            var confirmConnect = window.confirm('Connect with Facebook to find BJJ friends and training partners?\\n\\nWe only access your friends list to find other users.');
+            if (confirmConnect) {
                 alert('🎉 Facebook connected!\\n\\nYou can now find friends who also use BJJ AI Analyzer Pro.');
             }
         }
 
         function challengeFriend(friendName) {
-            const challenges = [
+            var challenges = [
                 'Most submissions this week',
-                'Best sweep percentage',
+                'Best sweep percentage', 
                 'Fastest submission time',
                 'Most guard passes',
                 'Best technique variety'
             ];
-            const randomChallenge = challenges[Math.floor(Math.random() * challenges.length)];
+            var randomChallenge = challenges[Math.floor(Math.random() * challenges.length)];
             
-            const confirmChallenge = confirm(`Challenge ${friendName} to: "${randomChallenge}"?\\n\\nThey'll have 24 hours to accept this challenge.`);
+            var confirmChallenge = confirm('Challenge ' + friendName + ' to: "' + randomChallenge + '"?\\n\\nThey will have 24 hours to accept this challenge.');
             if (confirmChallenge) {
-                alert(`🔥 Challenge sent to ${friendName}!\\n\\nYou'll be notified when they respond.`);
+                alert('🔥 Challenge sent to ' + friendName + '!\\n\\nYou will be notified when they respond.');
             }
+        }
+
+        // Black Belt Premium Features
+        function showCompetitionAnalytics() {
+            alert('🏆 Competition Analytics (Black Belt Only)\\n\\n• Match performance tracking\\n• Opponent analysis\\n• Tournament preparation insights\\n• Win/loss ratio by technique\\n• Competition-specific training plans');
+        }
+
+        function showPrivateCoaching() {
+            alert('👨‍🏫 Private Coaching Insights (Black Belt Only)\\n\\n• Personalized technique recommendations\\n• Weakness identification\\n• Training plan optimization\\n• Progress benchmarking\\n• 1-on-1 virtual coaching sessions');
+        }
+
+        function showAdvancedBreakdowns() {
+            alert('📊 Advanced Breakdowns (Black Belt Only)\\n\\n• Frame-by-frame analysis\\n• 3D movement tracking\\n• Leverage calculations\\n• Timing precision metrics\\n• Biomechanical efficiency scoring');
+        }
+
+        function generateTrainingPlan() {
+            alert('📋 AI Training Plan Generated!\\n\\n🎯 Focus Areas This Week:\\n• Improve guard retention (67% success rate)\\n• Work on submission setups\\n• Practice takedown defense\\n\\n📅 Recommended Sessions:\\n• 3x Drilling sessions\\n• 2x Sparring sessions\\n• 1x Competition prep');
         }
     </script>
 </body>

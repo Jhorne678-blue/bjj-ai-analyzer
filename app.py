@@ -587,14 +587,14 @@ def home():
             }});
         }}
 
-        function connectFacebook() {
+        function connectFacebook() {{
             var confirmConnect = window.confirm('Connect with Facebook to find BJJ friends and training partners?\\n\\nWe only access your friends list to find other users.');
-            if (confirmConnect) {
+            if (confirmConnect) {{
                 alert('🎉 Facebook connected!\\n\\nYou can now find friends who also use BJJ AI Analyzer Pro.');
-            }
-        }
+            }}
+        }}
 
-        function challengeFriend(friendName) {
+        function challengeFriend(friendName) {{
             var challenges = [
                 'Most submissions this week',
                 'Best sweep percentage', 
@@ -605,27 +605,27 @@ def home():
             var randomChallenge = challenges[Math.floor(Math.random() * challenges.length)];
             
             var confirmChallenge = confirm('Challenge ' + friendName + ' to: "' + randomChallenge + '"?\\n\\nThey will have 24 hours to accept this challenge.');
-            if (confirmChallenge) {
+            if (confirmChallenge) {{
                 alert('🔥 Challenge sent to ' + friendName + '!\\n\\nYou will be notified when they respond.');
-            }
-        }
+            }}
+        }}
 
         // Black Belt Premium Features
-        function showCompetitionAnalytics() {
+        function showCompetitionAnalytics() {{
             alert('🏆 Competition Analytics (Black Belt Only)\\n\\n• Match performance tracking\\n• Opponent analysis\\n• Tournament preparation insights\\n• Win/loss ratio by technique\\n• Competition-specific training plans');
-        }
+        }}
 
-        function showPrivateCoaching() {
+        function showPrivateCoaching() {{
             alert('👨‍🏫 Private Coaching Insights (Black Belt Only)\\n\\n• Personalized technique recommendations\\n• Weakness identification\\n• Training plan optimization\\n• Progress benchmarking\\n• 1-on-1 virtual coaching sessions');
-        }
+        }}
 
-        function showAdvancedBreakdowns() {
+        function showAdvancedBreakdowns() {{
             alert('📊 Advanced Breakdowns (Black Belt Only)\\n\\n• Frame-by-frame analysis\\n• 3D movement tracking\\n• Leverage calculations\\n• Timing precision metrics\\n• Biomechanical efficiency scoring');
-        }
+        }}
 
-        function generateTrainingPlan() {
+        function generateTrainingPlan() {{
             alert('📋 AI Training Plan Generated!\\n\\n🎯 Focus Areas This Week:\\n• Improve guard retention (67% success rate)\\n• Work on submission setups\\n• Practice takedown defense\\n\\n📅 Recommended Sessions:\\n• 3x Drilling sessions\\n• 2x Sparring sessions\\n• 1x Competition prep');
-        }
+        }}
     </script>
 </body>
 </html>'''

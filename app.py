@@ -109,7 +109,10 @@ def home():
     user_plan = users[user_id]['plan']
     video_count = len(user_videos.get(user_id, []))
     
-    html = '''<!DOCTYPE html>
+    # Build HTML in parts to avoid string issues
+    html_parts = []
+    
+    html_parts.append("""<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -130,15 +133,15 @@ def home():
     <div class="text-center py-8">
         <h1 class="text-5xl font-bold text-white mb-4">🥋 BJJ AI Analyzer Pro</h1>
         <p class="text-xl text-gray-200">Complete BJJ Analytics Platform</p>
-        <div class="mt-4">'''
+        <div class="mt-4">""")
     
     if user_plan != 'demo':
-        html += f'''<span class="bg-green-600 text-white px-4 py-2 rounded-lg">
+        html_parts.append(f"""<span class="bg-green-600 text-white px-4 py-2 rounded-lg">
             ✅ {user_plan.upper()} MEMBER • {video_count} Videos
-        </span>'''
+        </span>""")
     else:
         demo_uploads_used = video_count
-        html += f'''<div class="space-x-4">
+        html_parts.append(f"""<div class="space-x-4">
             <span class="bg-orange-600 text-white px-3 py-2 rounded-lg text-sm">
                 🆓 DEMO • {demo_uploads_used}/1 Free Upload Used
             </span>
@@ -148,9 +151,9 @@ def home():
             <button onclick="showPricing()" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-bold">
                 🚀 SUBSCRIBE NOW
             </button>
-        </div>'''
+        </div>""")
     
-    html += '''</div>
+    html_parts.append("""</div>
     </div>
 
     <!-- Access Code Modal -->
@@ -231,48 +234,48 @@ def home():
                     📹 Upload
                 </button>
                 <button onclick="showTab('submissions')" class="tab-button px-4 py-2 rounded-lg text-white font-semibold relative">
-                    🎯 Submissions'''
+                    🎯 Submissions""")
     
     if user_plan == 'demo':
-        html += '<span class="demo-badge">DEMO</span>'
+        html_parts.append('<span class="demo-badge">DEMO</span>')
     
-    html += '''</button>
+    html_parts.append("""</button>
                 <button onclick="showTab('sweeps')" class="tab-button px-4 py-2 rounded-lg text-white font-semibold relative">
-                    🌊 Sweeps'''
+                    🌊 Sweeps""")
     
     if user_plan == 'demo':
-        html += '<span class="demo-badge">DEMO</span>'
+        html_parts.append('<span class="demo-badge">DEMO</span>')
     
-    html += '''</button>
+    html_parts.append("""</button>
                 <button onclick="showTab('passes')" class="tab-button px-4 py-2 rounded-lg text-white font-semibold relative">
-                    🛡️ Passes'''
+                    🛡️ Passes""")
     
     if user_plan == 'demo':
-        html += '<span class="demo-badge">DEMO</span>'
+        html_parts.append('<span class="demo-badge">DEMO</span>')
     
-    html += '''</button>
+    html_parts.append("""</button>
                 <button onclick="showTab('takedowns')" class="tab-button px-4 py-2 rounded-lg text-white font-semibold relative">
-                    🤼 Takedowns'''
+                    🤼 Takedowns""")
     
     if user_plan == 'demo':
-        html += '<span class="demo-badge">DEMO</span>'
+        html_parts.append('<span class="demo-badge">DEMO</span>')
     
-    html += '''</button>
+    html_parts.append("""</button>
                 <button onclick="showTab('analytics')" class="tab-button px-4 py-2 rounded-lg text-white font-semibold relative">
-                    📊 Analytics'''
+                    📊 Analytics""")
     
     if user_plan == 'demo':
-        html += '<span class="demo-badge">DEMO</span>'
+        html_parts.append('<span class="demo-badge">DEMO</span>')
     
-    html += '''</button>'''
+    html_parts.append('</button>')
     
     if user_plan in ['pro', 'elite']:
-        html += '''
+        html_parts.append("""
                 <button onclick="showTab('friends')" class="tab-button px-4 py-2 rounded-lg text-white font-semibold">
                     👥 Friends
-                </button>'''
+                </button>""")
     
-    html += '''
+    html_parts.append("""
             </div>
         </div>
     </div>
@@ -281,12 +284,12 @@ def home():
         <!-- Upload Tab -->
         <div id="upload-tab" class="tab-content active">
             <div class="glass rounded-xl p-8 mb-8">
-                <h2 class="text-2xl font-bold text-white mb-6 text-center">Upload Your BJJ Video</h2>'''
+                <h2 class="text-2xl font-bold text-white mb-6 text-center">Upload Your BJJ Video</h2>""")
     
     demo_uploads_used = video_count if user_plan == 'demo' else 0
     
     if user_plan == 'demo' and demo_uploads_used >= 1:
-        html += '''<div class="bg-orange-900 bg-opacity-50 rounded-lg p-6 text-center mb-6">
+        html_parts.append("""<div class="bg-orange-900 bg-opacity-50 rounded-lg p-6 text-center mb-6">
                     <h3 class="text-xl font-bold text-white mb-2">🆓 Free Upload Used</h3>
                     <p class="text-gray-300 mb-4">You've used your 1 free demo upload. Get elite access or subscribe for unlimited uploads!</p>
                     <div class="space-x-4">
@@ -297,9 +300,9 @@ def home():
                             Subscribe
                         </button>
                     </div>
-                </div>'''
+                </div>""")
     elif user_plan == 'demo':
-        html += '''<div class="bg-green-900 bg-opacity-50 rounded-lg p-6 text-center mb-6">
+        html_parts.append("""<div class="bg-green-900 bg-opacity-50 rounded-lg p-6 text-center mb-6">
                     <h3 class="text-xl font-bold text-white mb-2">🆓 Free Demo Upload</h3>
                     <p class="text-gray-300 mb-4">Try our AI analysis with 1 free upload! Limited breakdown included.</p>
                     <p class="text-yellow-300 text-sm">After this, use an elite access code or subscribe for unlimited uploads.</p>
@@ -311,22 +314,23 @@ def home():
                     <button onclick="analyzeVideo()" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-8 rounded-lg">
                         🤖 Try AI Analysis
                     </button>
-                </div>'''
+                </div>""")
     else:
-        html += f'''<div class="text-center">
+        html_parts.append(f"""<div class="text-center">
                     <input type="file" id="videoFile" accept="video/*" class="mb-4 text-white">
                     <br>
                     <p class="text-green-300 text-sm mb-4">✅ {user_plan.title()} Plan - Full analysis</p>
                     <button onclick="analyzeVideo()" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-8 rounded-lg">
                         🤖 Analyze Techniques
-                    </button>'''
+                    </button>""")
         
         if user_plan == 'elite':
-            html += '<p class="text-purple-300 text-xs mt-2">🎬 Elite: Video timestamps included!</p>'
+            html_parts.append('<p class="text-purple-300 text-xs mt-2">🎬 Elite: Video timestamps included!</p>')
         
-        html += '</div>'
+        html_parts.append('</div>')
     
-    html += '''</div>
+    # Add the rest of the HTML content
+    html_parts.append(f"""</div>
 
             <!-- Progress Section -->
             <div id="progress-section" class="glass rounded-xl p-6 mb-8 hidden">
@@ -371,76 +375,43 @@ def home():
             </div>
         </div>
 
-        <!-- Submissions Tab -->
+        <!-- Other tabs content here -->
         <div id="submissions-tab" class="tab-content">
             <div class="glass rounded-xl p-8">
                 <h2 class="text-2xl font-bold text-white mb-6">🎯 Submission Analytics</h2>
-                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                    <div class="bg-white bg-opacity-10 rounded-lg p-6">
-                        <h3 class="text-xl font-bold text-white mb-4">Success Rates</h3>
-                        <canvas id="submission-chart" width="400" height="300"></canvas>
-                    </div>
-                    <div class="bg-white bg-opacity-10 rounded-lg p-6">
-                        <h3 class="text-xl font-bold text-white mb-4">Vulnerability Analysis</h3>
-                        <div class="space-y-3">
-                            <div class="flex justify-between">
-                                <span class="text-gray-300">Heel Hook</span>
-                                <span class="text-red-400 font-bold">67%</span>
-                            </div>
-                            <div class="flex justify-between">
-                                <span class="text-gray-300">Triangle</span>
-                                <span class="text-yellow-400 font-bold">45%</span>
-                            </div>
-                            <div class="flex justify-between">
-                                <span class="text-gray-300">RNC</span>
-                                <span class="text-green-400 font-bold">32%</span>
-                            </div>
-                        </div>
-                        <div class="mt-6">
-                            <h4 class="font-bold text-white mb-2">🎯 Training Focus</h4>
-                            <div class="bg-red-900 bg-opacity-50 rounded p-3">
-                                <p class="text-red-300 text-sm">Priority: Heel hook defense</p>
-                            </div>
-                        </div>
-                    </div>
+                <div class="bg-white bg-opacity-10 rounded-lg p-6">
+                    <canvas id="submission-chart" width="400" height="300"></canvas>
                 </div>
             </div>
         </div>
 
-        <!-- Sweeps Tab -->
         <div id="sweeps-tab" class="tab-content">
             <div class="glass rounded-xl p-8">
                 <h2 class="text-2xl font-bold text-white mb-6">🌊 Sweep Analytics</h2>
                 <div class="bg-white bg-opacity-10 rounded-lg p-6">
-                    <h3 class="text-xl font-bold text-white mb-4">Your Best Sweeps</h3>
                     <canvas id="sweep-chart" width="400" height="300"></canvas>
                 </div>
             </div>
         </div>
 
-        <!-- Guard Passes Tab -->
         <div id="passes-tab" class="tab-content">
             <div class="glass rounded-xl p-8">
                 <h2 class="text-2xl font-bold text-white mb-6">🛡️ Guard Pass Analytics</h2>
                 <div class="bg-white bg-opacity-10 rounded-lg p-6">
-                    <h3 class="text-xl font-bold text-white mb-4">Passing Success</h3>
                     <canvas id="pass-chart" width="400" height="300"></canvas>
                 </div>
             </div>
         </div>
 
-        <!-- Takedowns Tab -->
         <div id="takedowns-tab" class="tab-content">
             <div class="glass rounded-xl p-8">
                 <h2 class="text-2xl font-bold text-white mb-6">🤼 Takedown Analytics</h2>
                 <div class="bg-white bg-opacity-10 rounded-lg p-6">
-                    <h3 class="text-xl font-bold text-white mb-4">Success Rates</h3>
                     <canvas id="takedown-chart" width="400" height="300"></canvas>
                 </div>
             </div>
         </div>
 
-        <!-- Analytics Tab -->
         <div id="analytics-tab" class="tab-content">
             <div class="glass rounded-xl p-8">
                 <h2 class="text-2xl font-bold text-white mb-6">📊 Complete Analytics</h2>
@@ -454,7 +425,7 @@ def home():
                         <div class="text-green-200">Success Rate</div>
                     </div>
                     <div class="bg-gradient-to-br from-purple-600 to-purple-800 rounded-lg p-6 text-center">
-                        <div class="text-3xl font-bold text-white">''' + str(video_count) + '''</div>
+                        <div class="text-3xl font-bold text-white">{video_count}</div>
                         <div class="text-purple-200">Videos</div>
                     </div>
                     <div class="bg-gradient-to-br from-orange-600 to-orange-800 rounded-lg p-6 text-center">
@@ -462,34 +433,11 @@ def home():
                         <div class="text-orange-200">This Month</div>
                     </div>
                 </div>
-                <div class="bg-white bg-opacity-10 rounded-lg p-6">
-                    <h3 class="text-xl font-bold text-white mb-4">🎭 BJJ Style Profile</h3>
-                    <div class="space-y-4">
-                        <div>
-                            <div class="flex justify-between mb-1">
-                                <span class="text-gray-300">Guard Player</span>
-                                <span class="text-white">85%</span>
-                            </div>
-                            <div class="w-full bg-gray-700 rounded-full h-2">
-                                <div class="bg-blue-500 h-2 rounded-full" style="width: 85%"></div>
-                            </div>
-                        </div>
-                        <div>
-                            <div class="flex justify-between mb-1">
-                                <span class="text-gray-300">Submission Hunter</span>
-                                <span class="text-white">91%</span>
-                            </div>
-                            <div class="w-full bg-gray-700 rounded-full h-2">
-                                <div class="bg-red-500 h-2 rounded-full" style="width: 91%"></div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
             </div>
-        </div>'''
+        </div>""")
         
     if user_plan in ['pro', 'elite']:
-        html += '''
+        html_parts.append("""
         <!-- Friends Tab -->
         <div id="friends-tab" class="tab-content">
             <div class="glass rounded-xl p-8">
@@ -506,423 +454,93 @@ def home():
                         </div>
                     </div>
                     <div class="bg-white bg-opacity-10 rounded-lg p-6">
-                        <h3 class="text-xl font-bold text-white mb-4">Friend Requests</h3>
+                        <h3 class="text-xl font-bold text-white mb-4">Leaderboard</h3>
                         <div class="space-y-3">
-                            <div class="flex justify-between items-center bg-white bg-opacity-10 rounded p-3">
-                                <span class="text-white">@mikehook23</span>
-                                <div class="space-x-2">
-                                    <button class="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded text-sm">Accept</button>
-                                    <button class="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded text-sm">Decline</button>
+                            <div class="flex justify-between items-center bg-gradient-to-r from-yellow-600 to-yellow-700 rounded p-3">
+                                <div class="flex items-center space-x-3">
+                                    <span class="text-2xl">🥇</span>
+                                    <span class="text-white font-bold">@submachine92</span>
                                 </div>
+                                <span class="text-white font-bold">2,847 pts</span>
                             </div>
-                            <div class="flex justify-between items-center bg-white bg-opacity-10 rounded p-3">
-                                <span class="text-white">@guardgirl</span>
-                                <div class="space-x-2">
-                                    <button class="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded text-sm">Accept</button>
-                                    <button class="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded text-sm">Decline</button>
+                            <div class="flex justify-between items-center bg-white bg-opacity-10 rounded p-3 border-2 border-blue-400">
+                                <div class="flex items-center space-x-3">
+                                    <span class="text-lg">4️⃣</span>
+                                    <span class="text-blue-300 font-bold">You</span>
                                 </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="bg-white bg-opacity-10 rounded-lg p-6 mb-8">
-                    <h3 class="text-xl font-bold text-white mb-4">🏆 Leaderboard</h3>
-                    <div class="space-y-3">
-                        <div class="flex justify-between items-center bg-gradient-to-r from-yellow-600 to-yellow-700 rounded p-3">
-                            <div class="flex items-center space-x-3">
-                                <span class="text-2xl">🥇</span>
-                                <span class="text-white font-bold">@submachine92</span>
-                            </div>
-                            <span class="text-white font-bold">2,847 pts</span>
-                        </div>
-                        <div class="flex justify-between items-center bg-gradient-to-r from-gray-400 to-gray-500 rounded p-3">
-                            <div class="flex items-center space-x-3">
-                                <span class="text-2xl">🥈</span>
-                                <span class="text-white font-bold">@triangletrap</span>
-                            </div>
-                            <span class="text-white font-bold">2,103 pts</span>
-                        </div>
-                        <div class="flex justify-between items-center bg-gradient-to-r from-orange-600 to-orange-700 rounded p-3">
-                            <div class="flex items-center space-x-3">
-                                <span class="text-2xl">🥉</span>
-                                <span class="text-white font-bold">@sweepking</span>
-                            </div>
-                            <span class="text-white font-bold">1,978 pts</span>
-                        </div>
-                        <div class="flex justify-between items-center bg-white bg-opacity-10 rounded p-3 border-2 border-blue-400">
-                            <div class="flex items-center space-x-3">
-                                <span class="text-lg">4️⃣</span>
-                                <span class="text-blue-300 font-bold">You</span>
-                            </div>
-                            <span class="text-blue-300 font-bold">1,654 pts</span>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="bg-white bg-opacity-10 rounded-lg p-6">
-                    <h3 class="text-xl font-bold text-white mb-4">📊 Friends Activity</h3>
-                    <div class="space-y-4">
-                        <div class="bg-white bg-opacity-10 rounded p-4">
-                            <div class="flex items-center space-x-3 mb-2">
-                                <span class="text-green-400 font-bold">@mikehook23</span>
-                                <span class="text-gray-300 text-sm">2 hours ago</span>
-                            </div>
-                            <p class="text-gray-300 text-sm">Analyzed a training session • 12 techniques detected</p>
-                            <div class="flex space-x-4 mt-2 text-xs">
-                                <span class="text-blue-400">🎯 4 submissions</span>
-                                <span class="text-yellow-400">🌊 3 sweeps</span>
-                            </div>
-                        </div>
-                        <div class="bg-white bg-opacity-10 rounded p-4">
-                            <div class="flex items-center space-x-3 mb-2">
-                                <span class="text-green-400 font-bold">@guardgirl</span>
-                                <span class="text-gray-300 text-sm">1 day ago</span>
-                            </div>
-                            <p class="text-gray-300 text-sm">Hit a new personal record • 95% confidence armbar</p>
-                            <div class="flex space-x-4 mt-2 text-xs">
-                                <span class="text-red-400">🔥 New PB!</span>
-                                <span class="text-purple-400">⚡ Elite timing</span>
+                                <span class="text-blue-300 font-bold">1,654 pts</span>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
-        </div>'''
+        </div>""")
     
-    html += '''
-    </div>
-
-    <div class="text-center py-8 mt-8">
-        <p class="text-gray-400 text-sm">BJJ AI Analyzer Pro | Complete Analytics Platform</p>
+    # Add JavaScript
+    html_parts.append(f"""
     </div>
 
     <script>
-        const userPlan = "''' + user_plan + '''";
+        const userPlan = "{user_plan}";
 
-        function showTab(tabName) {
-            document.querySelectorAll('.tab-content').forEach(tab => {
-                tab.classList.remove('active');
-            });
-            document.querySelectorAll('.tab-button').forEach(btn => {
-                btn.classList.remove('active');
-            });
+        function showTab(tabName) {{
+            document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
             document.getElementById(tabName + '-tab').classList.add('active');
             event.target.classList.add('active');
-            
-            if (tabName === 'submissions') setTimeout(initSubmissionChart, 100);
-            else if (tabName === 'sweeps') setTimeout(initSweepChart, 100);
-            else if (tabName === 'passes') setTimeout(initPassChart, 100);
-            else if (tabName === 'takedowns') setTimeout(initTakedownChart, 100);
-        }
+        }}
 
-        function showAccessCode() {
+        function showAccessCode() {{
             document.getElementById('access-code-modal').classList.remove('hidden');
-        }
+        }}
 
-        function hideAccessCode() {
+        function hideAccessCode() {{
             document.getElementById('access-code-modal').classList.add('hidden');
-        }
+        }}
 
-        function showPricing() {
+        function showPricing() {{
             document.getElementById('pricing-modal').classList.remove('hidden');
-        }
+        }}
 
-        function hidePricing() {
+        function hidePricing() {{
             document.getElementById('pricing-modal').classList.add('hidden');
-        }
+        }}
 
-        async function redeemCode() {
+        async function redeemCode() {{
             const code = document.getElementById('access-code-input').value.trim();
             if (!code) return alert('Enter a code');
 
-            try {
-                const response = await fetch('/api/redeem-code', {
+            try {{
+                const response = await fetch('/api/redeem-code', {{
                     method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({code: code})
-                });
+                    headers: {{'Content-Type': 'application/json'}},
+                    body: JSON.stringify({{code: code}})
+                }});
                 const result = await response.json();
                 
-                if (result.success) {
+                if (result.success) {{
                     alert('🎉 Elite access activated! Refreshing...');
                     location.reload();
-                } else {
+                }} else {{
                     alert('❌ ' + result.message);
-                }
-            } catch (error) {
+                }}
+            }} catch (error) {{
                 alert('Error: ' + error.message);
-            }
-        }
+            }}
+        }}
 
-        function subscribePlan(plan) {
-            alert(`🚀 Subscribing to ${plan.toUpperCase()}!\\n\\nPayment integration would go here.\\n\\nFor demo: use BJJ2024FREE for elite access`);
-        }
+        function subscribePlan(plan) {{
+            alert(`🚀 Subscribing to ${{plan.toUpperCase()}}!\\n\\nPayment integration would go here.\\n\\nFor demo: use BJJ2024FREE for elite access`);
+        }}
 
-        async function analyzeVideo() {
+        async function analyzeVideo() {{
             const fileInput = document.getElementById('videoFile');
             if (!fileInput.files[0]) return alert('Select a video first!');
 
             document.getElementById('progress-section').classList.remove('hidden');
-
             let progress = 0;
             const progressBar = document.getElementById('progress-bar');
             
-            const interval = setInterval(() => {
+            const interval = setInterval(() => {{
                 progress += Math.random() * 15;
-                if (progress > 100) progress = 100;
-                progressBar.style.width = progress + '%';
-                
-                if (progress >= 100) {
-                    clearInterval(interval);
-                    performAnalysis();
-                }
-            }, 300);
-        }
-
-        async function performAnalysis() {
-            try {
-                const formData = new FormData();
-                formData.append('video', document.getElementById('videoFile').files[0]);
-
-                const response = await fetch('/api/analyze', {
-                    method: 'POST',
-                    body: formData
-                });
-
-                const results = await response.json();
-                if (results.error) {
-                    alert('❌ ' + results.error);
-                    resetApp();
-                    return;
-                }
-                
-                displayResults(results);
-            } catch (error) {
-                alert('Analysis failed: ' + error.message);
-                resetApp();
-            }
-        }
-
-        function displayResults(results) {
-            document.getElementById('progress-section').classList.add('hidden');
-            document.getElementById('results-section').classList.remove('hidden');
-
-            document.getElementById('total-count').textContent = results.total_techniques_detected;
-            document.getElementById('avg-confidence').textContent = Math.round(results.average_confidence * 100) + '%';
-            document.getElementById('video-duration').textContent = results.video_duration + 's';
-            
-            const submissionCount = results.detected_techniques.filter(t => t.category === 'submission').length;
-            document.getElementById('submission-count').textContent = submissionCount;
-
-            displayTechniques(results.detected_techniques);
-            displayInsights(results.insights);
-        }
-
-        function displayTechniques(techniques) {
-            const techniquesList = document.getElementById('techniques-list');
-            techniquesList.innerHTML = '';
-
-            techniques.forEach(technique => {
-                const categoryColors = {
-                    'submission': 'border-l-red-500 bg-red-900',
-                    'sweep': 'border-l-blue-500 bg-blue-900',
-                    'guard_pass': 'border-l-green-500 bg-green-900',
-                    'takedown': 'border-l-yellow-500 bg-yellow-900',
-                    'position': 'border-l-purple-500 bg-purple-900'
-                };
-
-                const qualityColors = {
-                    'excellent': 'text-green-400',
-                    'good': 'text-yellow-400',
-                    'fair': 'text-orange-400'
-                };
-
-                const categoryColor = categoryColors[technique.category] || 'border-l-gray-500 bg-gray-900';
-                const qualityColor = qualityColors[technique.quality] || 'text-gray-400';
-
-                const techniqueDiv = document.createElement('div');
-                techniqueDiv.className = `${categoryColor} bg-opacity-30 border-l-4 rounded-lg p-4`;
-                
-                let timestampHTML = '';
-                if (technique.has_timestamp) {
-                    timestampHTML = `
-                        <button onclick="jumpToTime(${technique.start_time})" 
-                                class="bg-blue-600 hover:bg-blue-700 text-white px-2 py-1 rounded text-xs ml-2">
-                            🎬 ${formatTime(technique.start_time)}
-                        </button>
-                    `;
-                }
-
-                techniqueDiv.innerHTML = `
-                    <div class="flex justify-between items-center">
-                        <div class="flex-1">
-                            <div class="flex items-center space-x-2 mb-1">
-                                <h4 class="text-lg font-bold text-white">${formatTechniqueName(technique.technique)}</h4>
-                                <span class="px-2 py-1 bg-white bg-opacity-20 rounded text-xs text-gray-300">
-                                    ${technique.category.replace('_', ' ').toUpperCase()}
-                                </span>
-                                ${timestampHTML}
-                            </div>
-                            <p class="text-gray-300 text-sm">
-                                Time: ${formatTime(technique.start_time)} - ${formatTime(technique.end_time)} | 
-                                Position: ${technique.position}
-                            </p>
-                        </div>
-                        <div class="text-right">
-                            <div class="text-white font-bold text-lg">${Math.round(technique.confidence * 100)}%</div>
-                            <div class="text-sm ${qualityColor} font-semibold">${technique.quality.toUpperCase()}</div>
-                        </div>
-                    </div>
-                `;
-                
-                techniquesList.appendChild(techniqueDiv);
-            });
-        }
-
-        function jumpToTime(seconds) {
-            alert(`🎬 Elite Feature: Jump to ${formatTime(seconds)}\\n\\nIn full app, this would seek video to exact moment!`);
-        }
-
-        function displayInsights(insights) {
-            const insightsList = document.getElementById('insights-list');
-            insightsList.innerHTML = '';
-
-            insights.forEach(insight => {
-                const insightDiv = document.createElement('div');
-                insightDiv.className = 'bg-white bg-opacity-10 rounded p-3 mb-2';
-                insightDiv.innerHTML = `<p class="text-gray-300">${insight}</p>`;
-                insightsList.appendChild(insightDiv);
-            });
-        }
-
-        function initSubmissionChart() {
-            const ctx = document.getElementById('submission-chart');
-            if (!ctx || ctx.chart) return;
-
-            ctx.chart = new Chart(ctx, {
-                type: 'doughnut',
-                data: {
-                    labels: ['Armbar', 'Triangle', 'RNC', 'Kimura', 'Heel Hook'],
-                    datasets: [{
-                        data: [87, 72, 95, 65, 81],
-                        backgroundColor: ['#ef4444', '#3b82f6', '#10b981', '#f59e0b', '#8b5cf6']
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    plugins: {
-                        legend: { labels: { color: 'white' } }
-                    }
-                }
-            });
-        }
-
-        function initSweepChart() {
-            const ctx = document.getElementById('sweep-chart');
-            if (!ctx || ctx.chart) return;
-
-            ctx.chart = new Chart(ctx, {
-                type: 'bar',
-                data: {
-                    labels: ['Tripod', 'Scissor', 'Butterfly', 'Flower', 'DLR'],
-                    datasets: [{
-                        label: 'Success Rate %',
-                        data: [92, 68, 81, 55, 73],
-                        backgroundColor: '#3b82f6'
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    scales: {
-                        y: { ticks: { color: 'white' } },
-                        x: { ticks: { color: 'white' } }
-                    },
-                    plugins: {
-                        legend: { labels: { color: 'white' } }
-                    }
-                }
-            });
-        }
-
-        function initPassChart() {
-            const ctx = document.getElementById('pass-chart');
-            if (!ctx || ctx.chart) return;
-
-            ctx.chart = new Chart(ctx, {
-                type: 'polarArea',
-                data: {
-                    labels: ['Knee Cut', 'Toreando', 'Leg Drag', 'Stack'],
-                    datasets: [{
-                        data: [82, 75, 88, 60],
-                        backgroundColor: ['#ef4444', '#3b82f6', '#10b981', '#f59e0b']
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    plugins: {
-                        legend: { labels: { color: 'white' } }
-                    },
-                    scales: {
-                        r: { ticks: { color: 'white' } }
-                    }
-                }
-            });
-        }
-
-        function initTakedownChart() {
-            const ctx = document.getElementById('takedown-chart');
-            if (!ctx || ctx.chart) return;
-
-            ctx.chart = new Chart(ctx, {
-                type: 'radar',
-                data: {
-                    labels: ['Double Leg', 'Single Leg', 'Hip Toss', 'Foot Sweep'],
-                    datasets: [{
-                        label: 'Success Rate',
-                        data: [70, 55, 45, 38],
-                        borderColor: '#3b82f6',
-                        backgroundColor: 'rgba(59, 130, 246, 0.2)'
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    plugins: {
-                        legend: { labels: { color: 'white' } }
-                    },
-                    scales: {
-                        r: { 
-                            ticks: { color: 'white' },
-                            pointLabels: { color: 'white' }
-                        }
-                    }
-                }
-            });
-        }
-
-        function formatTechniqueName(name) {
-            return name.replace(/_/g, ' ')
-                      .split(' ')
-                      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-                      .join(' ');
-        }
-
-        function formatTime(seconds) {
-            const mins = Math.floor(seconds / 60);
-            const secs = Math.floor(seconds % 60);
-            return `${mins}:${secs.toString().padStart(2, '0')}`;
-        }
-
-        function resetApp() {
-            document.getElementById('progress-section').classList.add('hidden');
-            document.getElementById('results-section').classList.add('hidden');
-            document.getElementById('videoFile').value = '';
-        }
-
-        // Initialize first chart
-        document.addEventListener('DOMContentLoaded', function() {
-            setTimeout(initSubmissionChart, 500);
-        });
-    </script>
-</body>
-</html>
+                if (progress >

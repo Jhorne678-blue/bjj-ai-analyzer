@@ -358,7 +358,7 @@ def home():
                         <li>• Progress tracking</li>
                         <li>• Follow friends</li>
                     </ul>
-                    <button onclick="subscribePlan('pro')" class="bg-blue-600 hover:bg-blue-700 text-white py-2 px-6 rounded-lg w-full">Subscribe</button>
+                    <button onclick="subscribePlan('pro')" class="bg-blue-600 hover:bg-blue-700 text-white py-2 px-6 rounded-lg w-full">Subscribe with PayPal</button>
                 </div>
                 <div class="bg-purple-600 bg-opacity-20 rounded-lg p-6 text-center border-2 border-purple-400">
                     <div class="bg-purple-500 text-white px-3 py-1 rounded-full text-xs mb-2">ELITE</div>
@@ -369,7 +369,7 @@ def home():
                         <li>• Video timestamps</li>
                         <li>• Competition tools</li>
                     </ul>
-                    <button onclick="subscribePlan('elite')" class="bg-purple-600 hover:bg-purple-700 text-white py-2 px-6 rounded-lg w-full">Subscribe</button>
+                    <button onclick="subscribePlan('elite')" class="bg-purple-600 hover:bg-purple-700 text-white py-2 px-6 rounded-lg w-full">Subscribe with PayPal</button>
                 </div>
             </div>
         </div>
@@ -499,6 +499,143 @@ def home():
         </div>
 
         {friends_content}
+
+        <!-- Challenges Tab -->
+        <div id="challenges-tab" class="tab-content">
+            <div class="glass rounded-xl p-8">
+                <h2 class="text-2xl font-bold text-white mb-6">🏆 Weekly Training Challenges</h2>
+                
+                <!-- Challenge Settings -->
+                <div class="bg-white bg-opacity-10 rounded-lg p-6 mb-8">
+                    <h3 class="text-xl font-bold text-white mb-4">⚙️ Challenge Preferences</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div class="text-center">
+                            <label class="flex items-center justify-center space-x-2 bg-white bg-opacity-10 rounded-lg p-4 cursor-pointer hover:bg-opacity-20">
+                                <input type="radio" name="challenge-type" value="solo" checked class="text-blue-600">
+                                <div>
+                                    <div class="text-white font-bold">🥋 Solo Training</div>
+                                    <div class="text-gray-300 text-sm">Individual challenges</div>
+                                </div>
+                            </label>
+                        </div>
+                        <div class="text-center">
+                            <label class="flex items-center justify-center space-x-2 bg-white bg-opacity-10 rounded-lg p-4 cursor-pointer hover:bg-opacity-20">
+                                <input type="radio" name="challenge-type" value="friends" class="text-blue-600">
+                                <div>
+                                    <div class="text-white font-bold">👥 With Friends</div>
+                                    <div class="text-gray-300 text-sm">Compete with friends</div>
+                                </div>
+                            </label>
+                        </div>
+                        <div class="text-center">
+                            <label class="flex items-center justify-center space-x-2 bg-white bg-opacity-10 rounded-lg p-4 cursor-pointer hover:bg-opacity-20">
+                                <input type="radio" name="challenge-type" value="none" class="text-blue-600">
+                                <div>
+                                    <div class="text-white font-bold">🚫 No Challenges</div>
+                                    <div class="text-gray-300 text-sm">Opt out completely</div>
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+                    <div class="text-center mt-4">
+                        <button onclick="updateChallengePreferences()" class="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg font-bold">
+                            💾 Save Preferences
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Current Week Challenge -->
+                <div id="current-challenge" class="bg-gradient-to-r from-purple-600 to-blue-600 rounded-lg p-6 mb-8">
+                    <div class="flex justify-between items-start mb-4">
+                        <div>
+                            <h3 class="text-2xl font-bold text-white mb-2">This Week's Challenge</h3>
+                            <p class="text-purple-100">December 9-15, 2024</p>
+                        </div>
+                        <div class="text-right">
+                            <div class="text-3xl font-bold text-white">3/7</div>
+                            <div class="text-purple-100 text-sm">Days Complete</div>
+                        </div>
+                    </div>
+                    <div class="bg-white bg-opacity-20 rounded-lg p-4 mb-4">
+                        <h4 class="text-xl font-bold text-white mb-2">🎯 "Submission Specialist"</h4>
+                        <p class="text-white mb-3">Complete 15 submission attempts this week. Track your success rate and improve your finishing game!</p>
+                        <div class="flex items-center space-x-4">
+                            <div class="flex-1 bg-white bg-opacity-30 rounded-full h-3">
+                                <div class="bg-yellow-400 h-3 rounded-full" style="width: 60%"></div>
+                            </div>
+                            <span class="text-white font-bold">9/15 Submissions</span>
+                        </div>
+                    </div>
+                    <div class="flex space-x-3">
+                        <button onclick="logTrainingSession()" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg font-bold">
+                            📹 Log Training Session
+                        </button>
+                        <button onclick="viewLeaderboard()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-bold">
+                            🏆 View Leaderboard
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Challenge History -->
+                <div class="bg-white bg-opacity-10 rounded-lg p-6 mb-6">
+                    <h3 class="text-xl font-bold text-white mb-4">📈 Challenge History</h3>
+                    <div class="space-y-3">
+                        <div class="flex justify-between items-center bg-green-900 bg-opacity-50 rounded p-3 border-l-4 border-green-500">
+                            <div>
+                                <div class="text-white font-bold">🌊 "Sweep Master" - Week of Dec 2</div>
+                                <div class="text-green-300 text-sm">Completed 12/10 sweeps • Exceeded goal!</div>
+                            </div>
+                            <div class="text-green-400 font-bold text-lg">✅ 120%</div>
+                        </div>
+                        <div class="flex justify-between items-center bg-yellow-900 bg-opacity-50 rounded p-3 border-l-4 border-yellow-500">
+                            <div>
+                                <div class="text-white font-bold">🛡️ "Guard Retention" - Week of Nov 25</div>
+                                <div class="text-yellow-300 text-sm">Completed 7/10 guard retention drills</div>
+                            </div>
+                            <div class="text-yellow-400 font-bold text-lg">70%</div>
+                        </div>
+                        <div class="flex justify-between items-center bg-red-900 bg-opacity-50 rounded p-3 border-l-4 border-red-500">
+                            <div>
+                                <div class="text-white font-bold">🤼 "Takedown Tuesday" - Week of Nov 18</div>
+                                <div class="text-red-300 text-sm">Completed 3/8 takedown attempts</div>
+                            </div>
+                            <div class="text-red-400 font-bold text-lg">38%</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Friend Challenges -->
+                <div id="friend-challenges" class="bg-white bg-opacity-10 rounded-lg p-6">
+                    <h3 class="text-xl font-bold text-white mb-4">👥 Friend Challenges</h3>
+                    <div class="space-y-4">
+                        <div class="bg-blue-900 bg-opacity-30 rounded p-4 border border-blue-500">
+                            <div class="flex justify-between items-center mb-3">
+                                <h4 class="text-white font-bold">🥇 Submission Speed Challenge</h4>
+                                <span class="text-blue-300 text-sm">vs @mikehook23</span>
+                            </div>
+                            <p class="text-gray-300 text-sm mb-3">Who can hit the fastest submission this week?</p>
+                            <div class="grid grid-cols-2 gap-4">
+                                <div class="text-center bg-white bg-opacity-10 rounded p-2">
+                                    <div class="text-white font-bold">You</div>
+                                    <div class="text-green-400 text-lg">3.2 sec</div>
+                                </div>
+                                <div class="text-center bg-white bg-opacity-10 rounded p-2">
+                                    <div class="text-white font-bold">@mikehook23</div>
+                                    <div class="text-red-400 text-lg">4.1 sec</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="text-center">
+                            <button onclick="createFriendChallenge()" class="bg-purple-600 hover:bg-purple-700 text-white px-6 py-2 rounded-lg font-bold">
+                                ⚔️ Challenge a Friend
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {friends_content}
     </div>
 
     <script>
@@ -551,7 +688,71 @@ def home():
         }}
 
         function subscribePlan(plan) {{
-            alert(`🚀 Subscribing to ${{plan.toUpperCase()}}!\\n\\nPayment integration would go here.\\n\\nFor demo: use BJJ2024FREE for elite access`);
+            const amount = plan === 'pro' ? '20.00' : '50.00';
+            const planName = plan === 'pro' ? 'BJJ Pro' : 'Elite';
+            
+            // Simulate PayPal integration
+            alert(`💳 Redirecting to PayPal...\\n\\nPlan: ${{planName}}\\nAmount: ${{amount}}/month\\n\\nIn production, this would redirect to PayPal checkout.`);
+            
+            // Simulate successful payment
+            setTimeout(() => {{
+                const confirmPayment = confirm(`✅ PayPal payment successful!\\n\\nUpgrade to ${{planName}} plan?`);
+                if (confirmPayment) {{
+                    alert(`🎉 Welcome to ${{planName}}!\\n\\nYour account has been upgraded. Refreshing...`);
+                    // In production, this would update the user's plan via API
+                    location.reload();
+                }}
+            }}, 2000);
+        }}
+
+        // Challenge system functions
+        function updateChallengePreferences() {{
+            const selectedType = document.querySelector('input[name="challenge-type"]:checked').value;
+            let message = '';
+            
+            switch(selectedType) {{
+                case 'solo':
+                    message = '🥋 Solo challenges enabled!\\n\\nYou\\'ll receive personalized weekly training challenges based on your performance.';
+                    break;
+                case 'friends':
+                    message = '👥 Friend challenges enabled!\\n\\nYou\\'ll receive challenges to compete with your friends and training partners.';
+                    break;
+                case 'none':
+                    message = '🚫 Challenges disabled.\\n\\nYou can always re-enable them later in your preferences.';
+                    break;
+            }}
+            
+            alert(`✅ Preferences saved!\\n\\n${{message}}`);
+        }}
+
+        function logTrainingSession() {{
+            alert('📹 Upload a training video to automatically track your challenge progress!\\n\\nOur AI will detect submissions and update your weekly challenge automatically.');
+            // Switch to upload tab
+            showTab('upload');
+        }}
+
+        function viewLeaderboard() {{
+            alert('🏆 Weekly Challenge Leaderboard\\n\\n1. @submachine92 - 15/15 ✅\\n2. @guardgirl - 12/15\\n3. You - 9/15\\n4. @mikehook23 - 7/15\\n5. @sweepking - 6/15\\n\\nKeep training to climb the ranks!');
+        }}
+
+        function createFriendChallenge() {{
+            const challengeTypes = [
+                'Submission Speed Challenge',
+                'Most Sweeps This Week',
+                'Guard Retention Master',
+                'Takedown Tuesday',
+                'Escape Artist Challenge'
+            ];
+            
+            const randomChallenge = challengeTypes[Math.floor(Math.random() * challengeTypes.length)];
+            const friends = ['@mikehook23', '@guardgirl', '@sweepking', '@triangletrap'];
+            const randomFriend = friends[Math.floor(Math.random() * friends.length)];
+            
+            const confirmChallenge = confirm(`⚔️ Challenge: "${{randomChallenge}}"\\n\\nChallenge ${{randomFriend}} to this week\\'s competition?`);
+            
+            if (confirmChallenge) {{
+                alert(`🔥 Challenge sent to ${{randomFriend}}!\\n\\nThey have 24 hours to accept. You\\'ll be notified when they respond.`);
+            }}
         }}
 
         async function analyzeVideo() {{

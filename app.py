@@ -12,11 +12,11 @@ app.secret_key = 'bjj-ai-secret-key-2024'
 users = {}
 user_videos = {}
 access_codes = {
-    'BJJ2024FREE': {'plan': 'free', 'uses': 100},
-    'GUARD2024': {'plan': 'free', 'uses': 100},
-    'SWEEP2024': {'plan': 'free', 'uses': 100},
-    'SUBMIT2024': {'plan': 'free', 'uses': 100},
-    'ESCAPE2024': {'plan': 'free', 'uses': 100}
+    'BJJ2024FREE': {'plan': 'elite', 'uses': 100},
+    'GUARD2024': {'plan': 'elite', 'uses': 100},
+    'SWEEP2024': {'plan': 'elite', 'uses': 100},
+    'SUBMIT2024': {'plan': 'elite', 'uses': 100},
+    'ESCAPE2024': {'plan': 'elite', 'uses': 100}
 }
 
 # Demo stats
@@ -41,7 +41,7 @@ def get_user_id():
 def generate_analysis(plan):
     techniques = []
     
-    # Generate 8-12 techniques
+    # Generate techniques based on plan
     technique_list = [
         {'name': 'armbar_from_guard', 'cat': 'submission'},
         {'name': 'triangle_choke', 'cat': 'submission'},
@@ -57,8 +57,13 @@ def generate_analysis(plan):
         {'name': 'guard_retention', 'cat': 'position'}
     ]
     
-    num_techniques = random.randint(8, 12)
-    selected = random.sample(technique_list, num_techniques)
+    # Demo users get limited analysis
+    if plan == 'demo':
+        num_techniques = random.randint(3, 5)  # Fewer techniques
+        selected = random.sample(technique_list, num_techniques)
+    else:
+        num_techniques = random.randint(8, 12)
+        selected = random.sample(technique_list, num_techniques)
     
     for i, tech in enumerate(selected):
         start_time = random.randint(10, 240)
@@ -73,12 +78,19 @@ def generate_analysis(plan):
             'has_timestamp': (plan == 'elite')
         })
     
-    insights = [
-        "🎯 Great technique diversity! You're showing skills across multiple categories.",
-        "🔥 High execution quality detected in your submissions.",
-        "🌊 Strong guard game - you're comfortable working from bottom.",
-        "📈 Consistent performance across different positions."
-    ]
+    # Different insights based on plan
+    if plan == 'demo':
+        insights = [
+            "🎯 Basic technique detection working! Upgrade for detailed analysis.",
+            "📊 Limited demo analysis - subscribe for full insights."
+        ]
+    else:
+        insights = [
+            "🎯 Great technique diversity! You're showing skills across multiple categories.",
+            "🔥 High execution quality detected in your submissions.",
+            "🌊 Strong guard game - you're comfortable working from bottom.",
+            "📈 Consistent performance across different positions."
+        ]
     
     return {
         'total_techniques_detected': len(techniques),
@@ -86,7 +98,7 @@ def generate_analysis(plan):
         'video_duration': random.randint(180, 300),
         'techniques_per_minute': round(len(techniques) / 4, 1),
         'average_confidence': round(sum(t['confidence'] for t in techniques) / len(techniques), 2),
-        'insights': random.sample(insights, 3),
+        'insights': random.sample(insights, min(len(insights), 3)),
         'analysis_timestamp': datetime.now().isoformat(),
         'user_plan': plan
     }
@@ -125,9 +137,13 @@ def home():
             ✅ {user_plan.upper()} MEMBER • {video_count} Videos
         </span>'''
     else:
-        html += '''<div class="space-x-4">
+        demo_uploads_used = video_count
+        html += f'''<div class="space-x-4">
+            <span class="bg-orange-600 text-white px-3 py-2 rounded-lg text-sm">
+                🆓 DEMO • {demo_uploads_used}/1 Free Upload Used
+            </span>
             <button onclick="showAccessCode()" class="bg-yellow-600 hover:bg-yellow-700 text-white px-4 py-2 rounded-lg font-bold">
-                📝 Have Access Code?
+                🎁 Elite Access Code?
             </button>
             <button onclick="showPricing()" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-bold">
                 🚀 SUBSCRIBE NOW
@@ -140,12 +156,13 @@ def home():
     <!-- Access Code Modal -->
     <div id="access-code-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 flex items-center justify-center">
         <div class="glass rounded-xl p-8 max-w-md mx-4">
-            <h2 class="text-2xl font-bold text-white mb-4">Enter Access Code</h2>
-            <input type="text" id="access-code-input" placeholder="Enter access code" 
+            <h2 class="text-2xl font-bold text-white mb-4">🎁 Elite Access Code</h2>
+            <p class="text-gray-300 mb-4">Got a code for free Elite access? Enter it here!</p>
+            <input type="text" id="access-code-input" placeholder="Enter elite access code" 
                    class="w-full p-3 rounded-lg bg-white bg-opacity-20 text-white placeholder-gray-300 mb-4">
             <div class="space-x-4">
                 <button onclick="redeemCode()" class="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg font-bold">
-                    Redeem
+                    Redeem Elite
                 </button>
                 <button onclick="hideAccessCode()" class="bg-gray-600 hover:bg-gray-700 text-white px-6 py-2 rounded-lg">
                     Cancel
@@ -164,15 +181,15 @@ def home():
             </div>
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div class="bg-white bg-opacity-10 rounded-lg p-6 text-center">
-                    <h3 class="text-xl font-bold text-white mb-2">Free Monthly</h3>
+                    <h3 class="text-xl font-bold text-white mb-2">Demo</h3>
                     <div class="text-3xl font-bold text-white mb-4">$0</div>
                     <ul class="text-gray-300 space-y-2 mb-6 text-sm">
-                        <li>• 1 video per month</li>
-                        <li>• Basic analytics</li>
+                        <li>• 1 free upload</li>
+                        <li>• Limited analysis</li>
                         <li>• Demo data view</li>
                     </ul>
-                    <button onclick="alert('Use access code!')" class="bg-gray-600 text-white py-2 px-4 rounded-lg w-full">
-                        Need Code
+                    <button onclick="alert('You are already on Demo!')" class="bg-gray-600 text-white py-2 px-4 rounded-lg w-full">
+                        Current Plan
                     </button>
                 </div>
                 <div class="bg-blue-600 bg-opacity-20 rounded-lg p-6 text-center border-2 border-blue-400">
@@ -181,7 +198,7 @@ def home():
                     <div class="text-3xl font-bold text-white mb-4">$20</div>
                     <ul class="text-white space-y-2 mb-6 text-sm">
                         <li>• Unlimited videos</li>
-                        <li>• Real analytics</li>
+                        <li>• Full analytics</li>
                         <li>• Progress tracking</li>
                     </ul>
                     <button onclick="subscribePlan('pro')" class="bg-blue-600 hover:bg-blue-700 text-white py-2 px-6 rounded-lg w-full">
@@ -257,24 +274,40 @@ def home():
             <div class="glass rounded-xl p-8 mb-8">
                 <h2 class="text-2xl font-bold text-white mb-6 text-center">Upload Your BJJ Video</h2>'''
     
-    if user_plan == 'demo':
-        html += '''<div class="bg-red-900 bg-opacity-50 rounded-lg p-6 text-center mb-6">
-                    <h3 class="text-xl font-bold text-white mb-2">🚫 Upload Not Available</h3>
-                    <p class="text-gray-300 mb-4">Demo users need access code or subscription</p>
+    demo_uploads_used = video_count if user_plan == 'demo' else 0
+    
+    if user_plan == 'demo' and demo_uploads_used >= 1:
+        html += '''<div class="bg-orange-900 bg-opacity-50 rounded-lg p-6 text-center mb-6">
+                    <h3 class="text-xl font-bold text-white mb-2">🆓 Free Upload Used</h3>
+                    <p class="text-gray-300 mb-4">You've used your 1 free demo upload. Get elite access or subscribe for unlimited uploads!</p>
                     <div class="space-x-4">
                         <button onclick="showAccessCode()" class="bg-yellow-600 hover:bg-yellow-700 text-white font-bold py-2 px-4 rounded-lg">
-                            Use Access Code
+                            🎁 Use Elite Code
                         </button>
                         <button onclick="showPricing()" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded-lg">
                             Subscribe
                         </button>
                     </div>
                 </div>'''
+    elif user_plan == 'demo':
+        html += f'''<div class="bg-green-900 bg-opacity-50 rounded-lg p-6 text-center mb-6">
+                    <h3 class="text-xl font-bold text-white mb-2">🆓 Free Demo Upload</h3>
+                    <p class="text-gray-300 mb-4">Try our AI analysis with 1 free upload! Limited breakdown included.</p>
+                    <p class="text-yellow-300 text-sm">After this, use an elite access code or subscribe for unlimited uploads.</p>
+                </div>
+                <div class="text-center">
+                    <input type="file" id="videoFile" accept="video/*" class="mb-4 text-white">
+                    <br>
+                    <p class="text-orange-300 text-sm mb-4">🆓 Demo Plan - Basic analysis (upgrade for full features)</p>
+                    <button onclick="analyzeVideo()" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-8 rounded-lg">
+                        🤖 Try AI Analysis
+                    </button>
+                </div>'''
     else:
         html += f'''<div class="text-center">
                     <input type="file" id="videoFile" accept="video/*" class="mb-4 text-white">
                     <br>
-                    <p class="text-green-300 text-sm mb-4">✅ {user_plan.title()} Plan - Real analysis</p>
+                    <p class="text-green-300 text-sm mb-4">✅ {user_plan.title()} Plan - Full analysis</p>
                     <button onclick="analyzeVideo()" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-8 rounded-lg">
                         🤖 Analyze Techniques
                     </button>'''
@@ -499,7 +532,7 @@ def home():
                 const result = await response.json();
                 
                 if (result.success) {
-                    alert('✅ Code redeemed! Refreshing...');
+                    alert('🎉 Elite access activated! Refreshing...');
                     location.reload();
                 } else {
                     alert('❌ ' + result.message);
@@ -510,14 +543,13 @@ def home():
         }
 
         function subscribePlan(plan) {
-            alert(`🚀 Subscribing to ${plan.toUpperCase()}!\\n\\nPayment integration would go here.\\n\\nFor demo: use BJJ2024FREE`);
+            alert(`🚀 Subscribing to ${plan.toUpperCase()}!\\n\\nPayment integration would go here.\\n\\nFor demo: use BJJ2024FREE for elite access`);
         }
 
         async function analyzeVideo() {
             const fileInput = document.getElementById('videoFile');
             if (!fileInput.files[0]) return alert('Select a video first!');
 
-            document.getElementById('upload-section').classList.add('hidden');
             document.getElementById('progress-section').classList.remove('hidden');
 
             let progress = 0;
@@ -546,6 +578,12 @@ def home():
                 });
 
                 const results = await response.json();
+                if (results.error) {
+                    alert('❌ ' + results.error);
+                    resetApp();
+                    return;
+                }
+                
                 displayResults(results);
             } catch (error) {
                 alert('Analysis failed: ' + error.message);
@@ -763,7 +801,6 @@ def home():
         }
 
         function resetApp() {
-            document.getElementById('upload-section').classList.remove('hidden');
             document.getElementById('progress-section').classList.add('hidden');
             document.getElementById('results-section').classList.add('hidden');
             document.getElementById('videoFile').value = '';
@@ -788,7 +825,7 @@ def redeem_code():
     if code in access_codes and access_codes[code]['uses'] > 0:
         access_codes[code]['uses'] -= 1
         users[user_id]['plan'] = access_codes[code]['plan']
-        return jsonify({'success': True, 'message': f'Code redeemed! You now have {access_codes[code]["plan"]} access.'})
+        return jsonify({'success': True, 'message': f'Elite access activated! You now have unlimited uploads with full analysis.'})
     else:
         return jsonify({'success': False, 'message': 'Invalid or expired access code'})
 
@@ -797,10 +834,13 @@ def analyze():
     user_id = get_user_id()
     user_plan = users[user_id]['plan']
     
+    # Demo users get 1 free upload
     if user_plan == 'demo':
-        return jsonify({'error': 'Please use access code or subscribe first'}), 403
+        demo_uploads_used = len(user_videos.get(user_id, []))
+        if demo_uploads_used >= 1:
+            return jsonify({'error': 'Demo limit reached! Use elite access code or subscribe for unlimited uploads.'}), 403
     
-    # Check monthly limit for free users
+    # Check monthly limit for free users (if we had a free plan)
     if user_plan == 'free':
         current_month = datetime.now().strftime('%Y-%m')
         monthly_videos = [v for v in user_videos.get(user_id, []) if v.get('timestamp', '').startswith(current_month)]

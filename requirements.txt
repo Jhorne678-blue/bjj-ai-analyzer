@@ -1,4 +1,7 @@
-Flask
-Werkzeug
+flask
 gunicorn
+werkzeug
 opencv-python-headless
+mediapipe
+yt-dlp
+numpy

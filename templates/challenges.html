@@ -1,0 +1,221 @@
+{% extends "base.html" %}
+
+{% block title %}Challenges - BJJ AI Analyzer{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 py-8">
+    <!-- Header -->
+    <div class="text-center mb-12">
+        <h1 class="text-4xl font-bold text-gray-900 mb-4">
+            <i class="fas fa-trophy text-yellow-500 mr-3"></i>
+            BJJ Training Challenges
+        </h1>
+        <p class="text-xl text-gray-600 max-w-3xl mx-auto">
+            Complete daily, weekly, and monthly challenges to improve your skills and earn points. 
+            Track your progress and compete with the community!
+        </p>
+    </div>
+    
+    <!-- Challenge Categories -->
+    <div class="grid md:grid-cols-3 gap-8 mb-12">
+        <!-- Daily Challenges -->
+        <div class="bg-gradient-to-br from-green-50 to-blue-50 rounded-xl p-6">
+            <div class="text-center mb-6">
+                <div class="bg-green-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <i class="fas fa-calendar-day text-green-600 text-2xl"></i>
+                </div>
+                <h2 class="text-2xl font-bold text-gray-900">Daily Challenges</h2>
+                <p class="text-gray-600">Quick drills to build consistent habits</p>
+            </div>
+            
+            <div class="space-y-4">
+                {% for challenge in challenges if challenge.challenge_type == 'daily' %}
+                <div class="bg-white rounded-lg p-4 border border-green-200">
+                    <div class="flex items-center justify-between mb-2">
+                        <h3 class="font-semibold text-gray-900">{{ challenge.title }}</h3>
+                        <span class="bg-green-100 text-green-800 px-2 py-1 rounded text-xs font-medium">
+                            {{ challenge.points }} pts
+                        </span>
+                    </div>
+                    <p class="text-sm text-gray-600 mb-3">{{ challenge.description }}</p>
+                    
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs text-gray-500 capitalize">{{ challenge.difficulty }}</span>
+                        {% if challenge.id in completed %}
+                            <span class="bg-green-500 text-white px-3 py-1 rounded text-xs font-medium">
+                                <i class="fas fa-check mr-1"></i>Completed
+                            </span>
+                        {% else %}
+                            <button class="bg-green-600 text-white px-3 py-1 rounded text-xs hover:bg-green-700 transition-colors">
+                                Start Challenge
+                            </button>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        
+        <!-- Weekly Challenges -->
+        <div class="bg-gradient-to-br from-blue-50 to-purple-50 rounded-xl p-6">
+            <div class="text-center mb-6">
+                <div class="bg-blue-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <i class="fas fa-calendar-week text-blue-600 text-2xl"></i>
+                </div>
+                <h2 class="text-2xl font-bold text-gray-900">Weekly Challenges</h2>
+                <p class="text-gray-600">More intensive training goals</p>
+            </div>
+            
+            <div class="space-y-4">
+                {% for challenge in challenges if challenge.challenge_type == 'weekly' %}
+                <div class="bg-white rounded-lg p-4 border border-blue-200">
+                    <div class="flex items-center justify-between mb-2">
+                        <h3 class="font-semibold text-gray-900">{{ challenge.title }}</h3>
+                        <span class="bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs font-medium">
+                            {{ challenge.points }} pts
+                        </span>
+                    </div>
+                    <p class="text-sm text-gray-600 mb-3">{{ challenge.description }}</p>
+                    
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs text-gray-500 capitalize">{{ challenge.difficulty }}</span>
+                        {% if challenge.id in completed %}
+                            <span class="bg-blue-500 text-white px-3 py-1 rounded text-xs font-medium">
+                                <i class="fas fa-check mr-1"></i>Completed
+                            </span>
+                        {% else %}
+                            <button class="bg-blue-600 text-white px-3 py-1 rounded text-xs hover:bg-blue-700 transition-colors">
+                                Start Challenge
+                            </button>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        
+        <!-- Monthly Challenges -->
+        <div class="bg-gradient-to-br from-purple-50 to-red-50 rounded-xl p-6">
+            <div class="text-center mb-6">
+                <div class="bg-purple-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <i class="fas fa-calendar-alt text-purple-600 text-2xl"></i>
+                </div>
+                <h2 class="text-2xl font-bold text-gray-900">Monthly Challenges</h2>
+                <p class="text-gray-600">Major skill development projects</p>
+            </div>
+            
+            <div class="space-y-4">
+                {% for challenge in challenges if challenge.challenge_type == 'monthly' %}
+                <div class="bg-white rounded-lg p-4 border border-purple-200">
+                    <div class="flex items-center justify-between mb-2">
+                        <h3 class="font-semibold text-gray-900">{{ challenge.title }}</h3>
+                        <span class="bg-purple-100 text-purple-800 px-2 py-1 rounded text-xs font-medium">
+                            {{ challenge.points }} pts
+                        </span>
+                    </div>
+                    <p class="text-sm text-gray-600 mb-3">{{ challenge.description }}</p>
+                    
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs text-gray-500 capitalize">{{ challenge.difficulty }}</span>
+                        {% if challenge.id in completed %}
+                            <span class="bg-purple-500 text-white px-3 py-1 rounded text-xs font-medium">
+                                <i class="fas fa-check mr-1"></i>Completed
+                            </span>
+                        {% else %}
+                            <button class="bg-purple-600 text-white px-3 py-1 rounded text-xs hover:bg-purple-700 transition-colors">
+                                Start Challenge
+                            </button>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    
+    <!-- Progress Section -->
+    <div class="bg-white rounded-xl shadow-md p-8 mb-8">
+        <h2 class="text-2xl font-bold text-gray-900 mb-6">Your Progress</h2>
+        
+        <div class="grid md:grid-cols-4 gap-6">
+            <div class="text-center">
+                <div class="text-3xl font-bold text-green-600">{{ completed|length }}</div>
+                <div class="text-sm text-gray-600">Challenges Completed</div>
+            </div>
+            <div class="text-center">
+                <div class="text-3xl font-bold text-blue-600">
+                    {% set total_points = completed.values() | map(attribute='points_earned') | sum %}
+                    {{ total_points or 0 }}
+                </div>
+                <div class="text-sm text-gray-600">Points Earned</div>
+            </div>
+            <div class="text-center">
+                <div class="text-3xl font-bold text-purple-600">
+                    {% set streak = 7 %}{{ streak }}
+                </div>
+                <div class="text-sm text-gray-600">Day Streak</div>
+            </div>
+            <div class="text-center">
+                <div class="text-3xl font-bold text-yellow-600">
+                    {% set rank = 42 %}#{{ rank }}
+                </div>
+                <div class="text-sm text-gray-600">Global Rank</div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Challenge Tips -->
+    <div class="bg-gradient-to-r from-yellow-50 to-orange-50 rounded-xl p-8">
+        <h2 class="text-2xl font-bold text-gray-900 mb-6">
+            <i class="fas fa-lightbulb text-yellow-500 mr-2"></i>
+            Challenge Tips & Strategies
+        </h2>
+        
+        <div class="grid md:grid-cols-2 gap-8">
+            <div>
+                <h3 class="text-lg font-semibold text-gray-900 mb-4">Maximizing Your Training</h3>
+                <ul class="space-y-3 text-gray-700">
+                    <li class="flex items-start">
+                        <i class="fas fa-check text-green-500 mr-2 mt-1"></i>
+                        <span>Record yourself during challenge attempts for better AI analysis</span>
+                    </li>
+                    <li class="flex items-start">
+                        <i class="fas fa-check text-green-500 mr-2 mt-1"></i>
+                        <span>Focus on technique quality over speed for higher confidence scores</span>
+                    </li>
+                    <li class="flex items-start">
+                        <i class="fas fa-check text-green-500 mr-2 mt-1"></i>
+                        <span>Complete daily challenges consistently to build habits</span>
+                    </li>
+                    <li class="flex items-start">
+                        <i class="fas fa-check text-green-500 mr-2 mt-1"></i>
+                        <span>Use good lighting and camera angles for better detection</span>
+                    </li>
+                </ul>
+            </div>
+            
+            <div>
+                <h3 class="text-lg font-semibold text-gray-900 mb-4">Point System</h3>
+                <div class="space-y-3">
+                    <div class="flex justify-between items-center bg-white rounded-lg p-3">
+                        <span class="text-gray-700">Daily Challenge</span>
+                        <span class="font-semibold text-green-600">10-15 points</span>
+                    </div>
+                    <div class="flex justify-between items-center bg-white rounded-lg p-3">
+                        <span class="text-gray-700">Weekly Challenge</span>
+                        <span class="font-semibold text-blue-600">50-75 points</span>
+                    </div>
+                    <div class="flex justify-between items-center bg-white rounded-lg p-3">
+                        <span class="text-gray-700">Monthly Challenge</span>
+                        <span class="font-semibold text-purple-600">100+ points</span>
+                    </div>
+                    <div class="flex justify-between items-center bg-white rounded-lg p-3">
+                        <span class="text-gray-700">Bonus for High Quality</span>
+                        <span class="font-semibold text-yellow-600">+20% points</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

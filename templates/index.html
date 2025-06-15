@@ -1,78 +1,509 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BJJ AI Analyzer - Professional BJJ Video Analysis</title>
-    <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; }
-        .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
-        .hero { text-align: center; color: white; padding: 100px 20px; }
-        .hero h1 { font-size: 3.5rem; margin-bottom: 20px; font-weight: 700; }
-        .hero p { font-size: 1.3rem; margin-bottom: 30px; opacity: 0.9; }
-        .hero .subtitle { font-size: 1.1rem; margin-bottom: 40px; opacity: 0.8; }
-        .btn { display: inline-block; background: white; color: #667eea; padding: 15px 30px; text-decoration: none; border-radius: 12px; font-weight: 600; margin: 10px; transition: all 0.3s ease; box-shadow: 0 4px 15px rgba(0,0,0,0.2); }
-        .btn:hover { transform: translateY(-3px); box-shadow: 0 8px 25px rgba(0,0,0,0.3); }
-        .btn-primary { background: #10b981; color: white; }
-        .features { background: white; padding: 80px 20px; }
-        .features h2 { text-align: center; margin-bottom: 50px; font-size: 2.5rem; color: #1a202c; }
-        .feature-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 40px; }
-        .feature { text-align: center; padding: 40px 30px; border-radius: 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); transition: transform 0.3s ease; }
-        .feature:hover { transform: translateY(-8px); }
-        .feature h3 { margin-bottom: 20px; color: #1a202c; font-size: 1.5rem; }
-        .feature p { color: #64748b; line-height: 1.6; font-size: 1.1rem; }
-        .stats { display: flex; justify-content: center; gap: 60px; margin: 40px 0; }
-        .stat { text-align: center; }
-        .stat-number { font-size: 2.5rem; font-weight: 700; margin-bottom: 8px; }
-        .stat-label { opacity: 0.8; }
-    </style>
-</head>
-<body>
-    <div class="hero">
-        <div class="container">
-            <h1>🥋 BJJ AI Analyzer</h1>
-            <p>Professional Brazilian Jiu-Jitsu Video Analysis Powered by AI</p>
-            <p class="subtitle">Join thousands of athletes improving their game with intelligent video analysis</p>
-            
-            <div class="stats">
-                <div class="stat">
-                    <div class="stat-number">10,000+</div>
-                    <div class="stat-label">Athletes</div>
-                </div>
-                <div class="stat">
-                    <div class="stat-number">50,000+</div>
-                    <div class="stat-label">Videos Analyzed</div>
-                </div>
-                <div class="stat">
-                    <div class="stat-number">80+</div>
-                    <div class="stat-label">Techniques Detected</div>
-                </div>
-            </div>
-            
-            <a href="/signup" class="btn btn-primary">Start Free Analysis</a>
-            <a href="/login" class="btn">Login</a>
+{% extends "base.html" %}
+
+{% block title %}BJJ AI Analyzer - Professional Brazilian Jiu-Jitsu Video Analysis{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<section class="gradient-bg text-white py-20">
+    <div class="max-w-7xl mx-auto px-4 text-center">
+        <h1 class="text-5xl md:text-6xl font-bold mb-6">
+            Professional Brazilian Jiu-Jitsu Video Analysis 
+            <span class="text-yellow-300">Powered by AI</span>
+        </h1>
+        <p class="text-xl md:text-2xl mb-8 opacity-90 max-w-3xl mx-auto">
+            Join thousands of athletes improving their game with intelligent video analysis. 
+            Advanced computer vision detects BJJ techniques including submissions, sweeps, guard passes, and takedowns with high precision.
+        </p>
+        
+        <!-- CTA Buttons -->
+        <div class="flex flex-col sm:flex-row gap-4 justify-center mb-12">
+            <a href="{{ url_for('auth') }}" 
+               class="bg-white text-purple-600 px-8 py-4 rounded-lg font-semibold text-lg hover:bg-gray-100 transition-colors inline-flex items-center justify-center">
+                <i class="fas fa-rocket mr-2"></i>
+                Start Free Analysis
+            </a>
+            <button onclick="scrollToDemo()" 
+                    class="border-2 border-white text-white px-8 py-4 rounded-lg font-semibold text-lg hover:bg-white hover:text-purple-600 transition-colors inline-flex items-center justify-center">
+                <i class="fas fa-play mr-2"></i>
+                Watch Demo
+            </button>
         </div>
-    </div>
-    
-    <div class="features">
-        <div class="container">
-            <h2>Advanced BJJ Analysis Features</h2>
-            <div class="feature-grid">
-                <div class="feature">
-                    <h3>🤖 AI-Powered Detection</h3>
-                    <p>Advanced computer vision detects BJJ techniques including submissions, sweeps, guard passes, and takedowns with high precision.</p>
-                </div>
-                <div class="feature">
-                    <h3>⏱️ Precise Timing</h3>
-                    <p>Get exact timestamps for technique setups, executions, and transitions to improve your timing and flow.</p>
-                </div>
-                <div class="feature">
-                    <h3>📊 Performance Tracking</h3>
-                    <p>Track your progress over time with detailed analytics on technique success rates and improvement areas.</p>
-                </div>
+        
+        <!-- Social Proof -->
+        <div class="flex items-center justify-center space-x-8 opacity-80">
+            <div class="text-center">
+                <div class="text-3xl font-bold">10,000+</div>
+                <div class="text-sm">Videos Analyzed</div>
+            </div>
+            <div class="text-center">
+                <div class="text-3xl font-bold">85+</div>
+                <div class="text-sm">Techniques Detected</div>
+            </div>
+            <div class="text-center">
+                <div class="text-3xl font-bold">5,000+</div>
+                <div class="text-sm">Happy Athletes</div>
             </div>
         </div>
     </div>
-</body>
-</html>
+</section>
+
+<!-- Features Section -->
+<section class="py-20 bg-white">
+    <div class="max-w-7xl mx-auto px-4">
+        <div class="text-center mb-16">
+            <h2 class="text-4xl font-bold text-gray-900 mb-4">
+                Advanced AI Video Analysis
+            </h2>
+            <p class="text-xl text-gray-600 max-w-3xl mx-auto">
+                Get exact timestamps for technique setups, executions, and transitions to improve your timing and flow.
+                Track your progress over time with detailed analytics on technique success rates and improvement areas.
+            </p>
+        </div>
+        
+        <div class="grid md:grid-cols-3 gap-8">
+            <!-- Feature 1 -->
+            <div class="bg-gradient-to-br from-purple-50 to-blue-50 rounded-xl p-8 card-hover">
+                <div class="bg-purple-100 w-16 h-16 rounded-lg flex items-center justify-center mb-6">
+                    <i class="fas fa-brain text-purple-600 text-2xl"></i>
+                </div>
+                <h3 class="text-xl font-semibold text-gray-900 mb-4">Real-Time Technique Detection</h3>
+                <p class="text-gray-600 mb-4">
+                    Our advanced computer vision AI identifies 80+ BJJ techniques including submissions, sweeps, 
+                    guard passes, takedowns, and transitions with up to 95% accuracy.
+                </p>
+                <ul class="text-sm text-gray-600 space-y-2">
+                    <li class="flex items-center"><i class="fas fa-check text-green-500 mr-2"></i>Submissions (chokes, joint locks)</li>
+                    <li class="flex items-center"><i class="fas fa-check text-green-500 mr-2"></i>Sweeps and reversals</li>
+                    <li class="flex items-center"><i class="fas fa-check text-green-500 mr-2"></i>Guard passes and retention</li>
+                    <li class="flex items-center"><i class="fas fa-check text-green-500 mr-2"></i>Takedowns and throws</li>
+                </ul>
+            </div>
+            
+            <!-- Feature 2 -->
+            <div class="bg-gradient-to-br from-green-50 to-blue-50 rounded-xl p-8 card-hover">
+                <div class="bg-green-100 w-16 h-16 rounded-lg flex items-center justify-center mb-6">
+                    <i class="fas fa-chart-line text-green-600 text-2xl"></i>
+                </div>
+                <h3 class="text-xl font-semibold text-gray-900 mb-4">Detailed Performance Analytics</h3>
+                <p class="text-gray-600 mb-4">
+                    Get comprehensive breakdowns of your performance with confidence scores, 
+                    technique frequency analysis, and personalized improvement recommendations.
+                </p>
+                <ul class="text-sm text-gray-600 space-y-2">
+                    <li class="flex items-center"><i class="fas fa-check text-green-500 mr-2"></i>Technique confidence scoring</li>
+                    <li class="flex items-center"><i class="fas fa-check text-green-500 mr-2"></i>Time-stamped breakdowns</li>
+                    <li class="flex items-center"><i class="fas fa-check text-green-500 mr-2"></i>Progress tracking over time</li>
+                    <li class="flex items-center"><i class="fas fa-check text-green-500 mr-2"></i>Personalized insights</li>
+                </ul>
+            </div>
+            
+            <!-- Feature 3 -->
+            <div class="bg-gradient-to-br from-yellow-50 to-red-50 rounded-xl p-8 card-hover">
+                <div class="bg-yellow-100 w-16 h-16 rounded-lg flex items-center justify-center mb-6">
+                    <i class="fas fa-video text-yellow-600 text-2xl"></i>
+                </div>
+                <h3 class="text-xl font-semibold text-gray-900 mb-4">Automatic Video Clips</h3>
+                <p class="text-gray-600 mb-4">
+                    Black Belt tier automatically extracts and creates individual clips for each detected technique, 
+                    perfect for studying specific movements and sharing highlights.
+                </p>
+                <ul class="text-sm text-gray-600 space-y-2">
+                    <li class="flex items-center"><i class="fas fa-check text-green-500 mr-2"></i>Auto-generated technique clips</li>
+                    <li class="flex items-center"><i class="fas fa-check text-green-500 mr-2"></i>Downloadable highlights</li>
+                    <li class="flex items-center"><i class="fas fa-check text-green-500 mr-2"></i>Social media ready</li>
+                    <li class="flex items-center"><i class="fas fa-check text-green-500 mr-2"></i>Training review tools</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Demo Section -->
+<section id="demo-section" class="py-20 bg-gray-50">
+    <div class="max-w-7xl mx-auto px-4">
+        <div class="text-center mb-16">
+            <h2 class="text-4xl font-bold text-gray-900 mb-4">See It In Action</h2>
+            <p class="text-xl text-gray-600">
+                Watch our AI analyze a real BJJ training session in real-time
+            </p>
+        </div>
+        
+        <div class="bg-white rounded-xl shadow-xl p-8">
+            <!-- Demo Video Placeholder -->
+            <div class="bg-gray-900 rounded-lg mb-8 relative overflow-hidden" style="padding-bottom: 56.25%;">
+                <div class="absolute inset-0 flex items-center justify-center">
+                    <button id="demo-play-btn" class="bg-white bg-opacity-20 hover:bg-opacity-30 rounded-full p-6 transition-all">
+                        <i class="fas fa-play text-white text-3xl ml-1"></i>
+                    </button>
+                </div>
+                <div class="absolute bottom-4 left-4 right-4">
+                    <div class="bg-black bg-opacity-50 rounded-lg p-4 text-white">
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="text-sm">BJJ Training Session Analysis</span>
+                            <span class="text-sm">5:23 / 15:47</span>
+                        </div>
+                        <div class="bg-gray-600 rounded-full h-1">
+                            <div class="bg-purple-500 h-1 rounded-full" style="width: 34%"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Demo Results -->
+            <div class="grid md:grid-cols-2 gap-8">
+                <div>
+                    <h3 class="text-xl font-semibold text-gray-900 mb-4">Detected Techniques</h3>
+                    <div class="space-y-3">
+                        <div class="bg-purple-50 rounded-lg p-4 border-l-4 border-purple-500">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <h4 class="font-medium text-gray-900">Armbar from Guard</h4>
+                                    <p class="text-sm text-gray-600">2:15 - 2:28 (13s)</p>
+                                </div>
+                                <span class="bg-green-100 text-green-800 px-2 py-1 rounded text-sm font-medium">
+                                    92% confidence
+                                </span>
+                            </div>
+                        </div>
+                        
+                        <div class="bg-blue-50 rounded-lg p-4 border-l-4 border-blue-500">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <h4 class="font-medium text-gray-900">Hip Escape</h4>
+                                    <p class="text-sm text-gray-600">3:42 - 3:48 (6s)</p>
+                                </div>
+                                <span class="bg-green-100 text-green-800 px-2 py-1 rounded text-sm font-medium">
+                                    88% confidence
+                                </span>
+                            </div>
+                        </div>
+                        
+                        <div class="bg-green-50 rounded-lg p-4 border-l-4 border-green-500">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <h4 class="font-medium text-gray-900">Scissor Sweep</h4>
+                                    <p class="text-sm text-gray-600">5:01 - 5:12 (11s)</p>
+                                </div>
+                                <span class="bg-green-100 text-green-800 px-2 py-1 rounded text-sm font-medium">
+                                    85% confidence
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div>
+                    <h3 class="text-xl font-semibold text-gray-900 mb-4">Analysis Summary</h3>
+                    <div class="space-y-4">
+                        <div class="bg-gray-50 rounded-lg p-4">
+                            <div class="flex items-center justify-between mb-2">
+                                <span class="text-sm text-gray-600">Total Techniques</span>
+                                <span class="font-semibold">12</span>
+                            </div>
+                            <div class="flex items-center justify-between mb-2">
+                                <span class="text-sm text-gray-600">Average Confidence</span>
+                                <span class="font-semibold">87%</span>
+                            </div>
+                            <div class="flex items-center justify-between mb-2">
+                                <span class="text-sm text-gray-600">Techniques per Minute</span>
+                                <span class="font-semibold">2.3</span>
+                            </div>
+                            <div class="flex items-center justify-between">
+                                <span class="text-sm text-gray-600">Top Category</span>
+                                <span class="font-semibold">Guard Work</span>
+                            </div>
+                        </div>
+                        
+                        <div class="bg-yellow-50 rounded-lg p-4 border border-yellow-200">
+                            <h4 class="font-medium text-yellow-800 mb-2">💡 AI Insights</h4>
+                            <p class="text-sm text-yellow-700">
+                                Strong guard game with excellent hip escape execution. 
+                                Consider working on submission setups from mount position.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Pricing Section -->
+<section class="py-20 bg-white">
+    <div class="max-w-7xl mx-auto px-4">
+        <div class="text-center mb-16">
+            <h2 class="text-4xl font-bold text-gray-900 mb-4">
+                Choose Your Training Plan
+            </h2>
+            <p class="text-xl text-gray-600">
+                Start free and upgrade as your training evolves
+            </p>
+        </div>
+        
+        <div class="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
+            <!-- Free Plan -->
+            <div class="bg-white rounded-xl border border-gray-200 p-8 hover:shadow-lg transition-shadow">
+                <div class="text-center">
+                    <h3 class="text-2xl font-bold text-gray-900 mb-2">Free</h3>
+                    <div class="text-4xl font-bold text-gray-900 mb-4">$0<span class="text-lg font-normal text-gray-600">/month</span></div>
+                    <p class="text-gray-600 mb-6">Perfect for getting started</p>
+                </div>
+                
+                <ul class="space-y-3 mb-8">
+                    <li class="flex items-center">
+                        <i class="fas fa-check text-green-500 mr-3"></i>
+                        <span class="text-gray-700">3 video uploads per month</span>
+                    </li>
+                    <li class="flex items-center">
+                        <i class="fas fa-check text-green-500 mr-3"></i>
+                        <span class="text-gray-700">Basic technique detection</span>
+                    </li>
+                    <li class="flex items-center">
+                        <i class="fas fa-check text-green-500 mr-3"></i>
+                        <span class="text-gray-700">Performance summaries</span>
+                    </li>
+                    <li class="flex items-center">
+                        <i class="fas fa-check text-green-500 mr-3"></i>
+                        <span class="text-gray-700">Daily challenges</span>
+                    </li>
+                </ul>
+                
+                <a href="{{ url_for('auth') }}" 
+                   class="w-full bg-gray-100 text-gray-800 py-3 px-4 rounded-lg text-center font-medium hover:bg-gray-200 transition-colors block">
+                    Get Started Free
+                </a>
+            </div>
+            
+            <!-- Pro Plan -->
+            <div class="bg-white rounded-xl border-2 border-blue-500 p-8 hover:shadow-lg transition-shadow relative">
+                <div class="absolute -top-4 left-1/2 transform -translate-x-1/2">
+                    <span class="bg-blue-500 text-white px-4 py-1 rounded-full text-sm font-medium">MOST POPULAR</span>
+                </div>
+                
+                <div class="text-center">
+                    <h3 class="text-2xl font-bold text-gray-900 mb-2">Pro</h3>
+                    <div class="text-4xl font-bold text-gray-900 mb-4">$19<span class="text-lg font-normal text-gray-600">/month</span></div>
+                    <p class="text-gray-600 mb-6">For serious practitioners</p>
+                </div>
+                
+                <ul class="space-y-3 mb-8">
+                    <li class="flex items-center">
+                        <i class="fas fa-check text-green-500 mr-3"></i>
+                        <span class="text-gray-700">Unlimited video uploads</span>
+                    </li>
+                    <li class="flex items-center">
+                        <i class="fas fa-check text-green-500 mr-3"></i>
+                        <span class="text-gray-700">Advanced technique analysis</span>
+                    </li>
+                    <li class="flex items-center">
+                        <i class="fas fa-check text-green-500 mr-3"></i>
+                        <span class="text-gray-700">Detailed progress tracking</span>
+                    </li>
+                    <li class="flex items-center">
+                        <i class="fas fa-check text-green-500 mr-3"></i>
+                        <span class="text-gray-700">YouTube video analysis</span>
+                    </li>
+                    <li class="flex items-center">
+                        <i class="fas fa-check text-green-500 mr-3"></i>
+                        <span class="text-gray-700">Weekly/Monthly challenges</span>
+                    </li>
+                </ul>
+                
+                <a href="{{ url_for('auth') }}" 
+                   class="w-full bg-blue-600 text-white py-3 px-4 rounded-lg text-center font-medium hover:bg-blue-700 transition-colors block">
+                    Start Pro Trial
+                </a>
+            </div>
+            
+            <!-- Black Belt Plan -->
+            <div class="bg-black text-white rounded-xl p-8 hover:shadow-lg transition-shadow relative">
+                <div class="absolute -top-4 left-1/2 transform -translate-x-1/2">
+                    <span class="bg-yellow-500 text-black px-4 py-1 rounded-full text-sm font-bold">PREMIUM</span>
+                </div>
+                
+                <div class="text-center">
+                    <h3 class="text-2xl font-bold mb-2">Black Belt</h3>
+                    <div class="text-4xl font-bold mb-4">$39<span class="text-lg font-normal text-gray-300">/month</span></div>
+                    <p class="text-gray-300 mb-6">For elite athletes & coaches</p>
+                </div>
+                
+                <ul class="space-y-3 mb-8">
+                    <li class="flex items-center">
+                        <i class="fas fa-check text-yellow-400 mr-3"></i>
+                        <span>Everything in Pro</span>
+                    </li>
+                    <li class="flex items-center">
+                        <i class="fas fa-check text-yellow-400 mr-3"></i>
+                        <span>Automatic video clip extraction</span>
+                    </li>
+                    <li class="flex items-center">
+                        <i class="fas fa-check text-yellow-400 mr-3"></i>
+                        <span>Generate friend codes</span>
+                    </li>
+                    <li class="flex items-center">
+                        <i class="fas fa-check text-yellow-400 mr-3"></i>
+                        <span>Priority customer support</span>
+                    </li>
+                    <li class="flex items-center">
+                        <i class="fas fa-check text-yellow-400 mr-3"></i>
+                        <span>Advanced analytics dashboard</span>
+                    </li>
+                </ul>
+                
+                <a href="{{ url_for('auth') }}" 
+                   class="w-full bg-yellow-500 text-black py-3 px-4 rounded-lg text-center font-medium hover:bg-yellow-400 transition-colors block">
+                    Go Black Belt
+                </a>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Testimonials Section -->
+<section class="py-20 bg-gray-50">
+    <div class="max-w-7xl mx-auto px-4">
+        <div class="text-center mb-16">
+            <h2 class="text-4xl font-bold text-gray-900 mb-4">
+                Trusted by Athletes Worldwide
+            </h2>
+            <p class="text-xl text-gray-600">
+                See what our community says about BJJ AI Analyzer
+            </p>
+        </div>
+        
+        <div class="grid md:grid-cols-3 gap-8">
+            <div class="bg-white rounded-xl p-8 shadow-md">
+                <div class="flex items-center mb-4">
+                    <div class="flex text-yellow-400">
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                    </div>
+                </div>
+                <p class="text-gray-700 mb-4">
+                    "This AI is incredible! It caught techniques I didn't even realize I was doing. 
+                    My guard game has improved dramatically since using BJJ AI Analyzer."
+                </p>
+                <div class="flex items-center">
+                    <div class="w-10 h-10 bg-purple-500 rounded-full flex items-center justify-center text-white font-bold mr-3">
+                        M
+                    </div>
+                    <div>
+                        <div class="font-semibold text-gray-900">Marcus Silva</div>
+                        <div class="text-sm text-gray-600">Purple Belt, 5 years training</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="bg-white rounded-xl p-8 shadow-md">
+                <div class="flex items-center mb-4">
+                    <div class="flex text-yellow-400">
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                    </div>
+                </div>
+                <p class="text-gray-700 mb-4">
+                    "As a coach, this tool helps me analyze my students' performance objectively. 
+                    The detailed breakdowns save me hours of video review."
+                </p>
+                <div class="flex items-center">
+                    <div class="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center text-white font-bold mr-3">
+                        S
+                    </div>
+                    <div>
+                        <div class="font-semibold text-gray-900">Sarah Johnson</div>
+                        <div class="text-sm text-gray-600">Black Belt, Head Coach</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="bg-white rounded-xl p-8 shadow-md">
+                <div class="flex items-center mb-4">
+                    <div class="flex text-yellow-400">
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                    </div>
+                </div>
+                <p class="text-gray-700 mb-4">
+                    "The automatic video clips are a game-changer! I can easily share my best moments 
+                    and study specific techniques in detail."
+                </p>
+                <div class="flex items-center">
+                    <div class="w-10 h-10 bg-green-500 rounded-full flex items-center justify-center text-white font-bold mr-3">
+                        R
+                    </div>
+                    <div>
+                        <div class="font-semibold text-gray-900">Roberto Martinez</div>
+                        <div class="text-sm text-gray-600">Brown Belt, Competitor</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- CTA Section -->
+<section class="py-20 gradient-bg text-white">
+    <div class="max-w-4xl mx-auto px-4 text-center">
+        <h2 class="text-4xl font-bold mb-6">
+            Ready to Revolutionize Your BJJ Training?
+        </h2>
+        <p class="text-xl mb-8 opacity-90">
+            Join thousands of athletes already using AI to improve their Brazilian Jiu-Jitsu game. 
+            Start your free analysis today and see the difference intelligent training makes.
+        </p>
+        
+        <div class="flex flex-col sm:flex-row gap-4 justify-center">
+            <a href="{{ url_for('auth') }}" 
+               class="bg-white text-purple-600 px-8 py-4 rounded-lg font-semibold text-lg hover:bg-gray-100 transition-colors inline-flex items-center justify-center">
+                <i class="fas fa-rocket mr-2"></i>
+                Start Free Trial
+            </a>
+            <a href="#demo-section" 
+               class="border-2 border-white text-white px-8 py-4 rounded-lg font-semibold text-lg hover:bg-white hover:text-purple-600 transition-colors inline-flex items-center justify-center">
+                <i class="fas fa-question-circle mr-2"></i>
+                Learn More
+            </a>
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function scrollToDemo() {
+    document.getElementById('demo-section').scrollIntoView({ 
+        behavior: 'smooth' 
+    });
+}
+
+// Demo video play button
+document.getElementById('demo-play-btn').addEventListener('click', function() {
+    // For demo purposes, just show a notification
+    showNotification('Demo video would start here! Sign up to upload your own videos.', 'info');
+});
+
+// Smooth scrolling for anchor links
+document.addEventListener('DOMContentLoaded', function() {
+    const links = document.querySelectorAll('a[href^="#"]');
+    links.forEach(link => {
+        link.addEventListener('click', function(e) {
+            e.preventDefault();
+            const targetId = this.getAttribute('href').substring(1);
+            const targetElement = document.getElementById(targetId);
+            if (targetElement) {
+                targetElement.scrollIntoView({ behavior: 'smooth' });
+            }
+        });
+    });
+});
+</script>
+{% endblock %}

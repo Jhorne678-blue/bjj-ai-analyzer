@@ -1,0 +1,320 @@
+{% extends "base.html" %}
+
+{% block title %}Leaderboards - BJJ AI Analyzer{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 py-8">
+    <!-- Header -->
+    <div class="text-center mb-12">
+        <h1 class="text-4xl font-bold text-gray-900 mb-4">
+            <i class="fas fa-medal text-yellow-500 mr-3"></i>
+            Community Leaderboards
+        </h1>
+        <p class="text-xl text-gray-600">
+            See how you rank against BJJ practitioners worldwide
+        </p>
+    </div>
+    
+    <!-- Tab Navigation -->
+    <div class="bg-white rounded-xl shadow-md mb-8">
+        <div class="border-b border-gray-200">
+            <nav class="flex space-x-8 px-6">
+                <button onclick="switchTab('points-leaderboard', this)" class="leaderboard-tab active py-4 px-2 border-b-2 border-transparent text-sm font-medium text-gray-500 hover:text-gray-700 hover:border-gray-300">
+                    <i class="fas fa-trophy mr-2"></i>Top Points
+                </button>
+                <button onclick="switchTab('uploads-leaderboard', this)" class="leaderboard-tab py-4 px-2 border-b-2 border-transparent text-sm font-medium text-gray-500 hover:text-gray-700 hover:border-gray-300">
+                    <i class="fas fa-video mr-2"></i>Most Uploads
+                </button>
+                <button onclick="switchTab('techniques-leaderboard', this)" class="leaderboard-tab py-4 px-2 border-b-2 border-transparent text-sm font-medium text-gray-500 hover:text-gray-700 hover:border-gray-300">
+                    <i class="fas fa-brain mr-2"></i>Most Techniques
+                </button>
+            </nav>
+        </div>
+        
+        <!-- Points Leaderboard -->
+        <div id="points-leaderboard" class="leaderboard-content p-6">
+            <h2 class="text-xl font-semibold text-gray-900 mb-6">Top Points Leaders</h2>
+            
+            {% if top_points %}
+                <div class="space-y-3">
+                    {% for user in top_points %}
+                    <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+                        <div class="flex items-center">
+                            <div class="flex-shrink-0 mr-4">
+                                {% if loop.index <= 3 %}
+                                    <div class="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold
+                                        {{ 'bg-yellow-500' if loop.index == 1 else 'bg-gray-400' if loop.index == 2 else 'bg-yellow-600' }}">
+                                        {% if loop.index == 1 %}🥇
+                                        {% elif loop.index == 2 %}🥈
+                                        {% else %}🥉
+                                        {% endif %}
+                                    </div>
+                                {% else %}
+                                    <div class="w-10 h-10 bg-gray-300 rounded-full flex items-center justify-center text-gray-700 font-bold">
+                                        {{ loop.index }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="flex items-center">
+                                <div class="w-10 h-10 bg-purple-600 rounded-full flex items-center justify-center text-white font-bold mr-3">
+                                    {{ user.username[0].upper() }}
+                                </div>
+                                <div>
+                                    <div class="font-medium text-gray-900">{{ user.username }}</div>
+                                    <div class="flex items-center">
+                                        {% if user.plan == 'blackbelt' %}
+                                            <span class="bg-black text-white px-2 py-1 rounded text-xs font-bold mr-2">BLACK BELT</span>
+                                        {% elif user.plan == 'pro' %}
+                                            <span class="bg-blue-500 text-white px-2 py-1 rounded text-xs font-bold mr-2">PRO</span>
+                                        {% else %}
+                                            <span class="bg-gray-400 text-white px-2 py-1 rounded text-xs font-bold mr-2">FREE</span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="text-right">
+                            <div class="text-lg font-bold text-gray-900">{{ user.total_uploads }} videos</div>
+                            <div class="text-sm text-gray-500">Training Machine</div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="text-center py-12">
+                    <i class="fas fa-video text-4xl text-gray-400 mb-4"></i>
+                    <p class="text-gray-600">No upload data available yet</p>
+                </div>
+            {% endif %}
+        </div>
+        
+        <!-- Techniques Leaderboard -->
+        <div id="techniques-leaderboard" class="leaderboard-content hidden p-6">
+            <h2 class="text-xl font-semibold text-gray-900 mb-6">Most Techniques Detected</h2>
+            
+            {% if top_techniques %}
+                <div class="space-y-3">
+                    {% for user in top_techniques %}
+                    <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+                        <div class="flex items-center">
+                            <div class="flex-shrink-0 mr-4">
+                                {% if loop.index <= 3 %}
+                                    <div class="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold
+                                        {{ 'bg-green-500' if loop.index == 1 else 'bg-green-400' if loop.index == 2 else 'bg-green-300' }}">
+                                        {{ loop.index }}
+                                    </div>
+                                {% else %}
+                                    <div class="w-10 h-10 bg-gray-300 rounded-full flex items-center justify-center text-gray-700 font-bold">
+                                        {{ loop.index }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="flex items-center">
+                                <div class="w-10 h-10 bg-green-600 rounded-full flex items-center justify-center text-white font-bold mr-3">
+                                    {{ user.username[0].upper() }}
+                                </div>
+                                <div>
+                                    <div class="font-medium text-gray-900">{{ user.username }}</div>
+                                    <div class="flex items-center">
+                                        {% if user.plan == 'blackbelt' %}
+                                            <span class="bg-black text-white px-2 py-1 rounded text-xs font-bold mr-2">BLACK BELT</span>
+                                        {% elif user.plan == 'pro' %}
+                                            <span class="bg-blue-500 text-white px-2 py-1 rounded text-xs font-bold mr-2">PRO</span>
+                                        {% else %}
+                                            <span class="bg-gray-400 text-white px-2 py-1 rounded text-xs font-bold mr-2">FREE</span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="text-right">
+                            <div class="text-lg font-bold text-gray-900">{{ user.technique_count }} techniques</div>
+                            <div class="text-sm text-gray-500">Technique Hunter</div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="text-center py-12">
+                    <i class="fas fa-brain text-4xl text-gray-400 mb-4"></i>
+                    <p class="text-gray-600">No technique data available yet</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+    
+    <!-- Current User Stats -->
+    <div class="bg-gradient-to-r from-purple-600 to-blue-600 rounded-xl p-8 text-white mb-8">
+        <h2 class="text-2xl font-bold mb-6">Your Current Ranking</h2>
+        
+        <div class="grid md:grid-cols-3 gap-6">
+            <div class="bg-white bg-opacity-20 rounded-lg p-6 text-center">
+                <div class="text-3xl font-bold mb-2">#42</div>
+                <div class="text-sm opacity-90">Points Ranking</div>
+                <div class="text-xs opacity-75 mt-1">Keep completing challenges!</div>
+            </div>
+            
+            <div class="bg-white bg-opacity-20 rounded-lg p-6 text-center">
+                <div class="text-3xl font-bold mb-2">#18</div>
+                <div class="text-sm opacity-90">Upload Ranking</div>
+                <div class="text-xs opacity-75 mt-1">Great training consistency!</div>
+            </div>
+            
+            <div class="bg-white bg-opacity-20 rounded-lg p-6 text-center">
+                <div class="text-3xl font-bold mb-2">#25</div>
+                <div class="text-sm opacity-90">Technique Ranking</div>
+                <div class="text-xs opacity-75 mt-1">Keep analyzing your rolls!</div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Achievement Badges -->
+    <div class="bg-white rounded-xl shadow-md p-8">
+        <h2 class="text-2xl font-bold text-gray-900 mb-6">Achievement Badges</h2>
+        
+        <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-6">
+            <!-- Sample badges -->
+            <div class="text-center">
+                <div class="w-16 h-16 bg-yellow-500 rounded-full flex items-center justify-center mx-auto mb-2">
+                    <i class="fas fa-fire text-white text-xl"></i>
+                </div>
+                <div class="text-sm font-medium text-gray-900">7-Day Streak</div>
+                <div class="text-xs text-gray-500">Earned</div>
+            </div>
+            
+            <div class="text-center">
+                <div class="w-16 h-16 bg-blue-500 rounded-full flex items-center justify-center mx-auto mb-2">
+                    <i class="fas fa-video text-white text-xl"></i>
+                </div>
+                <div class="text-sm font-medium text-gray-900">First Upload</div>
+                <div class="text-xs text-gray-500">Earned</div>
+            </div>
+            
+            <div class="text-center">
+                <div class="w-16 h-16 bg-green-500 rounded-full flex items-center justify-center mx-auto mb-2">
+                    <i class="fas fa-brain text-white text-xl"></i>
+                </div>
+                <div class="text-sm font-medium text-gray-900">100 Techniques</div>
+                <div class="text-xs text-gray-500">Earned</div>
+            </div>
+            
+            <div class="text-center opacity-50">
+                <div class="w-16 h-16 bg-gray-300 rounded-full flex items-center justify-center mx-auto mb-2">
+                    <i class="fas fa-trophy text-white text-xl"></i>
+                </div>
+                <div class="text-sm font-medium text-gray-900">Top 10</div>
+                <div class="text-xs text-gray-500">Locked</div>
+            </div>
+            
+            <div class="text-center opacity-50">
+                <div class="w-16 h-16 bg-gray-300 rounded-full flex items-center justify-center mx-auto mb-2">
+                    <i class="fas fa-medal text-white text-xl"></i>
+                </div>
+                <div class="text-sm font-medium text-gray-900">Monthly Winner</div>
+                <div class="text-xs text-gray-500">Locked</div>
+            </div>
+            
+            <div class="text-center opacity-50">
+                <div class="w-16 h-16 bg-gray-300 rounded-full flex items-center justify-center mx-auto mb-2">
+                    <i class="fas fa-star text-white text-xl"></i>
+                </div>
+                <div class="text-sm font-medium text-gray-900">1000 Points</div>
+                <div class="text-xs text-gray-500">Locked</div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function switchTab(tabId, buttonElement) {
+    // Hide all leaderboard contents
+    document.querySelectorAll('.leaderboard-content').forEach(content => {
+        content.classList.add('hidden');
+    });
+    
+    // Remove active class from all tabs
+    document.querySelectorAll('.leaderboard-tab').forEach(tab => {
+        tab.classList.remove('active', 'border-purple-500', 'text-purple-600');
+        tab.classList.add('border-transparent', 'text-gray-500');
+    });
+    
+    // Show selected tab content
+    document.getElementById(tabId).classList.remove('hidden');
+    
+    // Add active class to clicked tab
+    buttonElement.classList.add('active', 'border-purple-500', 'text-purple-600');
+    buttonElement.classList.remove('border-transparent', 'text-gray-500');
+}
+
+// Initialize first tab as active
+document.addEventListener('DOMContentLoaded', function() {
+    const firstTab = document.querySelector('.leaderboard-tab');
+    if (firstTab) {
+        firstTab.classList.add('active', 'border-purple-500', 'text-purple-600');
+        firstTab.classList.remove('border-transparent', 'text-gray-500');
+    }
+});
+</script>
+{% endblock %}-900">{{ user.username }}</div>
+                                    <div class="flex items-center">
+                                        {% if user.plan == 'blackbelt' %}
+                                            <span class="bg-black text-white px-2 py-1 rounded text-xs font-bold mr-2">BLACK BELT</span>
+                                        {% elif user.plan == 'pro' %}
+                                            <span class="bg-blue-500 text-white px-2 py-1 rounded text-xs font-bold mr-2">PRO</span>
+                                        {% else %}
+                                            <span class="bg-gray-400 text-white px-2 py-1 rounded text-xs font-bold mr-2">FREE</span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="text-right">
+                            <div class="text-lg font-bold text-gray-900">{{ user.points:,d }} points</div>
+                            <div class="text-sm text-gray-500">Challenge Master</div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="text-center py-12">
+                    <i class="fas fa-trophy text-4xl text-gray-400 mb-4"></i>
+                    <p class="text-gray-600">No leaderboard data available yet</p>
+                </div>
+            {% endif %}
+        </div>
+        
+        <!-- Uploads Leaderboard -->
+        <div id="uploads-leaderboard" class="leaderboard-content hidden p-6">
+            <h2 class="text-xl font-semibold text-gray-900 mb-6">Most Active Uploaders</h2>
+            
+            {% if top_uploads %}
+                <div class="space-y-3">
+                    {% for user in top_uploads %}
+                    <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+                        <div class="flex items-center">
+                            <div class="flex-shrink-0 mr-4">
+                                {% if loop.index <= 3 %}
+                                    <div class="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold
+                                        {{ 'bg-blue-500' if loop.index == 1 else 'bg-blue-400' if loop.index == 2 else 'bg-blue-300' }}">
+                                        {{ loop.index }}
+                                    </div>
+                                {% else %}
+                                    <div class="w-10 h-10 bg-gray-300 rounded-full flex items-center justify-center text-gray-700 font-bold">
+                                        {{ loop.index }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="flex items-center">
+                                <div class="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center text-white font-bold mr-3">
+                                    {{ user.username[0].upper() }}
+                                </div>
+                                <div>
+                                    <div class="font-medium text-gray

@@ -1,7 +1,6 @@
 from flask import Flask, render_template, request, redirect, url_for, flash
 from werkzeug.utils import secure_filename
 import os
-
 from analyzer import run_fake_analysis
 
 app = Flask(__name__)
@@ -11,8 +10,7 @@ UPLOAD_FOLDER = 'uploads'
 ALLOWED_EXTENSIONS = {'mp4', 'mov', 'avi', 'mkv'}
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
-if not os.path.exists(UPLOAD_FOLDER):
-    os.makedirs(UPLOAD_FOLDER)
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
@@ -38,12 +36,19 @@ def upload_video():
 
     filename = secure_filename(file.filename)
     filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-    file.save(filepath)
+    try:
+        file.save(filepath)
+    except Exception as e:
+        flash(f"Error saving file: {str(e)}")
+        return redirect(url_for('index'))
 
-    # Run AI analysis (currently mocked with random selections)
-    analysis = run_fake_analysis(filename)
+    try:
+        analysis = run_fake_analysis(filename)
+    except Exception as e:
+        flash(f"Error during analysis: {str(e)}")
+        return redirect(url_for('index'))
 
     return render_template('result.html', analysis=analysis)
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run(host='0.0.0.0', port=8080, debug=True)

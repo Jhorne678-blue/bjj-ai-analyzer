@@ -262,8 +262,16 @@ def home():
             <button onclick="showPricing()" class="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg font-bold text-lg">
                 💎 UPGRADE NOW
             </button>
-            {"" if user_plan != "free" else f'<span class="text-yellow-300 font-bold">Monthly Uploads: {monthly_uploads}/1</span>'}
-            {"" if user_plan == "free" else f'<span class="text-green-300 font-bold">Monthly Uploads: {monthly_uploads}/{4 if user_plan == "pro" else "∞"}</span>'}
+            <div class="inline-block">
+                {"" if user_plan != "free" else f'''
+                <span class="text-yellow-300 font-bold {'text-red-400' if monthly_uploads >= 1 else ''}">
+                    Monthly Uploads: {monthly_uploads}/1 {'- LIMIT REACHED!' if monthly_uploads >= 1 else ''}
+                </span>'''}
+                {"" if user_plan == "free" else f'''
+                <span class="text-green-300 font-bold {'text-red-400' if user_plan == 'pro' and monthly_uploads >= 4 else 'text-yellow-300' if user_plan == 'pro' and monthly_uploads >= 3 else ''}">
+                    Monthly Uploads: {monthly_uploads}/{4 if user_plan == "pro" else "∞"} {('- LIMIT REACHED!' if user_plan == 'pro' and monthly_uploads >= 4 else '- ALMOST FULL!' if user_plan == 'pro' and monthly_uploads >= 3 else '')}
+                </span>'''}
+            </div>
         </div>
     </div>
 
@@ -375,13 +383,20 @@ def home():
                     
                     <input type="file" id="videoFile" accept="video/*" class="mb-6 text-white bg-white bg-opacity-20 p-4 rounded-lg">
                     <br>
-                    <button onclick="analyzeVideo()" class="bg-white text-blue-600 font-bold py-4 px-8 rounded-lg text-xl hover:bg-gray-100">
-                        🤖 ANALYZE MY TECHNIQUES
+                    <button onclick="analyzeVideo()" 
+                            class="bg-white text-blue-600 font-bold py-4 px-8 rounded-lg text-xl hover:bg-gray-100 
+                                   {('opacity-50 cursor-not-allowed' if (user_plan == 'free' and monthly_uploads >= 1) or (user_plan == 'pro' and monthly_uploads >= 4) else '')}"
+                            {'disabled' if (user_plan == 'free' and monthly_uploads >= 1) or (user_plan == 'pro' and monthly_uploads >= 4) else ''}>
+                        {'🚫 MONTHLY LIMIT REACHED' if (user_plan == 'free' and monthly_uploads >= 1) or (user_plan == 'pro' and monthly_uploads >= 4) else '🤖 ANALYZE MY TECHNIQUES'}
                     </button>
                     
                     <div class="mt-6 text-white">
-                        {"" if user_plan != "free" else f'<p>📊 Monthly uploads remaining: <strong>{1 - monthly_uploads}</strong></p>'}
-                        {"" if user_plan == "free" else f'<p>📊 Monthly uploads: <strong>{monthly_uploads}/{4 if user_plan == "pro" else "∞"}</strong></p>'}
+                        <div id="upload-counter-display">
+                            {"" if user_plan != "free" else f'<p>📊 Monthly uploads remaining: <strong>{max(0, 1 - monthly_uploads)}</strong></p>'}
+                            {"" if user_plan == "free" else f'<p>📊 Monthly uploads: <strong>{monthly_uploads}/{4 if user_plan == "pro" else "∞"}</strong></p>'}
+                            {f'<p style="color: #ef4444; font-weight: bold;">⚠️ DEMO LIMIT REACHED - UPGRADE TO CONTINUE</p>' if user_plan == "free" and monthly_uploads >= 1 else ""}
+                            {f'<p style="color: #ef4444; font-weight: bold;">⚠️ PRO LIMIT REACHED - UPGRADE TO BLACK BELT</p>' if user_plan == "pro" and monthly_uploads >= 4 else ""}
+                        </div>
                     </div>
                 </div>
             </div>
@@ -690,17 +705,35 @@ def home():
                 return;
             }}
 
-            // Check upload limits
+            // STRICT UPLOAD LIMIT ENFORCEMENT
+            console.log('Current plan:', userPlan, 'Monthly uploads:', monthlyUploads, 'Max allowed:', maxUploads);
+            
             if (userPlan === 'free' && monthlyUploads >= 1) {{
-                alert('Monthly upload limit reached!\\n\\nUpgrade to Pro for 4 uploads per month or Black Belt for unlimited uploads.');
+                alert('🚫 DEMO MODE LIMIT REACHED!\\n\\nFree users get 1 upload per month.\\n\\nUpgrade to Pro for 4 uploads/month or Black Belt for unlimited uploads.');
                 showPricing();
                 return;
             }}
             
             if (userPlan === 'pro' && monthlyUploads >= 4) {{
-                alert('Monthly upload limit reached!\\n\\nUpgrade to Black Belt for unlimited uploads.');
+                alert('🚫 PRO PLAN LIMIT REACHED!\\n\\nPro users get 4 uploads per month.\\n\\nUpgrade to Black Belt for unlimited uploads.');
                 showPricing();
                 return;
+            }}
+
+            // Show remaining uploads before processing
+            if (userPlan === 'free') {{
+                const remaining = 1 - monthlyUploads;
+                if (remaining === 1) {{
+                    const confirmDemo = confirm('🆓 DEMO MODE UPLOAD\\n\\nThis will use your 1 free upload for this month.\\n\\nContinue with analysis?');
+                    if (!confirmDemo) return;
+                }}
+            }} else if (userPlan === 'pro') {{
+                const remaining = 4 - monthlyUploads;
+                const confirmPro = confirm(`🥋 PRO PLAN UPLOAD\\n\\nYou have ${{remaining}} uploads remaining this month.\\n\\nContinue with analysis?`);
+                if (!confirmPro) return;
+            }} else {{
+                const confirmBlackBelt = confirm('🥇 BLACK BELT UPLOAD\\n\\nUnlimited uploads available.\\n\\nContinue with analysis?');
+                if (!confirmBlackBelt) return;
             }}
 
             document.getElementById('progress-section').classList.remove('hidden');
@@ -737,14 +770,123 @@ def home():
                     return;
                 }}
                 
+                // SUCCESS - Update UI counters immediately
+                updateUploadCounters();
                 displayResults(results);
+                
+                // Show success message with updated limits
+                setTimeout(() => {{
+                    const newCount = monthlyUploads + 1;
+                    if (userPlan === 'free') {{
+                        alert('✅ VIDEO ANALYZED!\\n\\n🆓 Demo uploads used: ' + newCount + '/1\\n\\nUpgrade for more uploads!');
+                    }} else if (userPlan === 'pro') {{
+                        const remaining = 4 - newCount;
+                        alert('✅ VIDEO ANALYZED!\\n\\n🥋 Pro uploads remaining: ' + remaining + '/4');
+                    }} else {{
+                        alert('✅ VIDEO ANALYZED!\\n\\n🥇 Black Belt: Unlimited uploads');
+                    }}
+                }}, 1000);
+                
             }} catch (error) {{
                 alert('Analysis failed: ' + error.message);
                 document.getElementById('progress-section').classList.add('hidden');
             }}
         }}
 
-        function displayResults(results) {{
+        function updateUploadCounters() {{
+            // This will be called after successful upload to update the UI
+            const newCount = monthlyUploads + 1;
+            
+            // Update the header counter
+            const headerCounters = document.querySelectorAll('[class*="Monthly Uploads"]');
+            headerCounters.forEach(element => {{
+                if (userPlan === 'free') {{
+                    element.textContent = `Monthly Uploads: ${{newCount}}/1`;
+                    if (newCount >= 1) {{
+                        element.style.color = '#ef4444'; // Red when limit reached
+                        element.textContent += ' - LIMIT REACHED';
+                    }}
+                }} else if (userPlan === 'pro') {{
+                    element.textContent = `Monthly Uploads: ${{newCount}}/4`;
+                    if (newCount >= 4) {{
+                        element.style.color = '#ef4444';
+                        element.textContent += ' - LIMIT REACHED';
+                    }} else if (newCount >= 3) {{
+                        element.style.color = '#f59e0b'; // Orange when close to limit
+                    }}
+                }} else {{
+                    element.textContent = `Monthly Uploads: ${{newCount}}/∞`;
+                }}
+            }});
+            
+            // Update the upload section counter
+            const uploadRemaining = document.querySelector('div[class*="Monthly uploads remaining"]');
+            if (uploadRemaining) {{
+                if (userPlan === 'free') {{
+                    const remaining = Math.max(0, 1 - newCount);
+                    uploadRemaining.innerHTML = `<p>📊 Monthly uploads remaining: <strong>${{remaining}}</strong></p>`;
+                    if (remaining === 0) {{
+                        uploadRemaining.innerHTML += '<p style="color: #ef4444; font-weight: bold;">⚠️ DEMO LIMIT REACHED - UPGRADE TO CONTINUE</p>';
+                    }}
+                }} else if (userPlan === 'pro') {{
+                    const remaining = Math.max(0, 4 - newCount);
+                    uploadRemaining.innerHTML = `<p>📊 Monthly uploads remaining: <strong>${{remaining}}</strong></p>`;
+                    if (remaining === 0) {{
+                        uploadRemaining.innerHTML += '<p style="color: #ef4444; font-weight: bold;">⚠️ PRO LIMIT REACHED - UPGRADE TO BLACK BELT</p>';
+                    }}
+                }}
+            }}
+            
+            // Disable upload button if limit reached
+            const uploadButton = document.querySelector('button[onclick="analyzeVideo()"]');
+            if (uploadButton) {{
+                if ((userPlan === 'free' && newCount >= 1) || (userPlan === 'pro' && newCount >= 4)) {{
+                    uploadButton.disabled = true;
+                    uploadButton.style.opacity = '0.5';
+                    uploadButton.style.cursor = 'not-allowed';
+                    uploadButton.textContent = '🚫 MONTHLY LIMIT REACHED';
+                }}
+            }}
+        }}
+
+        // Update global monthlyUploads variable when upload succeeds
+        function incrementUploadCount() {{
+            window.monthlyUploads = monthlyUploads + 1;
+        }}
+
+        function showPricing() {{
+            document.getElementById('pricing-modal').classList.remove('hidden');
+        }}
+
+        function hidePricing() {{
+            document.getElementById('pricing-modal').classList.add('hidden');
+        }}
+
+        function selectPlan(plan) {{
+            if (plan === 'free') {{
+                alert('You are already on the free plan!');
+                return;
+            }}
+            
+            const planNames = {{'pro': 'Pro ($29/month)', 'blackbelt': 'Black Belt ($59/month)'}};
+            const planFeatures = {{
+                'pro': '✅ 4 uploads/month\\n✅ Detailed breakdowns\\n✅ Video timestamps\\n✅ Challenges & Social',
+                'blackbelt': '✅ UNLIMITED uploads\\n✅ Advanced breakdowns\\n✅ Competition analytics\\n✅ AI coaching\\n✅ 3D analysis'
+            }};
+            
+            const confirmUpgrade = confirm(`🚀 UPGRADE TO ${{planNames[plan].toUpperCase()}}\\n\\n${{planFeatures[plan]}}\\n\\nThis would redirect to payment in the real app.\\n\\nProceed with upgrade?`);
+            
+            if (confirmUpgrade) {{
+                // Simulate successful upgrade
+                alert(`🎉 CONGRATULATIONS!\\n\\nYou've been upgraded to ${{planNames[plan]}}!\\n\\nYour new upload limits are now active.`);
+                
+                // In a real app, this would make an API call to update the plan
+                // For demo purposes, we'll just reload to simulate the upgrade
+                setTimeout(() => {{
+                    location.reload();
+                }}, 2000);
+            }}
+        }}
             document.getElementById('progress-section').classList.add('hidden');
             document.getElementById('results-section').classList.remove('hidden');
 

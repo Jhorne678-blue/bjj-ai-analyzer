@@ -1,33 +1,36 @@
-import random
-
-TECHNIQUES = [
-    "Armbar", "Triangle", "Omoplata", "Guillotine", "Rear Naked Choke",
-    "Kimura", "Americana", "Ezekiel", "Peruvian Necktie", "Heel Hook",
-    "Straight Ankle Lock", "Calf Slicer", "Banana Split", "Toe Hold",
-    "X-Guard Sweep", "Lumberjack Sweep", "Scissor Sweep", "Hip Bump",
-    "Double Leg", "Single Leg", "Inside Trip", "Outside Trip",
-    "Pull Guard", "Sit Up Guard", "Toreando Pass", "Over Under Pass",
-    "Knee Cut Pass", "Leg Drag", "Body Lock Pass", "Half Guard Recovery",
-    "Shoulder Crunch Sweep", "Electric Chair", "Deep Half Sweep",
-    "Berimbolo", "Matrix Back Take", "Crab Ride", "Twister Hook",
-    "Deep De La Riva Sweep", "Rolling Back Take", "Kiss of the Dragon",
-    "Stack Pass", "North-South Escape", "Bridge & Roll", "Technical Mount",
-    "Leg Pin Pass", "Tripod Sweep", "Double Sleeve Sweep", "Loop Choke",
-    "Paper Cutter", "North-South Choke", "Wrist Lock", "Bulldog Choke",
-    "Flying Armbar", "Flying Triangle", "Standing Guillotine", "Rolling Kimura",
-    "Inverted Triangle", "No Arm Triangle", "Submission Chain", "Mount Retention",
-    "Back Retention", "Side Control Escape", "Kesa Gatame Escape",
-    "Butterfly Sweep", "Reverse De La Riva Sweep", "Saddle Entry",
-    "Ashigarami Setup", "False Reap Entry", "Leg Entanglement",
-    "Wrestle-Up Sweep", "Lapel Guard Setup", "Worm Guard Sweep",
-    "Baratoplata", "Shoulder Pin", "Can Opener Pass", "Stack Escape",
-    "Sit Through Escape", "Elbow Push Escape", "Leg Trap Pass"
-]
+import cv2
+import os
+import numpy as np
+import mediapipe as mp
 
 def run_fake_analysis(filename):
-    detected = random.sample(TECHNIQUES, k=6)
+    filepath = os.path.join("uploads", filename)
+    cap = cv2.VideoCapture(filepath)
+
+    if not cap.isOpened():
+        raise Exception("Failed to open video.")
+
+    mp_pose = mp.solutions.pose
+    pose = mp_pose.Pose()
+    keypoints_data = []
+
+    while True:
+        ret, frame = cap.read()
+        if not ret:
+            break
+
+        image_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+        results = pose.process(image_rgb)
+
+        if results.pose_landmarks:
+            landmarks = results.pose_landmarks.landmark
+            keypoints = [(lm.x, lm.y, lm.z) for lm in landmarks]
+            keypoints_data.append(keypoints)
+
+    cap.release()
+
     return {
-        "filename": filename,
-        "detected_techniques": detected,
-        "summary": f"{len(detected)} techniques recognized. Solid round!"
+        "summary": f"Video '{filename}' analyzed using real grappling pose tracking.",
+        "keypoints": f"{len(keypoints_data)} frames processed.",
+        "technique_preview": "Classifier coming soon with 80+ techniques."
     }

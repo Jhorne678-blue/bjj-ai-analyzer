@@ -1,8 +1,5 @@
-# analyzer.py
-
 import random
 
-# Simulated database of techniques — we’ll build this out later
 TECHNIQUES = [
     "Armbar", "Triangle", "Omoplata", "Guillotine", "Rear Naked Choke",
     "Kimura", "Americana", "Ezekiel", "Peruvian Necktie", "Heel Hook",
@@ -28,11 +25,7 @@ TECHNIQUES = [
 ]
 
 def run_fake_analysis(filename):
-    print(f"Analyzing file: {filename}")
-
-    # Simulate recognizing some techniques
     detected = random.sample(TECHNIQUES, k=6)
-
     return {
         "filename": filename,
         "detected_techniques": detected,

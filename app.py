@@ -10,12 +10,12 @@ UPLOAD_FOLDER = 'uploads'
 ALLOWED_EXTENSIONS = {'mp4', 'mov', 'avi', 'mkv'}
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
-# SAFELY create the upload folder
-if not os.path.isdir(UPLOAD_FOLDER):
-    try:
-        os.makedirs(UPLOAD_FOLDER)
-    except Exception as e:
-        print(f"Failed to create upload directory: {e}")
+# Safe directory check
+try:
+    if not os.path.isdir(UPLOAD_FOLDER):
+        os.mkdir(UPLOAD_FOLDER)
+except Exception as e:
+    print(f"Failed to create upload directory: {e}")
 
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
@@ -33,27 +33,4 @@ def upload_video():
     file = request.files['video']
     if file.filename == '':
         flash('No selected file.')
-        return redirect(url_for('index'))
-
-    if not allowed_file(file.filename):
-        flash('Invalid file type.')
-        return redirect(url_for('index'))
-
-    filename = secure_filename(file.filename)
-    filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-    try:
-        file.save(filepath)
-    except Exception as e:
-        flash(f"Error saving file: {str(e)}")
-        return redirect(url_for('index'))
-
-    try:
-        analysis = run_fake_analysis(filename)
-    except Exception as e:
-        flash(f"Error during analysis: {str(e)}")
-        return redirect(url_for('index'))
-
-    return render_template('result.html', analysis=analysis)
-
-if __name__ == "__main__":
-    app.run(host='0.0.0.0', port=8080, debug=True)
+        return r

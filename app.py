@@ -177,34 +177,60 @@ def upload_video():
     filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
     file.save(filepath)
     
+    # Import analyzer
+    from analyzer import BJJAnalyzer, validate_video_file
+    
+    # Validate video
+    is_valid, message = validate_video_file(filepath)
+    if not is_valid:
+        os.remove(filepath)  # Clean up invalid file
+        return jsonify({'error': message}), 400
+    
     # Save to database
     conn = sqlite3.connect('bjj_analyzer.db')
     cursor = conn.cursor()
     cursor.execute('''
         INSERT INTO videos (user_id, filename, original_filename, analysis_complete)
         VALUES (?, ?, ?, ?)
-    ''', (user_id, filename, file.filename, True))
+    ''', (user_id, filename, file.filename, False))
     video_id = cursor.lastrowid
-    
-    # Generate sample analysis results
-    techniques = [
-        ('armbar', 'submission', 0.87, 45.2, 52.1),
-        ('triangle_choke', 'submission', 0.92, 78.5, 85.3),
-        ('scissor_sweep', 'sweep', 0.79, 120.1, 127.8),
-        ('knee_cut_pass', 'guard_pass', 0.84, 156.3, 162.7)
-    ]
-    
-    for tech in techniques:
-        cursor.execute('''
-            INSERT INTO analysis_results (video_id, technique_name, category, confidence, start_time, end_time)
-            VALUES (?, ?, ?, ?, ?, ?)
-        ''', (video_id, tech[0], tech[1], tech[2], tech[3], tech[4]))
-    
-    cursor.execute('UPDATE users SET total_uploads = total_uploads + 1, monthly_uploads = monthly_uploads + 1 WHERE id = ?', (user_id,))
     conn.commit()
     conn.close()
     
-    return jsonify({'success': True, 'video_id': video_id, 'message': 'Analysis complete!'})
+    # Start analysis
+    try:
+        analyzer = BJJAnalyzer()
+        plan = 'free'  # We'll add plan detection later
+        results = analyzer.analyze_video(filepath, plan)
+        
+        if results['techniques']:
+            # Save analysis results
+            conn = sqlite3.connect('bjj_analyzer.db')
+            cursor = conn.cursor()
+            
+            for tech in results['techniques']:
+                cursor.execute('''
+                    INSERT INTO analysis_results (video_id, technique_name, category, confidence, start_time, end_time)
+                    VALUES (?, ?, ?, ?, ?, ?)
+                ''', (video_id, tech['name'], tech['category'], tech['confidence'], tech['start_time'], tech['end_time']))
+            
+            cursor.execute('UPDATE videos SET analysis_complete = ? WHERE id = ?', (True, video_id))
+            cursor.execute('UPDATE users SET total_uploads = total_uploads + 1, monthly_uploads = monthly_uploads + 1 WHERE id = ?', (user_id,))
+            conn.commit()
+            conn.close()
+            
+            return jsonify({
+                'success': True, 
+                'video_id': video_id, 
+                'message': f'Analysis complete! Detected {len(results["techniques"])} techniques.',
+                'techniques_found': len(results['techniques']),
+                'duration': results['duration']
+            })
+        else:
+            return jsonify({'error': 'No techniques detected in video'}), 400
+            
+    except Exception as e:
+        return jsonify({'error': f'Analysis failed: {str(e)}'}), 500
 
 @app.route('/results/<int:video_id>')
 def results(video_id):

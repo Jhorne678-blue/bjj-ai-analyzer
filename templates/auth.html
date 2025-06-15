@@ -1,1 +1,41 @@
-
+<!DOCTYPE html>
+<html>
+<head>
+    <title>{% if mode == 'signup' %}Sign Up{% else %}Login{% endif %} - BJJ AI</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 400px; margin: 50px auto; padding: 20px; }
+        input { width: 100%; padding: 10px; margin: 10px 0; border: 1px solid #ddd; }
+        .btn { background: #007bff; color: white; padding: 10px 20px; border: none; width: 100%; }
+    </style>
+</head>
+<body>
+    <h2>{% if mode == 'signup' %}Create Account{% else %}Login{% endif %}</h2>
+    
+    {% with messages = get_flashed_messages() %}
+        {% if messages %}
+            {% for message in messages %}
+                <div style="color: red; margin: 10px 0;">{{ message }}</div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+    
+    <form method="POST">
+        {% if mode == 'signup' %}
+        <input type="text" name="username" placeholder="Username" required>
+        {% endif %}
+        <input type="{% if mode == 'signup' %}email{% else %}text{% endif %}" 
+               name="{% if mode == 'signup' %}email{% else %}username{% endif %}" 
+               placeholder="{% if mode == 'signup' %}Email{% else %}Username/Email{% endif %}" required>
+        <input type="password" name="password" placeholder="Password" required>
+        <button type="submit" class="btn">{% if mode == 'signup' %}Sign Up{% else %}Login{% endif %}</button>
+    </form>
+    
+    <p style="text-align: center; margin-top: 20px;">
+        {% if mode == 'signup' %}
+            <a href="/login">Already have an account? Login</a>
+        {% else %}
+            <a href="/signup">Need an account? Sign Up</a>
+        {% endif %}
+    </p>
+</body>
+</html>

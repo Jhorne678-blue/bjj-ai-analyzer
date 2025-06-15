@@ -5,7 +5,7 @@ from werkzeug.utils import secure_filename
 app = Flask(__name__)
 app.secret_key = 'supersecretkey'
 
-UPLOAD_FOLDER = 'static/uploads'
+UPLOAD_FOLDER = 'uploads'
 ALLOWED_EXTENSIONS = {'mp4', 'mov', 'avi', 'mkv'}
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
@@ -21,28 +21,26 @@ def index():
 
 @app.route('/upload', methods=['POST'])
 def upload_video():
-    if 'file' not in request.files:
-        flash('No file part')
-        return redirect(request.url)
+    if 'video' not in request.files:
+        flash('No file part in request')
+        return redirect(url_for('index'))
 
-    file = request.files['file']
+    file = request.files['video']
+
     if file.filename == '':
-        flash('No selected file')
+        flash('No file selected')
         return redirect(url_for('index'))
 
     if file and allowed_file(file.filename):
         filename = secure_filename(file.filename)
-        file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-        file.save(file_path)
+        filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+        file.save(filepath)
 
-        # Placeholder: Here’s where AI analysis code would run.
-        analysis_result = f"Analysis complete for {filename} (placeholder result)"
+        # Fake "analysis"
+        fake_analysis = f"🎯 Analysis complete for {filename}. Looks like you rolled like a beast!"
+        return render_template('result.html', result=fake_analysis, filename=filename)
 
-        return render_template('result.html', result=analysis_result, filename=filename)
+    flash('Invalid file type')
+    return redirect(url_for('index'))
 
-    else:
-        flash('Invalid file type. Please upload a video file.')
-        return redirect(url_for('index'))
-
-if __name__ == '__main__':
-    app.run(debug=True)
+if __name__ ==

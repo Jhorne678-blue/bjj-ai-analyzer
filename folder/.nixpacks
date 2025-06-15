@@ -1,3 +1,0 @@
-git add .nixpacks/packages.nix
-git commit -m "Add libGL for OpenCV"
-git push

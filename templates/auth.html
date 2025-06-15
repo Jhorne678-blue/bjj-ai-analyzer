@@ -1,41 +1,75 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>{% if mode == 'signup' %}Sign Up{% else %}Login{% endif %} - BJJ AI</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% if mode == 'signup' %}Sign Up{% else %}Login{% endif %} - BJJ AI Analyzer</title>
     <style>
-        body { font-family: Arial, sans-serif; max-width: 400px; margin: 50px auto; padding: 20px; }
-        input { width: 100%; padding: 10px; margin: 10px 0; border: 1px solid #ddd; }
-        .btn { background: #007bff; color: white; padding: 10px 20px; border: none; width: 100%; }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: Arial, sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; display: flex; align-items: center; justify-content: center; }
+        .auth-container { background: white; padding: 40px; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); max-width: 400px; width: 90%; }
+        .auth-header { text-align: center; margin-bottom: 30px; }
+        .auth-header h1 { color: #667eea; margin-bottom: 10px; }
+        .form-group { margin-bottom: 20px; }
+        .form-group label { display: block; margin-bottom: 5px; font-weight: bold; color: #333; }
+        .form-group input { width: 100%; padding: 12px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 16px; }
+        .form-group input:focus { outline: none; border-color: #667eea; }
+        .btn { background: #667eea; color: white; padding: 12px 24px; border: none; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; width: 100%; }
+        .btn:hover { background: #5a6fd8; }
+        .auth-footer { text-align: center; margin-top: 20px; }
+        .auth-footer a { color: #667eea; text-decoration: none; }
+        .flash-message { background: #f8d7da; color: #721c24; padding: 10px; border-radius: 5px; margin-bottom: 20px; }
     </style>
 </head>
 <body>
-    <h2>{% if mode == 'signup' %}Create Account{% else %}Login{% endif %}</h2>
-    
-    {% with messages = get_flashed_messages() %}
-        {% if messages %}
-            {% for message in messages %}
-                <div style="color: red; margin: 10px 0;">{{ message }}</div>
-            {% endfor %}
-        {% endif %}
-    {% endwith %}
-    
-    <form method="POST">
-        {% if mode == 'signup' %}
-        <input type="text" name="username" placeholder="Username" required>
-        {% endif %}
-        <input type="{% if mode == 'signup' %}email{% else %}text{% endif %}" 
-               name="{% if mode == 'signup' %}email{% else %}username{% endif %}" 
-               placeholder="{% if mode == 'signup' %}Email{% else %}Username/Email{% endif %}" required>
-        <input type="password" name="password" placeholder="Password" required>
-        <button type="submit" class="btn">{% if mode == 'signup' %}Sign Up{% else %}Login{% endif %}</button>
-    </form>
-    
-    <p style="text-align: center; margin-top: 20px;">
-        {% if mode == 'signup' %}
-            <a href="/login">Already have an account? Login</a>
-        {% else %}
-            <a href="/signup">Need an account? Sign Up</a>
-        {% endif %}
-    </p>
+    <div class="auth-container">
+        <div class="auth-header">
+            <h1>🥋 BJJ AI</h1>
+            <h2>{% if mode == 'signup' %}Create Account{% else %}Welcome Back{% endif %}</h2>
+        </div>
+
+        {% with messages = get_flashed_messages() %}
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="flash-message">{{ message }}</div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <form method="POST">
+            {% if mode == 'signup' %}
+            <div class="form-group">
+                <label for="username">Username</label>
+                <input type="text" id="username" name="username" required>
+            </div>
+            {% endif %}
+
+            <div class="form-group">
+                <label for="{% if mode == 'signup' %}email{% else %}username{% endif %}">
+                    {% if mode == 'signup' %}Email{% else %}Username or Email{% endif %}
+                </label>
+                <input type="{% if mode == 'signup' %}email{% else %}text{% endif %}" 
+                       id="{% if mode == 'signup' %}email{% else %}username{% endif %}" 
+                       name="{% if mode == 'signup' %}email{% else %}username{% endif %}" required>
+            </div>
+
+            <div class="form-group">
+                <label for="password">Password</label>
+                <input type="password" id="password" name="password" required>
+            </div>
+
+            <button type="submit" class="btn">
+                {% if mode == 'signup' %}Create Account{% else %}Sign In{% endif %}
+            </button>
+        </form>
+
+        <div class="auth-footer">
+            {% if mode == 'signup' %}
+                <p><a href="/login">Already have an account? Sign in</a></p>
+            {% else %}
+                <p><a href="/signup">Need an account? Sign up</a></p>
+            {% endif %}
+        </div>
+    </div>
 </body>
 </html>

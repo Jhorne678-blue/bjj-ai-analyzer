@@ -1,34 +1,25 @@
-from flask import Flask, request, jsonify, session, redirect, url_for, flash, render_template
-from werkzeug.utils import secure_filename
+from flask import Flask, render_template, request, jsonify, session, redirect, url_for, flash
 from werkzeug.security import generate_password_hash, check_password_hash
+from werkzeug.utils import secure_filename
 import os
 import sqlite3
 import uuid
-from datetime import datetime, timedelta
-import json
-from functools import wraps
+from datetime import datetime
 import secrets
+import random
 
 app = Flask(__name__)
-app.secret_key = os.environ.get('SECRET_KEY', secrets.token_hex(32))
+app.secret_key = os.environ.get('SECRET_KEY', 'bjj-secret-key-2024')
 
 # Configuration
 app.config['UPLOAD_FOLDER'] = 'uploads'
-app.config['MAX_CONTENT_LENGTH'] = 100 * 1024 * 1024  # 100MB max file size
+app.config['MAX_CONTENT_LENGTH'] = 100 * 1024 * 1024  # 100MB
 app.config['ALLOWED_EXTENSIONS'] = {'mp4', 'avi', 'mov', 'mkv', 'webm'}
 
-# Ensure upload directory exists
+# Ensure directories exist
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 
-# Black Belt Access Codes
-BLACK_BELT_CODES = {
-    'BJJMASTER2024': {'uses_left': 10, 'expires': '2025-12-31'},
-    'FRIENDCODE123': {'uses_left': 5, 'expires': '2025-06-30'},
-    'UNLIMITED001': {'uses_left': -1, 'expires': '2026-01-01'}
-}
-
 def init_db():
-    """Initialize the database with all necessary tables"""
     conn = sqlite3.connect('bjj_analyzer.db')
     cursor = conn.cursor()
     
@@ -40,10 +31,8 @@ def init_db():
             password_hash TEXT NOT NULL,
             plan TEXT DEFAULT 'free',
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            subscription_expires TIMESTAMP,
             total_uploads INTEGER DEFAULT 0,
-            monthly_uploads INTEGER DEFAULT 0,
-            last_upload_month TEXT
+            monthly_uploads INTEGER DEFAULT 0
         )
     ''')
     
@@ -75,24 +64,8 @@ def init_db():
     conn.commit()
     conn.close()
 
-def login_required(f):
-    @wraps(f)
-    def decorated_function(*args, **kwargs):
-        if 'user_id' not in session:
-            return redirect(url_for('login'))
-        return f(*args, **kwargs)
-    return decorated_function
-
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in app.config['ALLOWED_EXTENSIONS']
-
-def get_user_plan(user_id):
-    conn = sqlite3.connect('bjj_analyzer.db')
-    cursor = conn.cursor()
-    cursor.execute('SELECT plan FROM users WHERE id = ?', (user_id,))
-    result = cursor.fetchone()
-    conn.close()
-    return result[0] if result else 'free'
 
 @app.route('/')
 def index():
@@ -117,9 +90,9 @@ def signup():
             conn = sqlite3.connect('bjj_analyzer.db')
             cursor = conn.cursor()
             cursor.execute('''
-                INSERT INTO users (username, email, password_hash, last_upload_month)
-                VALUES (?, ?, ?, ?)
-            ''', (username, email, password_hash, datetime.now().strftime('%Y-%m')))
+                INSERT INTO users (username, email, password_hash)
+                VALUES (?, ?, ?)
+            ''', (username, email, password_hash))
             conn.commit()
             
             user_id = cursor.lastrowid
@@ -166,30 +139,31 @@ def logout():
     return redirect(url_for('index'))
 
 @app.route('/dashboard')
-@login_required
 def dashboard():
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+    
     user_id = session['user_id']
-    plan = get_user_plan(user_id)
     
     conn = sqlite3.connect('bjj_analyzer.db')
     cursor = conn.cursor()
+    cursor.execute('SELECT total_uploads, monthly_uploads FROM users WHERE id = ?', (user_id,))
+    user_data = cursor.fetchone()
+    
     cursor.execute('SELECT COUNT(*) FROM videos WHERE user_id = ?', (user_id,))
     total_videos = cursor.fetchone()[0]
-    
-    cursor.execute('SELECT monthly_uploads FROM users WHERE id = ?', (user_id,))
-    monthly_uploads = cursor.fetchone()[0]
     
     conn.close()
     
     return render_template('dashboard.html', 
-                         plan=plan, 
                          total_videos=total_videos,
-                         monthly_uploads=monthly_uploads)
+                         monthly_uploads=user_data[1] if user_data else 0,
+                         plan='free')
 
 @app.route('/upload', methods=['POST'])
-@login_required
 def upload_video():
-    user_id = session['user_id']
+    if 'user_id' not in session:
+        return jsonify({'error': 'Not logged in'}), 401
     
     if 'video' not in request.files:
         return jsonify({'error': 'No video file provided'}), 400
@@ -198,6 +172,7 @@ def upload_video():
     if file.filename == '' or not allowed_file(file.filename):
         return jsonify({'error': 'Invalid file'}), 400
     
+    user_id = session['user_id']
     filename = str(uuid.uuid4()) + '_' + secure_filename(file.filename)
     filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
     file.save(filepath)
@@ -206,13 +181,65 @@ def upload_video():
     conn = sqlite3.connect('bjj_analyzer.db')
     cursor = conn.cursor()
     cursor.execute('''
-        INSERT INTO videos (user_id, filename, original_filename)
-        VALUES (?, ?, ?)
-    ''', (user_id, filename, file.filename))
+        INSERT INTO videos (user_id, filename, original_filename, analysis_complete)
+        VALUES (?, ?, ?, ?)
+    ''', (user_id, filename, file.filename, True))
     video_id = cursor.lastrowid
     
-    # Simulate analysis results
-    import random
+    # Generate sample analysis results
     techniques = [
-        {'name': 'armbar', 'category': 'submission', 'confidence': 0.87, 'start_time': 45.2, 'end_time': 52.1},
-        {'name': 'triangle_c
+        ('armbar', 'submission', 0.87, 45.2, 52.1),
+        ('triangle_choke', 'submission', 0.92, 78.5, 85.3),
+        ('scissor_sweep', 'sweep', 0.79, 120.1, 127.8),
+        ('knee_cut_pass', 'guard_pass', 0.84, 156.3, 162.7)
+    ]
+    
+    for tech in techniques:
+        cursor.execute('''
+            INSERT INTO analysis_results (video_id, technique_name, category, confidence, start_time, end_time)
+            VALUES (?, ?, ?, ?, ?, ?)
+        ''', (video_id, tech[0], tech[1], tech[2], tech[3], tech[4]))
+    
+    cursor.execute('UPDATE users SET total_uploads = total_uploads + 1, monthly_uploads = monthly_uploads + 1 WHERE id = ?', (user_id,))
+    conn.commit()
+    conn.close()
+    
+    return jsonify({'success': True, 'video_id': video_id, 'message': 'Analysis complete!'})
+
+@app.route('/results/<int:video_id>')
+def results(video_id):
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+    
+    user_id = session['user_id']
+    
+    conn = sqlite3.connect('bjj_analyzer.db')
+    cursor = conn.cursor()
+    
+    cursor.execute('SELECT filename, original_filename FROM videos WHERE id = ? AND user_id = ?', 
+                  (video_id, user_id))
+    video = cursor.fetchone()
+    
+    if not video:
+        flash('Video not found')
+        return redirect(url_for('dashboard'))
+    
+    cursor.execute('''
+        SELECT technique_name, category, confidence, start_time, end_time
+        FROM analysis_results WHERE video_id = ?
+        ORDER BY start_time
+    ''', (video_id,))
+    
+    techniques = cursor.fetchall()
+    conn.close()
+    
+    return render_template('results.html', video=video, techniques=techniques, video_id=video_id)
+
+@app.route('/health')
+def health():
+    return jsonify({'status': 'running', 'message': 'BJJ AI Analyzer is ready!'})
+
+if __name__ == '__main__':
+    init_db()
+    port = int(os.environ.get('PORT', 5000))
+    app.run(host='0.0.0.0', port=port, debug=False)

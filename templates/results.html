@@ -2,20 +2,24 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Analysis Result | BJJ Analyzer</title>
+  <title>BJJ AI Results</title>
   <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="bg-gray-800 text-white flex flex-col items-center py-16 space-y-8">
-  <h1 class="text-3xl font-bold">🧠 Analysis Result</h1>
-  <p class="italic">Video: <strong>{{ filename }}</strong></p>
+<body class="bg-black text-white flex flex-col items-center py-16 space-y-6">
+  <h1 class="text-3xl font-bold">🧠 AI Grappling Breakdown</h1>
 
-  <div class="bg-gray-700 p-8 rounded shadow-md w-full max-w-md space-y-4">
-    <p>Sweeps: <strong>{{ stats.sweeps }}</strong></p>
-    <p>Submissions: <strong>{{ stats.submissions }}</strong></p>
-    <p>Takedowns: <strong>{{ stats.takedowns }}</strong></p>
-    <p>Guard Retention: <strong>{{ stats.guard_retention_sec }} seconds</strong></p>
+  <p class="italic text-gray-300">Video: {{ analysis.filename }}</p>
+  <p class="text-green-400">{{ analysis.summary }}</p>
+
+  <div class="bg-gray-800 p-6 rounded shadow-md max-w-md w-full mt-4">
+    <h2 class="text-xl font-semibold mb-2">Detected Techniques:</h2>
+    <ul class="list-disc list-inside space-y-1">
+      {% for tech in analysis.detected_techniques %}
+        <li>{{ tech }}</li>
+      {% endfor %}
+    </ul>
   </div>
 
-  <a href="/" class="text-blue-400 hover:underline">← Upload Another Video</a>
+  <a href="/" class="text-blue-400 mt-6 hover:underline">⬅️ Upload another video</a>
 </body>
 </html>

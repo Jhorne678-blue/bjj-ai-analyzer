@@ -1,6 +1,0 @@
-/bjj-ai-analyzer
-├── app.py
-├── requirements.txt
-├── Procfile
-├── templates
-│   └── index.html

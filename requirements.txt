@@ -6,4 +6,3 @@ mediapipe
 yt-dlp
 numpy
 yt-dlp
-pip install yt-dlp

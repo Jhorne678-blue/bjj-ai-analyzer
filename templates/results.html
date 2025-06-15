@@ -1,1 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Analysis Results - BJJ AI Analyzer</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: Arial, sans-serif; background: #f5f5f5; }
+        .nav { background: white; padding: 15px 20px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); display: flex; justify-content: space-between; align-items: center; }
+        .nav h1 { color: #667eea; }
+        .nav a { color: #667eea; text-decoration: none; }
+        .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+        .results-header { background: white; padding: 30px; border-radius: 10px; margin-bottom: 20px; text-align: center; }
+        .techniques { display: grid; gap: 20px; }
+        .technique { background: white; padding: 20px; border-radius: 10px; border-left: 5px solid #667eea; }
+        .technique h3 { color: #333; margin-bottom: 10px; }
+        .technique-meta { display: flex; gap: 20px; color: #666; font-size: 14px; }
+        .confidence { background: #e8f5e8; padding: 5px 10px; border-radius: 15px; }
+        .category { background: #e0f0ff; padding: 5px 10px; border-radius: 15px; }
+    </style>
+</head>
+<body>
+    <nav class="nav">
+        <h1>🥋 BJJ AI Analyzer</h1>
+        <div>
+            <a href="/dashboard">← Back to Dashboard</a>
+        </div>
+    </nav>
 
+    <div class="container">
+        <div class="results-header">
+            <h1>📊 Analysis Results</h1>
+            <h2>{{ video[1] or video[0] }}</h2>
+            <p>{{ techniques|length }} techniques detected</p>
+        </div>
+
+        <div class="techniques">
+            {% for tech in techniques %}
+            <div class="technique">
+                <h3>{{ tech[0].replace('_', ' ').title() }}</h3>
+                <div class="technique-meta">
+                    <span class="category">{{ tech[1].title() }}</span>
+                    <span class="confidence">{{ (tech[2] * 100)|round }}% confidence</span>
+                    <span>⏱️ {{ tech[3]|round(1) }}s - {{ tech[4]|round(1) }}s</span>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</body>
+</html>

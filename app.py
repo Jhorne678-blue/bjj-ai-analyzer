@@ -155,6 +155,20 @@ def generate_analysis(plan):
 @app.route('/')
 def home():
     user_id = get_user_id()
+    
+    # Ensure user exists in dictionary
+    if user_id not in users:
+        users[user_id] = {
+            'plan': 'free',
+            'videos_count': 0,
+            'created_at': datetime.now().isoformat(),
+            'monthly_uploads': 0,
+            'last_upload_month': datetime.now().strftime('%Y-%m'),
+            'email': None,
+            'name': None
+        }
+        user_videos[user_id] = []
+    
     user = users[user_id]
     
     return """<!DOCTYPE html>

@@ -1,10 +1,373 @@
-<div class="flex justify-between">
-                                <span class="text-blue-100">Avg Execution Time</span>
-                                <span class="text-white font-bold" id="sweep-avg-time">-</span>
+from flask import Flask, request, jsonify, session
+import os
+import json
+import time
+import random
+from datetime import datetime
+
+app = Flask(__name__)
+app.secret_key = 'bjj-ai-secret-key-2024'
+
+users = {}
+user_videos = {}
+
+def get_user_id():
+    if 'user_id' not in session:
+        session['user_id'] = f"user_{random.randint(1000, 9999)}"
+        users[session['user_id']] = {
+            'plan': 'free',
+            'videos_count': 0,
+            'created_at': datetime.now().isoformat(),
+            'monthly_uploads': 0,
+            'last_upload_month': datetime.now().strftime('%Y-%m'),
+            'email': None,
+            'name': None
+        }
+        user_videos[session['user_id']] = []
+    return session['user_id']
+
+def generate_analysis(plan):
+    techniques = []
+    technique_list = [
+        {'name': 'armbar_from_guard', 'cat': 'submission'},
+        {'name': 'triangle_choke', 'cat': 'submission'},
+        {'name': 'rear_naked_choke', 'cat': 'submission'},
+        {'name': 'kimura', 'cat': 'submission'},
+        {'name': 'guillotine', 'cat': 'submission'},
+        {'name': 'darce_choke', 'cat': 'submission'},
+        {'name': 'omoplata', 'cat': 'submission'},
+        {'name': 'americana', 'cat': 'submission'},
+        {'name': 'heel_hook', 'cat': 'submission'},
+        {'name': 'ankle_lock', 'cat': 'submission'},
+        {'name': 'ezekiel_choke', 'cat': 'submission'},
+        {'name': 'loop_choke', 'cat': 'submission'},
+        {'name': 'bow_and_arrow_choke', 'cat': 'submission'},
+        {'name': 'baseball_choke', 'cat': 'submission'},
+        {'name': 'knee_bar', 'cat': 'submission'},
+        {'name': 'toe_hold', 'cat': 'submission'},
+        {'name': 'calf_slicer', 'cat': 'submission'},
+        {'name': 'north_south_choke', 'cat': 'submission'},
+        {'name': 'anaconda_choke', 'cat': 'submission'},
+        {'name': 'peruvian_necktie', 'cat': 'submission'},
+        {'name': 'scissor_sweep', 'cat': 'sweep'},
+        {'name': 'butterfly_sweep', 'cat': 'sweep'},
+        {'name': 'tripod_sweep', 'cat': 'sweep'},
+        {'name': 'flower_sweep', 'cat': 'sweep'},
+        {'name': 'hook_sweep', 'cat': 'sweep'},
+        {'name': 'pendulum_sweep', 'cat': 'sweep'},
+        {'name': 'spider_guard_sweep', 'cat': 'sweep'},
+        {'name': 'de_la_riva_sweep', 'cat': 'sweep'},
+        {'name': 'x_guard_sweep', 'cat': 'sweep'},
+        {'name': 'berimbolo', 'cat': 'sweep'},
+        {'name': 'old_school_sweep', 'cat': 'sweep'},
+        {'name': 'hip_bump_sweep', 'cat': 'sweep'},
+        {'name': 'sit_up_sweep', 'cat': 'sweep'},
+        {'name': 'lasso_guard_sweep', 'cat': 'sweep'},
+        {'name': 'balloon_sweep', 'cat': 'sweep'},
+        {'name': 'tornado_sweep', 'cat': 'sweep'},
+        {'name': 'knee_tap_sweep', 'cat': 'sweep'},
+        {'name': 'electric_chair_sweep', 'cat': 'sweep'},
+        {'name': 'knee_cut_pass', 'cat': 'guard_pass'},
+        {'name': 'toreando_pass', 'cat': 'guard_pass'},
+        {'name': 'leg_drag', 'cat': 'guard_pass'},
+        {'name': 'stack_pass', 'cat': 'guard_pass'},
+        {'name': 'over_under_pass', 'cat': 'guard_pass'},
+        {'name': 'x_pass', 'cat': 'guard_pass'},
+        {'name': 'long_step_pass', 'cat': 'guard_pass'},
+        {'name': 'smash_pass', 'cat': 'guard_pass'},
+        {'name': 'headquarters_pass', 'cat': 'guard_pass'},
+        {'name': 'knee_slide_pass', 'cat': 'guard_pass'},
+        {'name': 'bullfighter_pass', 'cat': 'guard_pass'},
+        {'name': 'cartwheel_pass', 'cat': 'guard_pass'},
+        {'name': 'standing_pass', 'cat': 'guard_pass'},
+        {'name': 'leg_weave_pass', 'cat': 'guard_pass'},
+        {'name': 'double_leg_takedown', 'cat': 'takedown'},
+        {'name': 'single_leg_takedown', 'cat': 'takedown'},
+        {'name': 'hip_toss', 'cat': 'takedown'},
+        {'name': 'foot_sweep', 'cat': 'takedown'},
+        {'name': 'ankle_pick', 'cat': 'takedown'},
+        {'name': 'duck_under', 'cat': 'takedown'},
+        {'name': 'arm_drag_takedown', 'cat': 'takedown'},
+        {'name': 'osoto_gari', 'cat': 'takedown'},
+        {'name': 'seoi_nage', 'cat': 'takedown'},
+        {'name': 'uchi_mata', 'cat': 'takedown'},
+        {'name': 'high_crotch', 'cat': 'takedown'},
+        {'name': 'fireman_carry', 'cat': 'takedown'},
+        {'name': 'tai_otoshi', 'cat': 'takedown'},
+        {'name': 'tomoe_nage', 'cat': 'takedown'},
+        {'name': 'inside_trip', 'cat': 'takedown'},
+        {'name': 'outside_trip', 'cat': 'takedown'},
+        {'name': 'mount_escape', 'cat': 'escape'},
+        {'name': 'side_control_escape', 'cat': 'escape'},
+        {'name': 'back_escape', 'cat': 'escape'},
+        {'name': 'turtle_escape', 'cat': 'escape'},
+        {'name': 'bridge_and_roll', 'cat': 'escape'},
+        {'name': 'knee_on_belly_escape', 'cat': 'escape'},
+        {'name': 'guard_to_mount', 'cat': 'transition'},
+        {'name': 'side_control_to_mount', 'cat': 'transition'},
+        {'name': 'mount_to_back', 'cat': 'transition'},
+        {'name': 'knee_on_belly_transition', 'cat': 'transition'},
+        {'name': 'scramble', 'cat': 'transition'},
+        {'name': 'hip_escape', 'cat': 'guard_retention'},
+        {'name': 'shrimping', 'cat': 'guard_retention'},
+        {'name': 'knee_shield', 'cat': 'guard_retention'},
+        {'name': 'frames', 'cat': 'guard_retention'},
+        {'name': 'inversion', 'cat': 'guard_retention'}
+    ]
+    
+    num_techniques = random.randint(8, 15)
+    selected = random.sample(technique_list, min(num_techniques, len(technique_list)))
+    
+    for tech in selected:
+        start_time = random.randint(10, 240)
+        techniques.append({
+            'technique': tech['name'],
+            'category': tech['cat'],
+            'confidence': round(random.uniform(0.75, 0.98), 2),
+            'start_time': start_time,
+            'end_time': start_time + random.randint(8, 20),
+            'quality': random.choice(['excellent', 'good', 'fair']),
+            'position': random.choice(['guard', 'mount', 'side_control', 'standing', 'half_guard', 'back_control']),
+            'has_timestamp': (plan in ['pro', 'blackbelt']),
+            'has_breakdown': (plan in ['pro', 'blackbelt'])
+        })
+    
+    insights = [
+        "Great technique diversity! You're showing skills across multiple categories.",
+        "High execution quality detected in your submissions.",
+        "Strong guard game - you're comfortable working from bottom.",
+        "Consistent performance across different positions.",
+        "Your timing on transitions is improving significantly.",
+        "Developing a well-rounded game across all positions."
+    ]
+    
+    return {
+        'total_techniques_detected': len(techniques),
+        'detected_techniques': techniques,
+        'video_duration': random.randint(180, 300),
+        'techniques_per_minute': round(len(techniques) / 4, 1),
+        'average_confidence': round(sum(t['confidence'] for t in techniques) / len(techniques), 2),
+        'insights': random.sample(insights, 3),
+        'analysis_timestamp': datetime.now().isoformat(),
+        'user_plan': plan
+    }
+
+@app.route('/')
+def home():
+    user_id = get_user_id()
+    user = users[user_id]
+    
+    return """<!DOCTYPE html>
+<html>
+<head>
+    <title>BJJ AI Analyzer Pro</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+        .glass { background: rgba(255, 255, 255, 0.1); backdrop-filter: blur(10px); }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        .tab-button.active { background: rgba(255, 255, 255, 0.2); }
+    </style>
+</head>
+<body class="min-h-screen">
+    <div class="text-center py-8">
+        <h1 class="text-5xl font-bold text-white mb-4">BJJ AI Analyzer Pro</h1>
+        <p class="text-xl text-gray-200">Complete BJJ Analytics Platform</p>
+        
+        <div class="mt-6 mb-4" id="account-section">
+            <div class="bg-yellow-600 bg-opacity-20 rounded-lg p-4 max-w-md mx-auto border border-yellow-500">
+                <h3 class="text-lg font-bold text-white mb-2">Create Your Account</h3>
+                <p class="text-yellow-100 text-sm mb-4">Save your progress and let AI learn your fighting style!</p>
+                <div class="space-y-3">
+                    <input type="email" id="userEmail" placeholder="Enter your email" 
+                           class="w-full p-3 rounded-lg bg-white bg-opacity-20 text-white placeholder-gray-300">
+                    <input type="text" id="userName" placeholder="Your name" 
+                           class="w-full p-3 rounded-lg bg-white bg-opacity-20 text-white placeholder-gray-300">
+                    <button onclick="createAccount()" class="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg font-bold w-full">
+                        CREATE ACCOUNT
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <div class="mt-4">
+            <span class="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-6 py-3 rounded-lg text-lg font-bold" id="user-info">
+                FREE PLAN • 0 Videos Analyzed
+            </span>
+        </div>
+        
+        <div class="mt-4 space-x-4">
+            <button onclick="showPricing()" class="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg font-bold text-lg">
+                UPGRADE NOW
+            </button>
+            <span class="font-bold text-yellow-300" id="upload-counter">
+                Monthly Uploads: 0/1
+            </span>
+        </div>
+    </div>
+
+    <div id="pricing-modal" class="fixed inset-0 bg-black bg-opacity-75 hidden z-50 flex items-center justify-center">
+        <div class="glass rounded-2xl p-8 max-w-6xl mx-4">
+            <div class="flex justify-between items-center mb-8">
+                <h2 class="text-3xl font-bold text-white">Choose Your BJJ Journey</h2>
+                <button onclick="hidePricing()" class="text-white text-3xl hover:text-red-400">&times;</button>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <div class="bg-gray-800 bg-opacity-50 rounded-xl p-6 text-center">
+                    <h3 class="text-2xl font-bold text-white mb-4">Free</h3>
+                    <div class="text-4xl font-bold text-white mb-6">$0/month</div>
+                    <ul class="text-gray-300 space-y-3 mb-8 text-left">
+                        <li>1 upload per month</li>
+                        <li>Basic analytics</li>
+                        <li>No timestamps</li>
+                        <li>No breakdowns</li>
+                    </ul>
+                    <button class="bg-gray-600 text-white py-3 px-6 rounded-lg w-full font-bold">Current Plan</button>
+                </div>
+                
+                <div class="bg-blue-600 bg-opacity-30 rounded-xl p-6 text-center border-2 border-blue-400">
+                    <div class="bg-blue-500 text-white px-4 py-2 rounded-full text-sm mb-4">MOST POPULAR</div>
+                    <h3 class="text-2xl font-bold text-white mb-4">Pro</h3>
+                    <div class="text-4xl font-bold text-white mb-6">$29/month</div>
+                    <ul class="text-white space-y-3 mb-8 text-left">
+                        <li>4 uploads per month</li>
+                        <li>Detailed breakdowns</li>
+                        <li>Video timestamps</li>
+                        <li>Advanced analytics</li>
+                    </ul>
+                    <button onclick="selectPlan('pro')" class="bg-blue-600 hover:bg-blue-700 text-white py-3 px-8 rounded-lg w-full font-bold">
+                        UPGRADE TO PRO
+                    </button>
+                </div>
+                
+                <div class="bg-black bg-opacity-50 rounded-xl p-6 text-center border-2 border-yellow-400">
+                    <div class="bg-yellow-500 text-black px-4 py-2 rounded-full text-sm mb-4 font-bold">BLACK BELT</div>
+                    <h3 class="text-2xl font-bold text-white mb-4">Black Belt</h3>
+                    <div class="text-4xl font-bold text-white mb-6">$59/month</div>
+                    <ul class="text-yellow-100 space-y-3 mb-8 text-left">
+                        <li>UNLIMITED uploads</li>
+                        <li>Advanced breakdowns</li>
+                        <li>Competition analytics</li>
+                        <li>AI coaching</li>
+                    </ul>
+                    <button onclick="selectPlan('blackbelt')" class="bg-yellow-500 hover:bg-yellow-600 text-black py-3 px-8 rounded-lg w-full font-bold">
+                        GO BLACK BELT
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container mx-auto px-4 max-w-6xl mb-8">
+        <div class="glass rounded-xl p-2">
+            <div class="flex flex-wrap justify-center space-x-2">
+                <button onclick="showTab('upload')" class="tab-button active px-6 py-3 rounded-lg text-white font-semibold text-lg">Upload</button>
+                <button onclick="showTab('submissions')" class="tab-button px-6 py-3 rounded-lg text-white font-semibold text-lg">Submissions</button>
+                <button onclick="showTab('sweeps')" class="tab-button px-6 py-3 rounded-lg text-white font-semibold text-lg">Sweeps</button>
+                <button onclick="showTab('takedowns')" class="tab-button px-6 py-3 rounded-lg text-white font-semibold text-lg">Takedowns</button>
+                <button onclick="showTab('analytics')" class="tab-button px-6 py-3 rounded-lg text-white font-semibold text-lg">Analytics</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="container mx-auto px-4 max-w-6xl">
+        <div id="upload-tab" class="tab-content active">
+            <div class="glass rounded-xl p-8">
+                <h2 class="text-3xl font-bold text-white mb-8 text-center">Upload Your BJJ Video</h2>
+                <div class="bg-gradient-to-r from-green-600 to-blue-600 rounded-xl p-8 text-center">
+                    <h3 class="text-2xl font-bold text-white mb-4">Ready to Analyze Your Game?</h3>
+                    <p class="text-white mb-6">Upload your training footage and get instant AI-powered technique analysis</p>
+                    <input type="file" id="videoFile" accept="video/*" class="mb-6 text-white bg-white bg-opacity-20 p-4 rounded-lg">
+                    <br>
+                    <button onclick="analyzeVideo()" class="bg-white text-blue-600 font-bold py-4 px-8 rounded-lg text-xl hover:bg-gray-100" id="analyze-btn">
+                        ANALYZE MY TECHNIQUES
+                    </button>
+                    <div class="mt-6 text-white">
+                        <div id="upload-info">
+                            <p>Monthly uploads remaining: <strong>1</strong></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="progress-section" class="glass rounded-xl p-8 mt-8 hidden">
+                <h3 class="text-2xl font-bold text-white mb-6 text-center">AI Analyzing Your Techniques...</h3>
+                <div class="w-full bg-gray-700 rounded-full h-6 mb-6">
+                    <div id="progress-bar" class="bg-gradient-to-r from-green-500 to-blue-500 h-6 rounded-full transition-all duration-500" style="width: 0%"></div>
+                </div>
+                <p class="text-gray-300 text-center text-lg">Processing your BJJ footage with advanced AI...</p>
+            </div>
+
+            <div id="results-section" class="glass rounded-xl p-8 mt-8 hidden">
+                <h3 class="text-3xl font-bold text-white mb-8 text-center">Your BJJ Analysis</h3>
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-6 mb-8">
+                    <div class="bg-gradient-to-br from-blue-500 to-blue-700 rounded-xl p-6 text-center">
+                        <div class="text-3xl font-bold text-white" id="total-count">0</div>
+                        <div class="text-blue-100">Techniques</div>
+                    </div>
+                    <div class="bg-gradient-to-br from-green-500 to-green-700 rounded-xl p-6 text-center">
+                        <div class="text-3xl font-bold text-white" id="avg-confidence">0%</div>
+                        <div class="text-green-100">Accuracy</div>
+                    </div>
+                    <div class="bg-gradient-to-br from-purple-500 to-purple-700 rounded-xl p-6 text-center">
+                        <div class="text-3xl font-bold text-white" id="video-duration">0m</div>
+                        <div class="text-purple-100">Duration</div>
+                    </div>
+                    <div class="bg-gradient-to-br from-red-500 to-red-700 rounded-xl p-6 text-center">
+                        <div class="text-3xl font-bold text-white" id="submission-count">0</div>
+                        <div class="text-red-100">Submissions</div>
+                    </div>
+                </div>
+                <div id="techniques-list" class="space-y-4 mb-8"></div>
+                <div class="bg-white bg-opacity-10 rounded-xl p-6">
+                    <h4 class="text-2xl font-bold text-white mb-4">AI Insights</h4>
+                    <div id="insights-list"></div>
+                </div>
+            </div>
+        </div>
+
+        <div id="submissions-tab" class="tab-content">
+            <div class="glass rounded-xl p-8">
+                <h2 class="text-3xl font-bold text-white mb-8 text-center">Submission Analysis</h2>
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+                    <div class="bg-gradient-to-br from-red-500 to-red-700 rounded-xl p-6">
+                        <h3 class="text-xl font-bold text-white mb-4">Submission Stats</h3>
+                        <div class="space-y-4">
+                            <div class="flex justify-between">
+                                <span class="text-red-100">Success Rate</span>
+                                <span class="text-white font-bold" id="sub-success-rate">-</span>
                             </div>
                             <div class="flex justify-between">
-                                <span class="text-blue-100">Favorite Guard</span>
-                                <span class="text-white font-bold" id="sweep-fav-guard">-</span>
+                                <span class="text-red-100">Avg Setup Time</span>
+                                <span class="text-white font-bold" id="sub-avg-time">-</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-red-100">Total Attempts</span>
+                                <span class="text-white font-bold" id="sub-total-attempts">-</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="bg-white bg-opacity-10 rounded-xl p-6">
+                        <h3 class="text-xl font-bold text-white mb-4">Top Submissions</h3>
+                        <div id="top-submissions" class="space-y-3">
+                            <p class="text-gray-300 text-center">Upload videos to see your top submissions!</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="sweeps-tab" class="tab-content">
+            <div class="glass rounded-xl p-8">
+                <h2 class="text-3xl font-bold text-white mb-8 text-center">Sweep Analysis</h2>
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+                    <div class="bg-gradient-to-br from-blue-500 to-blue-700 rounded-xl p-6">
+                        <h3 class="text-xl font-bold text-white mb-4">Sweep Stats</h3>
+                        <div class="space-y-4">
+                            <div class="flex justify-between">
+                                <span class="text-blue-100">Success Rate</span>
+                                <span class="text-white font-bold" id="sweep-success-rate">-</span>
                             </div>
                             <div class="flex justify-between">
                                 <span class="text-blue-100">Total Attempts</span>
@@ -12,19 +375,11 @@
                             </div>
                         </div>
                     </div>
-                    
                     <div class="bg-white bg-opacity-10 rounded-xl p-6">
                         <h3 class="text-xl font-bold text-white mb-4">Top Sweeps</h3>
                         <div id="top-sweeps" class="space-y-3">
                             <p class="text-gray-300 text-center">Upload videos to see your top sweeps!</p>
                         </div>
-                    </div>
-                </div>
-                
-                <div class="bg-white bg-opacity-10 rounded-xl p-6">
-                    <h3 class="text-xl font-bold text-white mb-4">AI Recommendations</h3>
-                    <div id="sweep-recommendations" class="space-y-3">
-                        <p class="text-gray-300 text-center">Upload videos to get personalized sweep recommendations!</p>
                     </div>
                 </div>
             </div>
@@ -33,7 +388,6 @@
         <div id="takedowns-tab" class="tab-content">
             <div class="glass rounded-xl p-8">
                 <h2 class="text-3xl font-bold text-white mb-8 text-center">Takedown Analysis</h2>
-                
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
                     <div class="bg-gradient-to-br from-orange-500 to-orange-700 rounded-xl p-6">
                         <h3 class="text-xl font-bold text-white mb-4">Takedown Stats</h3>
@@ -43,32 +397,16 @@
                                 <span class="text-white font-bold" id="takedown-success-rate">-</span>
                             </div>
                             <div class="flex justify-between">
-                                <span class="text-orange-100">Avg Setup Time</span>
-                                <span class="text-white font-bold" id="takedown-avg-time">-</span>
-                            </div>
-                            <div class="flex justify-between">
-                                <span class="text-orange-100">Favorite Style</span>
-                                <span class="text-white font-bold" id="takedown-fav-style">-</span>
-                            </div>
-                            <div class="flex justify-between">
                                 <span class="text-orange-100">Total Attempts</span>
                                 <span class="text-white font-bold" id="takedown-total-attempts">-</span>
                             </div>
                         </div>
                     </div>
-                    
                     <div class="bg-white bg-opacity-10 rounded-xl p-6">
                         <h3 class="text-xl font-bold text-white mb-4">Top Takedowns</h3>
                         <div id="top-takedowns" class="space-y-3">
                             <p class="text-gray-300 text-center">Upload videos to see your top takedowns!</p>
                         </div>
-                    </div>
-                </div>
-                
-                <div class="bg-white bg-opacity-10 rounded-xl p-6">
-                    <h3 class="text-xl font-bold text-white mb-4">AI Recommendations</h3>
-                    <div id="takedown-recommendations" class="space-y-3">
-                        <p class="text-gray-300 text-center">Upload videos to get personalized takedown recommendations!</p>
                     </div>
                 </div>
             </div>
@@ -77,47 +415,25 @@
         <div id="analytics-tab" class="tab-content">
             <div class="glass rounded-xl p-8">
                 <h2 class="text-3xl font-bold text-white mb-8 text-center">Your BJJ Analytics</h2>
-                
                 <div class="bg-gradient-to-r from-purple-600 to-blue-600 rounded-xl p-6 mb-8">
                     <h3 class="text-2xl font-bold text-white mb-4">Overall Performance</h3>
                     <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
                         <div class="bg-white bg-opacity-20 rounded-lg p-4 text-center">
-                            <div class="text-2xl font-bold text-white" id="total-videos-analyzed">0</div>
-                            <div class="text-purple-100">Videos Analyzed</div>
+                            <div class="text-2xl font-bold text-white" id="total-videos">0</div>
+                            <div class="text-purple-100">Videos</div>
                         </div>
                         <div class="bg-white bg-opacity-20 rounded-lg p-4 text-center">
-                            <div class="text-2xl font-bold text-white" id="total-techniques-found">0</div>
-                            <div class="text-purple-100">Total Techniques</div>
+                            <div class="text-2xl font-bold text-white" id="total-techniques">0</div>
+                            <div class="text-purple-100">Techniques</div>
                         </div>
                         <div class="bg-white bg-opacity-20 rounded-lg p-4 text-center">
-                            <div class="text-2xl font-bold text-white" id="overall-success-rate">0%</div>
+                            <div class="text-2xl font-bold text-white" id="overall-rate">0%</div>
                             <div class="text-purple-100">Success Rate</div>
                         </div>
                         <div class="bg-white bg-opacity-20 rounded-lg p-4 text-center">
-                            <div class="text-2xl font-bold text-white" id="improvement-trend">-</div>
-                            <div class="text-purple-100">Trend</div>
+                            <div class="text-2xl font-bold text-white">+12%</div>
+                            <div class="text-purple-100">Improvement</div>
                         </div>
-                    </div>
-                </div>
-
-                <div class="bg-white bg-opacity-10 rounded-xl p-6 mb-6">
-                    <h3 class="text-xl font-bold text-white mb-4">Category Breakdown</h3>
-                    <div id="category-breakdown" class="space-y-3">
-                        <p class="text-gray-300 text-center">Upload videos to see your technique category breakdown!</p>
-                    </div>
-                </div>
-
-                <div class="bg-white bg-opacity-10 rounded-xl p-6 mb-6">
-                    <h3 class="text-xl font-bold text-white mb-4">Recent Sessions</h3>
-                    <div id="recent-sessions" class="space-y-3">
-                        <p class="text-gray-300 text-center">Upload videos to track your recent training sessions!</p>
-                    </div>
-                </div>
-
-                <div class="bg-white bg-opacity-10 rounded-xl p-6">
-                    <h3 class="text-xl font-bold text-white mb-4">AI Training Insights</h3>
-                    <div id="ai-training-insights" class="space-y-3">
-                        <p class="text-gray-300 text-center">Upload videos to get personalized AI training insights!</p>
                     </div>
                 </div>
             </div>
@@ -125,14 +441,14 @@
     </div>
 
     <script>
-        const userPlan = "''' + user_plan + '''";
-        let monthlyUploads = ''' + str(monthly_uploads) + ''';
-        const maxUploads = ''' + str(max_uploads) + ''';
-        const userEmail = "''' + str(user_email or '') + '''";
+        let userPlan = '""" + user['plan'] + """';
+        let monthlyUploads = """ + str(user['monthly_uploads']) + """;
+        let userEmail = '""" + str(user.get('email') or '') + """';
+        let userName = '""" + str(user.get('name') or '') + """';
 
         function createAccount() {
-            var email = document.getElementById('userEmail').value.trim();
-            var name = document.getElementById('userName').value.trim();
+            const email = document.getElementById('userEmail').value.trim();
+            const name = document.getElementById('userName').value.trim();
             
             if (!email || !name) {
                 alert('Please enter both email and name!');
@@ -152,14 +468,11 @@
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
-                    alert('Account created successfully! Your progress will now be saved and AI will learn your fighting style.');
+                    alert('Account created successfully!');
                     location.reload();
                 } else {
                     alert('Error: ' + data.message);
                 }
-            })
-            .catch(error => {
-                alert('Error creating account: ' + error.message);
             });
         }
 
@@ -179,20 +492,8 @@
         }
 
         function selectPlan(plan) {
-            if (plan === 'free') {
-                alert('You are already on the free plan!');
-                return;
-            }
-            
-            const planNames = {'pro': 'Pro ($29/month)', 'blackbelt': 'Black Belt ($59/month)'};
-            const planFeatures = {
-                'pro': '4 uploads/month, Detailed breakdowns, Video timestamps, Challenges and Social',
-                'blackbelt': 'UNLIMITED uploads, Advanced breakdowns, Competition analytics, AI coaching, 3D analysis'
-            };
-            
-            const confirmUpgrade = confirm('Upgrade to ' + planNames[plan] + '? Features: ' + planFeatures[plan] + '. This would redirect to payment in the real app. Proceed with upgrade?');
-            
-            if (confirmUpgrade) {
+            const plans = {pro: 'Pro ($29/month)', blackbelt: 'Black Belt ($59/month)'};
+            if (confirm('Upgrade to ' + plans[plan] + '? This would redirect to payment in real app.')) {
                 fetch('/api/upgrade', {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
@@ -201,16 +502,11 @@
                 .then(response => response.json())
                 .then(data => {
                     if (data.success) {
-                        alert('Congratulations! You have been upgraded to ' + planNames[plan] + '! Your new upload limits are now active.');
-                        setTimeout(() => {
-                            location.reload();
-                        }, 2000);
+                        alert('Upgraded successfully!');
+                        location.reload();
                     } else {
                         alert('Upgrade failed: ' + data.message);
                     }
-                })
-                .catch(error => {
-                    alert('Upgrade failed: ' + error.message);
                 });
             }
         }
@@ -223,27 +519,15 @@
             }
 
             if (userPlan === 'free' && monthlyUploads >= 1) {
-                alert('DEMO MODE LIMIT REACHED! Free users get 1 upload per month. Upgrade to Pro for 4 uploads/month or Black Belt for unlimited uploads.');
+                alert('Monthly upload limit reached! Upgrade to Pro for more uploads.');
                 showPricing();
                 return;
             }
             
             if (userPlan === 'pro' && monthlyUploads >= 4) {
-                alert('PRO PLAN LIMIT REACHED! Pro users get 4 uploads per month. Upgrade to Black Belt for unlimited uploads.');
+                alert('Monthly upload limit reached! Upgrade to Black Belt for unlimited uploads.');
                 showPricing();
                 return;
-            }
-
-            if (userPlan === 'free') {
-                const remaining = 1 - monthlyUploads;
-                if (remaining === 1) {
-                    const confirmDemo = confirm('DEMO MODE UPLOAD. This will use your 1 free upload for this month. Continue with analysis?');
-                    if (!confirmDemo) return;
-                }
-            } else if (userPlan === 'pro') {
-                const remaining = 4 - monthlyUploads;
-                const confirmPro = confirm('PRO PLAN UPLOAD. You have ' + remaining + ' uploads remaining this month. Continue with analysis?');
-                if (!confirmPro) return;
             }
 
             document.getElementById('progress-section').classList.remove('hidden');
@@ -280,7 +564,7 @@
                 
                 monthlyUploads++;
                 displayResults(results);
-                updateUIAfterUpload();
+                updateCounters();
             })
             .catch(error => {
                 alert('Analysis failed: ' + error.message);
@@ -288,43 +572,21 @@
             });
         }
 
-        function updateUIAfterUpload() {
-            setTimeout(() => {
-                if (userPlan === 'free') {
-                    alert('VIDEO ANALYZED! Demo uploads used: ' + monthlyUploads + '/1. Upgrade for more uploads!');
-                } else if (userPlan === 'pro') {
-                    const remaining = 4 - monthlyUploads;
-                    alert('VIDEO ANALYZED! Pro uploads remaining: ' + remaining + '/4');
-                } else {
-                    alert('VIDEO ANALYZED! Black Belt: Unlimited uploads');
-                }
-            }, 1000);
-
-            const counterDisplay = document.getElementById('upload-counter-display');
-            if (counterDisplay) {
-                let newHTML = '';
-                if (userPlan === 'free' && monthlyUploads >= 1) {
-                    newHTML = '<p style="color: #ef4444; font-weight: bold;">DEMO LIMIT REACHED - UPGRADE TO CONTINUE</p>';
-                } else if (userPlan === 'pro' && monthlyUploads >= 4) {
-                    newHTML = '<p style="color: #ef4444; font-weight: bold;">PRO LIMIT REACHED - UPGRADE TO BLACK BELT</p>';
-                } else if (userPlan === 'free') {
-                    const remaining = Math.max(0, 1 - monthlyUploads);
-                    newHTML = '<p>Monthly uploads remaining: <strong>' + remaining + '</strong></p>';
-                } else {
-                    const maxDisplay = userPlan === 'blackbelt' ? 'infinity' : (userPlan === 'pro' ? '4' : '1');
-                    newHTML = '<p>Monthly uploads: <strong>' + monthlyUploads + '/' + maxDisplay + '</strong></p>';
-                }
-                counterDisplay.innerHTML = newHTML;
+        function updateCounters() {
+            const maxUploads = userPlan === 'free' ? 1 : (userPlan === 'pro' ? 4 : 999);
+            const remaining = Math.max(0, maxUploads - monthlyUploads);
+            
+            document.getElementById('upload-counter').textContent = 'Monthly Uploads: ' + monthlyUploads + '/' + (userPlan === 'blackbelt' ? 'unlimited' : maxUploads);
+            
+            if (userPlan === 'free') {
+                document.getElementById('upload-info').innerHTML = '<p>Monthly uploads remaining: <strong>' + remaining + '</strong></p>';
             }
-
-            const uploadButton = document.querySelector('button[onclick="analyzeVideo()"]');
-            if (uploadButton) {
-                const limitReached = (userPlan === 'free' && monthlyUploads >= 1) || (userPlan === 'pro' && monthlyUploads >= 4);
-                if (limitReached) {
-                    uploadButton.disabled = true;
-                    uploadButton.className += ' opacity-50 cursor-not-allowed';
-                    uploadButton.textContent = 'MONTHLY LIMIT REACHED';
-                }
+            
+            if ((userPlan === 'free' && monthlyUploads >= 1) || (userPlan === 'pro' && monthlyUploads >= 4)) {
+                const btn = document.getElementById('analyze-btn');
+                btn.disabled = true;
+                btn.textContent = 'MONTHLY LIMIT REACHED';
+                btn.className += ' opacity-50 cursor-not-allowed';
             }
         }
 
@@ -349,199 +611,99 @@
             techniquesList.innerHTML = '';
 
             techniques.forEach(technique => {
-                const techniqueDiv = document.createElement('div');
-                techniqueDiv.className = 'bg-white bg-opacity-10 rounded-xl p-6 border-l-4 border-blue-500';
+                const div = document.createElement('div');
+                div.className = 'bg-white bg-opacity-10 rounded-xl p-6 border-l-4 border-blue-500';
                 
-                let timestampHTML = '';
+                let buttons = '';
                 if (technique.has_timestamp) {
-                    timestampHTML = '<button onclick="alert(\\'Timestamp: ' + Math.floor(technique.start_time/60) + ':' + (technique.start_time%60).toString().padStart(2, '0') + '\\')" class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded text-sm ml-3">Timestamp</button>';
+                    buttons += '<button class="bg-blue-600 text-white px-3 py-1 rounded text-sm ml-3">Timestamp</button>';
                 }
-
-                let breakdownHTML = '';
                 if (technique.has_breakdown) {
-                    breakdownHTML = '<button onclick="alert(\\'Full breakdown available for ' + technique.technique.replace(/_/g, ' ') + '!\\')" class="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded text-sm ml-2">Breakdown</button>';
+                    buttons += '<button class="bg-green-600 text-white px-3 py-1 rounded text-sm ml-2">Breakdown</button>';
                 }
 
-                techniqueDiv.innerHTML = '<div class="flex justify-between items-center"><div class="flex-1"><div class="flex items-center mb-2"><h4 class="text-xl font-bold text-white">' + technique.technique.replace(/_/g, ' ').replace(/\\b\\w/g, l => l.toUpperCase()) + '</h4><span class="ml-3 px-3 py-1 bg-blue-600 rounded-full text-xs text-white">' + technique.category.replace('_', ' ').toUpperCase() + '</span>' + timestampHTML + breakdownHTML + '</div><p class="text-gray-300">Position: ' + technique.position + ' • Quality: ' + technique.quality + '</p></div><div class="text-right"><div class="text-2xl font-bold text-white">' + Math.round(technique.confidence * 100) + '%</div><div class="text-gray-300 text-sm">Confidence</div></div></div>';
+                div.innerHTML = '<div class="flex justify-between items-center"><div class="flex-1"><div class="flex items-center mb-2"><h4 class="text-xl font-bold text-white">' + technique.technique.replace(/_/g, ' ').replace(/\\b\\w/g, l => l.toUpperCase()) + '</h4><span class="ml-3 px-3 py-1 bg-blue-600 rounded-full text-xs text-white">' + technique.category.toUpperCase() + '</span>' + buttons + '</div><p class="text-gray-300">Position: ' + technique.position + ' • Quality: ' + technique.quality + '</p></div><div class="text-right"><div class="text-2xl font-bold text-white">' + Math.round(technique.confidence * 100) + '%</div><div class="text-gray-300 text-sm">Confidence</div></div></div>';
                 
-                techniquesList.appendChild(techniqueDiv);
+                techniquesList.appendChild(div);
             });
         }
 
         function displayInsights(insights) {
             const insightsList = document.getElementById('insights-list');
             insightsList.innerHTML = '';
-
             insights.forEach(insight => {
-                const insightDiv = document.createElement('div');
-                insightDiv.className = 'bg-white bg-opacity-10 rounded-lg p-4 mb-3';
-                insightDiv.innerHTML = '<p class="text-white text-lg">' + insight + '</p>';
-                insightsList.appendChild(insightDiv);
+                const div = document.createElement('div');
+                div.className = 'bg-white bg-opacity-10 rounded-lg p-4 mb-3';
+                div.innerHTML = '<p class="text-white text-lg">' + insight + '</p>';
+                insightsList.appendChild(div);
             });
         }
 
         function updateTabAnalytics(techniques) {
-            // Update submissions tab
             const submissions = techniques.filter(t => t.category === 'submission');
             if (submissions.length > 0) {
-                const avgConfidence = submissions.reduce((sum, t) => sum + t.confidence, 0) / submissions.length;
+                const avgConf = submissions.reduce((sum, t) => sum + t.confidence, 0) / submissions.length;
                 const avgTime = submissions.reduce((sum, t) => sum + (t.end_time - t.start_time), 0) / submissions.length;
-                const positions = submissions.map(t => t.position);
-                const favPosition = getMostFrequent(positions);
                 
-                document.getElementById('sub-success-rate').textContent = Math.round(avgConfidence * 100) + '%';
+                document.getElementById('sub-success-rate').textContent = Math.round(avgConf * 100) + '%';
                 document.getElementById('sub-avg-time').textContent = avgTime.toFixed(1) + 's';
-                document.getElementById('sub-fav-position').textContent = favPosition || 'N/A';
                 document.getElementById('sub-total-attempts').textContent = submissions.length;
                 
-                updateTopList('top-submissions', submissions);
-                updateRecommendations('sub-recommendations', submissions);
+                const topSubs = document.getElementById('top-submissions');
+                topSubs.innerHTML = '';
+                submissions.sort((a, b) => b.confidence - a.confidence).slice(0, 3).forEach(tech => {
+                    const div = document.createElement('div');
+                    div.className = 'flex justify-between items-center bg-white bg-opacity-10 rounded-lg p-3';
+                    div.innerHTML = '<span class="text-white">' + tech.technique.replace(/_/g, ' ') + '</span><span class="text-green-400 font-bold">' + Math.round(tech.confidence * 100) + '%</span>';
+                    topSubs.appendChild(div);
+                });
             }
 
-            // Update sweeps tab
             const sweeps = techniques.filter(t => t.category === 'sweep');
             if (sweeps.length > 0) {
-                const avgConfidence = sweeps.reduce((sum, t) => sum + t.confidence, 0) / sweeps.length;
-                const avgTime = sweeps.reduce((sum, t) => sum + (t.end_time - t.start_time), 0) / sweeps.length;
-                const positions = sweeps.map(t => t.position);
-                const favGuard = getMostFrequent(positions);
-                
-                document.getElementById('sweep-success-rate').textContent = Math.round(avgConfidence * 100) + '%';
-                document.getElementById('sweep-avg-time').textContent = avgTime.toFixed(1) + 's';
-                document.getElementById('sweep-fav-guard').textContent = favGuard || 'N/A';
+                const avgConf = sweeps.reduce((sum, t) => sum + t.confidence, 0) / sweeps.length;
+                document.getElementById('sweep-success-rate').textContent = Math.round(avgConf * 100) + '%';
                 document.getElementById('sweep-total-attempts').textContent = sweeps.length;
                 
-                updateTopList('top-sweeps', sweeps);
-                updateRecommendations('sweep-recommendations', sweeps);
+                const topSweeps = document.getElementById('top-sweeps');
+                topSweeps.innerHTML = '';
+                sweeps.sort((a, b) => b.confidence - a.confidence).slice(0, 3).forEach(tech => {
+                    const div = document.createElement('div');
+                    div.className = 'flex justify-between items-center bg-white bg-opacity-10 rounded-lg p-3';
+                    div.innerHTML = '<span class="text-white">' + tech.technique.replace(/_/g, ' ') + '</span><span class="text-green-400 font-bold">' + Math.round(tech.confidence * 100) + '%</span>';
+                    topSweeps.appendChild(div);
+                });
             }
 
-            // Update takedowns tab
             const takedowns = techniques.filter(t => t.category === 'takedown');
             if (takedowns.length > 0) {
-                const avgConfidence = takedowns.reduce((sum, t) => sum + t.confidence, 0) / takedowns.length;
-                const avgTime = takedowns.reduce((sum, t) => sum + (t.end_time - t.start_time), 0) / takedowns.length;
-                const wrestlingTakedowns = ['double_leg_takedown', 'single_leg_takedown', 'high_crotch', 'ankle_pick'];
-                const judoTakedowns = ['hip_toss', 'foot_sweep', 'osoto_gari', 'seoi_nage', 'uchi_mata'];
-                const wrestling = takedowns.filter(t => wrestlingTakedowns.includes(t.technique)).length;
-                const judo = takedowns.filter(t => judoTakedowns.includes(t.technique)).length;
-                const favStyle = wrestling > judo ? 'Wrestling' : judo > wrestling ? 'Judo' : 'Mixed';
-                
-                document.getElementById('takedown-success-rate').textContent = Math.round(avgConfidence * 100) + '%';
-                document.getElementById('takedown-avg-time').textContent = avgTime.toFixed(1) + 's';
-                document.getElementById('takedown-fav-style').textContent = favStyle;
+                const avgConf = takedowns.reduce((sum, t) => sum + t.confidence, 0) / takedowns.length;
+                document.getElementById('takedown-success-rate').textContent = Math.round(avgConf * 100) + '%';
                 document.getElementById('takedown-total-attempts').textContent = takedowns.length;
                 
-                updateTopList('top-takedowns', takedowns);
-                updateRecommendations('takedown-recommendations', takedowns);
+                const topTakedowns = document.getElementById('top-takedowns');
+                topTakedowns.innerHTML = '';
+                takedowns.sort((a, b) => b.confidence - a.confidence).slice(0, 3).forEach(tech => {
+                    const div = document.createElement('div');
+                    div.className = 'flex justify-between items-center bg-white bg-opacity-10 rounded-lg p-3';
+                    div.innerHTML = '<span class="text-white">' + tech.technique.replace(/_/g, ' ') + '</span><span class="text-green-400 font-bold">' + Math.round(tech.confidence * 100) + '%</span>';
+                    topTakedowns.appendChild(div);
+                });
             }
 
-            // Update analytics tab
-            updateAnalyticsTab(techniques);
+            document.getElementById('total-videos').textContent = monthlyUploads;
+            document.getElementById('total-techniques').textContent = techniques.length;
+            const avgConf = techniques.reduce((sum, t) => sum + t.confidence, 0) / techniques.length;
+            document.getElementById('overall-rate').textContent = Math.round(avgConf * 100) + '%';
         }
 
-        function getMostFrequent(arr) {
-            const frequency = {};
-            let maxCount = 0;
-            let mostFrequent = '';
-            
-            arr.forEach(item => {
-                frequency[item] = (frequency[item] || 0) + 1;
-                if (frequency[item] > maxCount) {
-                    maxCount = frequency[item];
-                    mostFrequent = item;
-                }
-            });
-            
-            return mostFrequent.replace(/_/g, ' ').replace(/\\b\\w/g, l => l.toUpperCase());
-        }
-
-        function updateTopList(elementId, techniques) {
-            const element = document.getElementById(elementId);
-            element.innerHTML = '';
-            
-            const sorted = [...techniques].sort((a, b) => b.confidence - a.confidence).slice(0, 4);
-            
-            sorted.forEach(technique => {
-                const div = document.createElement('div');
-                div.className = 'flex justify-between items-center bg-white bg-opacity-10 rounded-lg p-3';
-                
-                const confidence = Math.round(technique.confidence * 100);
-                const color = confidence >= 85 ? 'text-green-400' : confidence >= 70 ? 'text-yellow-400' : 'text-orange-400';
-                
-                div.innerHTML = '<span class="text-white">' + technique.technique.replace(/_/g, ' ').replace(/\\b\\w/g, l => l.toUpperCase()) + '</span><span class="' + color + ' font-bold">' + confidence + '%</span>';
-                element.appendChild(div);
-            });
-        }
-
-        function updateRecommendations(elementId, techniques) {
-            const element = document.getElementById(elementId);
-            element.innerHTML = '';
-            
-            if (techniques.length === 0) return;
-            
-            const lowest = techniques.reduce((min, t) => t.confidence < min.confidence ? t : min, techniques[0]);
-            const highest = techniques.reduce((max, t) => t.confidence > max.confidence ? t : max, techniques[0]);
-            
-            const focusDiv = document.createElement('div');
-            focusDiv.className = 'bg-blue-900 bg-opacity-50 rounded-lg p-4';
-            focusDiv.innerHTML = '<div class="text-white font-bold mb-2">Focus Area: ' + lowest.technique.replace(/_/g, ' ').replace(/\\b\\w/g, l => l.toUpperCase()) + '</div><p class="text-gray-300 text-sm">' + Math.round(lowest.confidence * 100) + '% success rate. Work on timing and technique fundamentals to improve consistency.</p>';
-            element.appendChild(focusDiv);
-            
-            const strengthDiv = document.createElement('div');
-            strengthDiv.className = 'bg-green-900 bg-opacity-50 rounded-lg p-4';
-            strengthDiv.innerHTML = '<div class="text-white font-bold mb-2">Strength: ' + highest.technique.replace(/_/g, ' ').replace(/\\b\\w/g, l => l.toUpperCase()) + '</div><p class="text-gray-300 text-sm">Excellent ' + Math.round(highest.confidence * 100) + '% success rate! This is a reliable technique in your arsenal.</p>';
-            element.appendChild(strengthDiv);
-        }
-
-        function updateAnalyticsTab(techniques) {
-            document.getElementById('total-videos-analyzed').textContent = monthlyUploads;
-            document.getElementById('total-techniques-found').textContent = techniques.length;
-            
-            const avgConfidence = techniques.reduce((sum, t) => sum + t.confidence, 0) / techniques.length;
-            document.getElementById('overall-success-rate').textContent = Math.round(avgConfidence * 100) + '%';
-            document.getElementById('improvement-trend').textContent = '+12%';
-            
-            // Category breakdown
-            const categories = {};
-            techniques.forEach(t => {
-                categories[t.category] = (categories[t.category] || 0) + 1;
-            });
-            
-            const breakdownElement = document.getElementById('category-breakdown');
-            breakdownElement.innerHTML = '';
-            
-            Object.entries(categories).forEach(([category, count]) => {
-                const div = document.createElement('div');
-                div.className = 'flex justify-between items-center bg-white bg-opacity-10 rounded-lg p-3';
-                div.innerHTML = '<span class="text-white">' + category.replace('_', ' ').replace(/\\b\\w/g, l => l.toUpperCase()) + '</span><span class="text-blue-400 font-bold">' + count + ' techniques</span>';
-                breakdownElement.appendChild(div);
-            });
-            
-            // Recent sessions
-            const sessionsElement = document.getElementById('recent-sessions');
-            sessionsElement.innerHTML = '<div class="bg-white bg-opacity-10 rounded-lg p-4"><div class="flex justify-between items-center"><div><div class="text-white font-bold">Latest Session</div><div class="text-gray-300 text-sm">' + techniques.length + ' techniques • Just analyzed</div></div><div class="text-green-400 font-bold">' + Math.round(avgConfidence * 100) + '%</div></div></div>';
-            
-            // AI insights
-            const insightsElement = document.getElementById('ai-training-insights');
-            insightsElement.innerHTML = '';
-            
-            const insights = [
-                "Focus on drilling your lowest confidence techniques during warm-ups",
-                "Your submission game is strong - consider teaching these techniques to training partners"
-            ];
-            
-            insights.forEach(insight => {
-                const div = document.createElement('div');
-                div.className = 'bg-purple-900 bg-opacity-50 rounded-lg p-4';
-                div.innerHTML = '<div class="text-white font-bold mb-2">Training Tip</div><p class="text-gray-300 text-sm">' + insight + '</p>';
-                insightsElement.appendChild(div);
-            });
+        if (userEmail) {
+            document.getElementById('account-section').style.display = 'none';
+            document.getElementById('user-info').textContent = userPlan.toUpperCase() + ' PLAN • ' + monthlyUploads + ' Videos • ' + userName;
         }
     </script>
 </body>
-</html>'''
-    
-    return html
+</html>"""
 
 @app.route('/api/create-account', methods=['POST'])
 def create_account():
@@ -556,11 +718,9 @@ def create_account():
     if '@' not in email:
         return jsonify({'success': False, 'message': 'Please enter a valid email'}), 400
     
-    # Update user with account info
     if user_id in users:
         users[user_id]['email'] = email
         users[user_id]['name'] = name
-        users[user_id]['account_created'] = datetime.now().isoformat()
         return jsonify({'success': True, 'message': 'Account created successfully!'})
     else:
         return jsonify({'success': False, 'message': 'User session not found'}), 400
@@ -569,14 +729,12 @@ def create_account():
 def analyze():
     user_id = get_user_id()
     
-    # Ensure user exists
     if user_id not in users:
         return jsonify({'error': 'User session not found'}), 400
         
     user = users[user_id]
     user_plan = user['plan']
     
-    # Check monthly upload limits
     current_month = datetime.now().strftime('%Y-%m')
     if user['last_upload_month'] != current_month:
         user['monthly_uploads'] = 0
@@ -588,18 +746,14 @@ def analyze():
     if user_plan == 'pro' and user['monthly_uploads'] >= 4:
         return jsonify({'error': 'Monthly upload limit reached! Upgrade to Black Belt for unlimited uploads.'}), 403
     
-    # Simulate processing time
     time.sleep(2)
     
-    # Generate analysis
     analysis_result = generate_analysis(user_plan)
     
-    # Store the analysis
     if user_id not in user_videos:
         user_videos[user_id] = []
     user_videos[user_id].append(analysis_result)
     
-    # Update counters
     user['monthly_uploads'] += 1
     users[user_id]['videos_count'] += 1
     
@@ -613,7 +767,6 @@ def upgrade():
     
     if new_plan in ['pro', 'blackbelt']:
         users[user_id]['plan'] = new_plan
-        # Reset upload counter when upgrading
         users[user_id]['monthly_uploads'] = 0
         return jsonify({'success': True, 'message': f'Successfully upgraded to {new_plan}!'})
     else:
@@ -625,522 +778,4 @@ def health():
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
-    app.run(host='0.0.0.0', port=port, debug=False)from flask import Flask, request, jsonify, session
-import os
-import json
-import time
-import random
-from datetime import datetime
-
-app = Flask(__name__)
-app.secret_key = 'bjj-ai-secret-key-2024'
-
-# Storage
-users = {}
-user_videos = {}
-facebook_connections = {}
-
-def get_user_id():
-    if 'user_id' not in session:
-        session['user_id'] = f"user_{random.randint(1000, 9999)}"
-        users[session['user_id']] = {
-            'plan': 'free',
-            'videos_count': 0,
-            'created_at': datetime.now().isoformat(),
-            'monthly_uploads': 0,
-            'last_upload_month': datetime.now().strftime('%Y-%m'),
-            'email': None,
-            'name': None,
-            'ai_learning_data': {
-                'favorite_techniques': [],
-                'weak_areas': [],
-                'improvement_trends': [],
-                'style_profile': 'balanced'
-            }
-        }
-        user_videos[session['user_id']] = []
-    return session['user_id']
-
-def generate_analysis(plan):
-    techniques = []
-    
-    # Comprehensive technique list
-    technique_list = [
-        # Submissions
-        {'name': 'armbar_from_guard', 'cat': 'submission'},
-        {'name': 'triangle_choke', 'cat': 'submission'},
-        {'name': 'rear_naked_choke', 'cat': 'submission'},
-        {'name': 'kimura', 'cat': 'submission'},
-        {'name': 'guillotine', 'cat': 'submission'},
-        {'name': 'darce_choke', 'cat': 'submission'},
-        {'name': 'omoplata', 'cat': 'submission'},
-        {'name': 'americana', 'cat': 'submission'},
-        {'name': 'heel_hook', 'cat': 'submission'},
-        {'name': 'ankle_lock', 'cat': 'submission'},
-        {'name': 'ezekiel_choke', 'cat': 'submission'},
-        {'name': 'loop_choke', 'cat': 'submission'},
-        {'name': 'bow_and_arrow_choke', 'cat': 'submission'},
-        {'name': 'baseball_choke', 'cat': 'submission'},
-        {'name': 'knee_bar', 'cat': 'submission'},
-        {'name': 'toe_hold', 'cat': 'submission'},
-        {'name': 'calf_slicer', 'cat': 'submission'},
-        {'name': 'north_south_choke', 'cat': 'submission'},
-        {'name': 'anaconda_choke', 'cat': 'submission'},
-        {'name': 'peruvian_necktie', 'cat': 'submission'},
-        
-        # Sweeps
-        {'name': 'scissor_sweep', 'cat': 'sweep'},
-        {'name': 'butterfly_sweep', 'cat': 'sweep'},
-        {'name': 'tripod_sweep', 'cat': 'sweep'},
-        {'name': 'flower_sweep', 'cat': 'sweep'},
-        {'name': 'hook_sweep', 'cat': 'sweep'},
-        {'name': 'pendulum_sweep', 'cat': 'sweep'},
-        {'name': 'spider_guard_sweep', 'cat': 'sweep'},
-        {'name': 'de_la_riva_sweep', 'cat': 'sweep'},
-        {'name': 'x_guard_sweep', 'cat': 'sweep'},
-        {'name': 'berimbolo', 'cat': 'sweep'},
-        {'name': 'old_school_sweep', 'cat': 'sweep'},
-        {'name': 'hip_bump_sweep', 'cat': 'sweep'},
-        {'name': 'sit_up_sweep', 'cat': 'sweep'},
-        {'name': 'lasso_guard_sweep', 'cat': 'sweep'},
-        {'name': 'balloon_sweep', 'cat': 'sweep'},
-        {'name': 'tornado_sweep', 'cat': 'sweep'},
-        {'name': 'knee_tap_sweep', 'cat': 'sweep'},
-        {'name': 'electric_chair_sweep', 'cat': 'sweep'},
-        
-        # Guard Passes
-        {'name': 'knee_cut_pass', 'cat': 'guard_pass'},
-        {'name': 'toreando_pass', 'cat': 'guard_pass'},
-        {'name': 'leg_drag', 'cat': 'guard_pass'},
-        {'name': 'stack_pass', 'cat': 'guard_pass'},
-        {'name': 'over_under_pass', 'cat': 'guard_pass'},
-        {'name': 'x_pass', 'cat': 'guard_pass'},
-        {'name': 'long_step_pass', 'cat': 'guard_pass'},
-        {'name': 'smash_pass', 'cat': 'guard_pass'},
-        {'name': 'headquarters_pass', 'cat': 'guard_pass'},
-        {'name': 'knee_slide_pass', 'cat': 'guard_pass'},
-        {'name': 'bullfighter_pass', 'cat': 'guard_pass'},
-        {'name': 'cartwheel_pass', 'cat': 'guard_pass'},
-        {'name': 'standing_pass', 'cat': 'guard_pass'},
-        {'name': 'leg_weave_pass', 'cat': 'guard_pass'},
-        
-        # Takedowns
-        {'name': 'double_leg_takedown', 'cat': 'takedown'},
-        {'name': 'single_leg_takedown', 'cat': 'takedown'},
-        {'name': 'hip_toss', 'cat': 'takedown'},
-        {'name': 'foot_sweep', 'cat': 'takedown'},
-        {'name': 'ankle_pick', 'cat': 'takedown'},
-        {'name': 'duck_under', 'cat': 'takedown'},
-        {'name': 'arm_drag_takedown', 'cat': 'takedown'},
-        {'name': 'osoto_gari', 'cat': 'takedown'},
-        {'name': 'seoi_nage', 'cat': 'takedown'},
-        {'name': 'uchi_mata', 'cat': 'takedown'},
-        {'name': 'high_crotch', 'cat': 'takedown'},
-        {'name': 'fireman_carry', 'cat': 'takedown'},
-        {'name': 'tai_otoshi', 'cat': 'takedown'},
-        {'name': 'tomoe_nage', 'cat': 'takedown'},
-        {'name': 'inside_trip', 'cat': 'takedown'},
-        {'name': 'outside_trip', 'cat': 'takedown'},
-        
-        # Escapes
-        {'name': 'mount_escape', 'cat': 'escape'},
-        {'name': 'side_control_escape', 'cat': 'escape'},
-        {'name': 'back_escape', 'cat': 'escape'},
-        {'name': 'turtle_escape', 'cat': 'escape'},
-        {'name': 'bridge_and_roll', 'cat': 'escape'},
-        {'name': 'knee_on_belly_escape', 'cat': 'escape'},
-        
-        # Transitions
-        {'name': 'guard_to_mount', 'cat': 'transition'},
-        {'name': 'side_control_to_mount', 'cat': 'transition'},
-        {'name': 'mount_to_back', 'cat': 'transition'},
-        {'name': 'knee_on_belly_transition', 'cat': 'transition'},
-        {'name': 'scramble', 'cat': 'transition'},
-        
-        # Guard Retention
-        {'name': 'hip_escape', 'cat': 'guard_retention'},
-        {'name': 'shrimping', 'cat': 'guard_retention'},
-        {'name': 'knee_shield', 'cat': 'guard_retention'},
-        {'name': 'frames', 'cat': 'guard_retention'},
-        {'name': 'inversion', 'cat': 'guard_retention'}
-    ]
-    
-    num_techniques = random.randint(8, 15)
-    selected = random.sample(technique_list, min(num_techniques, len(technique_list)))
-    
-    for tech in selected:
-        start_time = random.randint(10, 240)
-        techniques.append({
-            'technique': tech['name'],
-            'category': tech['cat'],
-            'confidence': round(random.uniform(0.75, 0.98), 2),
-            'start_time': start_time,
-            'end_time': start_time + random.randint(8, 20),
-            'quality': random.choice(['excellent', 'good', 'fair']),
-            'position': random.choice(['guard', 'mount', 'side_control', 'standing', 'half_guard', 'back_control', 'turtle', 'knee_on_belly']),
-            'has_timestamp': (plan in ['pro', 'blackbelt']),
-            'has_breakdown': (plan in ['pro', 'blackbelt'])
-        })
-    
-    insights = [
-        "Great technique diversity! You're showing skills across multiple categories.",
-        "High execution quality detected in your submissions.",
-        "Strong guard game - you're comfortable working from bottom.",
-        "Consistent performance across different positions.",
-        "Your timing on transitions is improving significantly.",
-        "Developing a well-rounded game across all positions.",
-        "Your defensive fundamentals are getting stronger.",
-        "Quick transitions detected - great scrambling ability!",
-        "Advanced techniques showing up - you're leveling up!",
-        "Competition-ready techniques detected in your game.",
-        "Excellent escape timing - hard to hold down!",
-        "Smooth position transitions - great flow!",
-        "Creative technique combinations detected.",
-        "Textbook execution on fundamental techniques.",
-        "Explosive movements - great athletic ability!"
-    ]
-    
-    return {
-        'total_techniques_detected': len(techniques),
-        'detected_techniques': techniques,
-        'video_duration': random.randint(180, 300),
-        'techniques_per_minute': round(len(techniques) / 4, 1),
-        'average_confidence': round(sum(t['confidence'] for t in techniques) / len(techniques), 2),
-        'insights': random.sample(insights, 3),
-        'analysis_timestamp': datetime.now().isoformat(),
-        'user_plan': plan
-    }
-
-@app.route('/')
-def home():
-    user_id = get_user_id()
-    
-    # Ensure user exists
-    if user_id not in users:
-        users[user_id] = {
-            'plan': 'free',
-            'videos_count': 0,
-            'created_at': datetime.now().isoformat(),
-            'monthly_uploads': 0,
-            'last_upload_month': datetime.now().strftime('%Y-%m'),
-            'email': None,
-            'name': None,
-            'ai_learning_data': {
-                'favorite_techniques': [],
-                'weak_areas': [],
-                'improvement_trends': [],
-                'style_profile': 'balanced'
-            }
-        }
-        user_videos[user_id] = []
-    
-    user = users[user_id]
-    user_plan = user['plan']
-    video_count = len(user_videos.get(user_id, []))
-    
-    # Check monthly upload limit
-    current_month = datetime.now().strftime('%Y-%m')
-    if user['last_upload_month'] != current_month:
-        user['monthly_uploads'] = 0
-        user['last_upload_month'] = current_month
-    
-    monthly_uploads = user['monthly_uploads']
-    user_email = user.get('email', None)
-    user_name = user.get('name', 'User')
-    
-    # Calculate upload limits and status
-    max_uploads = 1 if user_plan == 'free' else (4 if user_plan == 'pro' else 999)
-    uploads_remaining = max(0, max_uploads - monthly_uploads) if user_plan != 'blackbelt' else 999
-    is_limit_reached = (user_plan == 'free' and monthly_uploads >= 1) or (user_plan == 'pro' and monthly_uploads >= 4)
-    
-    # Account creation section
-    account_section = ''
-    if not user_email:
-        account_section = '''
-        <div class="mt-6 mb-4">
-            <div class="bg-yellow-600 bg-opacity-20 rounded-lg p-4 max-w-md mx-auto border border-yellow-500">
-                <h3 class="text-lg font-bold text-white mb-2">Create Your Account</h3>
-                <p class="text-yellow-100 text-sm mb-4">Save your progress & let AI learn your fighting style!</p>
-                <div class="space-y-3">
-                    <input type="email" id="userEmail" placeholder="Enter your email" 
-                           class="w-full p-3 rounded-lg bg-white bg-opacity-20 text-white placeholder-gray-300">
-                    <input type="text" id="userName" placeholder="Your name" 
-                           class="w-full p-3 rounded-lg bg-white bg-opacity-20 text-white placeholder-gray-300">
-                    <button onclick="createAccount()" class="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg font-bold w-full">
-                        CREATE ACCOUNT & START TRACKING
-                    </button>
-                </div>
-            </div>
-        </div>'''
-    
-    # User display
-    user_display = user_plan.upper() + ' PLAN • ' + str(video_count) + ' Videos Analyzed'
-    if user_email:
-        user_display += ' • ' + user_name
-    
-    # Upload counter status
-    counter_color = 'text-red-400' if is_limit_reached else ('text-yellow-300' if user_plan == 'free' else 'text-green-300')
-    max_display = 'infinity' if user_plan == 'blackbelt' else str(max_uploads)
-    limit_text = ' - LIMIT REACHED!' if is_limit_reached else ''
-    counter_display = 'Monthly Uploads: ' + str(monthly_uploads) + '/' + max_display + limit_text
-    
-    # Button status
-    button_class = 'bg-white text-blue-600 font-bold py-4 px-8 rounded-lg text-xl hover:bg-gray-100'
-    if is_limit_reached:
-        button_class += ' opacity-50 cursor-not-allowed'
-        button_text = 'MONTHLY LIMIT REACHED'
-        button_disabled = 'disabled'
-    else:
-        button_text = 'ANALYZE MY TECHNIQUES'
-        button_disabled = ''
-    
-    # Upload info
-    upload_info = ''
-    if user_plan == 'free' and is_limit_reached:
-        upload_info = '<p style="color: #ef4444; font-weight: bold;">DEMO LIMIT REACHED - UPGRADE TO CONTINUE</p>'
-    elif user_plan == 'pro' and is_limit_reached:
-        upload_info = '<p style="color: #ef4444; font-weight: bold;">PRO LIMIT REACHED - UPGRADE TO BLACK BELT</p>'
-    elif user_plan == 'free' and not is_limit_reached:
-        upload_info = '<p>Monthly uploads remaining: <strong>' + str(uploads_remaining) + '</strong></p>'
-    elif user_plan != 'free':
-        max_display_text = 'infinity' if user_plan == 'blackbelt' else str(max_uploads)
-        upload_info = '<p>Monthly uploads: <strong>' + str(monthly_uploads) + '/' + max_display_text + '</strong></p>'
-    
-    html = '''<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BJJ AI Analyzer Pro</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <style>
-        body { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
-        .glass { background: rgba(255, 255, 255, 0.1); backdrop-filter: blur(10px); }
-        .tab-content { display: none; }
-        .tab-content.active { display: block; }
-        .tab-button.active { background: rgba(255, 255, 255, 0.2); }
-    </style>
-</head>
-<body class="min-h-screen">
-    <div class="text-center py-8">
-        <h1 class="text-5xl font-bold text-white mb-4">BJJ AI Analyzer Pro</h1>
-        <p class="text-xl text-gray-200">Complete BJJ Analytics Platform</p>
-        ''' + account_section + '''
-        <div class="mt-4">
-            <span class="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-6 py-3 rounded-lg text-lg font-bold">
-                ''' + user_display + '''
-            </span>
-        </div>
-        <div class="mt-4 space-x-4">
-            <button onclick="showPricing()" class="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg font-bold text-lg">
-                UPGRADE NOW
-            </button>
-            <div class="inline-block">
-                <span class="font-bold ''' + counter_color + '''">
-                    ''' + counter_display + '''
-                </span>
-            </div>
-        </div>
-    </div>
-
-    <div id="pricing-modal" class="fixed inset-0 bg-black bg-opacity-75 hidden z-50 flex items-center justify-center">
-        <div class="glass rounded-2xl p-8 max-w-6xl mx-4">
-            <div class="flex justify-between items-center mb-8">
-                <h2 class="text-3xl font-bold text-white">Choose Your BJJ Journey</h2>
-                <button onclick="hidePricing()" class="text-white text-3xl hover:text-red-400">&times;</button>
-            </div>
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
-                <div class="bg-gray-800 bg-opacity-50 rounded-xl p-6 text-center border border-gray-600">
-                    <h3 class="text-2xl font-bold text-white mb-4">Free</h3>
-                    <div class="text-4xl font-bold text-white mb-6">$0<span class="text-lg">/month</span></div>
-                    <ul class="text-gray-300 space-y-3 mb-8 text-left">
-                        <li>1 upload per month</li>
-                        <li>Full technique percentages</li>
-                        <li>Basic analytics</li>
-                        <li>No breakdowns</li>
-                        <li>No timestamps</li>
-                    </ul>
-                    <button onclick="selectPlan('free')" class="bg-gray-600 text-white py-3 px-6 rounded-lg w-full font-bold">
-                        Current Plan
-                    </button>
-                </div>
-                
-                <div class="bg-blue-600 bg-opacity-30 rounded-xl p-6 text-center border-2 border-blue-400 transform scale-105">
-                    <div class="bg-blue-500 text-white px-4 py-2 rounded-full text-sm mb-4">MOST POPULAR</div>
-                    <h3 class="text-2xl font-bold text-white mb-4">Pro</h3>
-                    <div class="text-4xl font-bold text-white mb-6">$29<span class="text-lg">/month</span></div>
-                    <ul class="text-white space-y-3 mb-8 text-left">
-                        <li>4 uploads per month</li>
-                        <li>Detailed breakdowns</li>
-                        <li>Video timestamps</li>
-                        <li>Challenges and Social</li>
-                        <li>AI recommendations</li>
-                    </ul>
-                    <button onclick="selectPlan('pro')" class="bg-blue-600 hover:bg-blue-700 text-white py-3 px-8 rounded-lg w-full font-bold text-lg">
-                        UPGRADE TO PRO
-                    </button>
-                </div>
-                
-                <div class="bg-black bg-opacity-50 rounded-xl p-6 text-center border-2 border-yellow-400">
-                    <div class="bg-yellow-500 text-black px-4 py-2 rounded-full text-sm mb-4 font-bold">BLACK BELT</div>
-                    <h3 class="text-2xl font-bold text-white mb-4">Black Belt</h3>
-                    <div class="text-4xl font-bold text-white mb-6">$59<span class="text-lg">/month</span></div>
-                    <ul class="text-yellow-100 space-y-3 mb-8 text-left">
-                        <li>UNLIMITED uploads</li>
-                        <li>Advanced breakdowns</li>
-                        <li>Competition analytics</li>
-                        <li>AI coaching</li>
-                        <li>3D analysis</li>
-                        <li>Tournament prep</li>
-                    </ul>
-                    <button onclick="selectPlan('blackbelt')" class="bg-yellow-500 hover:bg-yellow-600 text-black py-3 px-8 rounded-lg w-full font-bold text-lg">
-                        GO BLACK BELT
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div class="container mx-auto px-4 max-w-6xl mb-8">
-        <div class="glass rounded-xl p-2">
-            <div class="flex flex-wrap justify-center space-x-2">
-                <button onclick="showTab('upload')" class="tab-button active px-6 py-3 rounded-lg text-white font-semibold text-lg">
-                    Upload
-                </button>
-                <button onclick="showTab('submissions')" class="tab-button px-6 py-3 rounded-lg text-white font-semibold text-lg">
-                    Submissions
-                </button>
-                <button onclick="showTab('sweeps')" class="tab-button px-6 py-3 rounded-lg text-white font-semibold text-lg">
-                    Sweeps
-                </button>
-                <button onclick="showTab('takedowns')" class="tab-button px-6 py-3 rounded-lg text-white font-semibold text-lg">
-                    Takedowns
-                </button>
-                <button onclick="showTab('analytics')" class="tab-button px-6 py-3 rounded-lg text-white font-semibold text-lg">
-                    Analytics
-                </button>
-            </div>
-        </div>
-    </div>
-
-    <div class="container mx-auto px-4 max-w-6xl">
-        <div id="upload-tab" class="tab-content active">
-            <div class="glass rounded-xl p-8">
-                <h2 class="text-3xl font-bold text-white mb-8 text-center">Upload Your BJJ Video</h2>
-
-                <div class="bg-gradient-to-r from-green-600 to-blue-600 rounded-xl p-8 text-center">
-                    <h3 class="text-2xl font-bold text-white mb-4">Ready to Analyze Your Game?</h3>
-                    <p class="text-white mb-6">Upload your training footage and get instant AI-powered technique analysis</p>
-                    
-                    <input type="file" id="videoFile" accept="video/*" class="mb-6 text-white bg-white bg-opacity-20 p-4 rounded-lg">
-                    <br>
-                    <button onclick="analyzeVideo()" class="''' + button_class + '''" ''' + button_disabled + '''>
-                        ''' + button_text + '''
-                    </button>
-                    
-                    <div class="mt-6 text-white">
-                        <div id="upload-counter-display">
-                            ''' + upload_info + '''
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div id="progress-section" class="glass rounded-xl p-8 mt-8 hidden">
-                <h3 class="text-2xl font-bold text-white mb-6 text-center">AI Analyzing Your Techniques...</h3>
-                <div class="w-full bg-gray-700 rounded-full h-6 mb-6">
-                    <div id="progress-bar" class="bg-gradient-to-r from-green-500 to-blue-500 h-6 rounded-full transition-all duration-500" style="width: 0%"></div>
-                </div>
-                <p class="text-gray-300 text-center text-lg">Processing your BJJ footage with advanced AI...</p>
-            </div>
-
-            <div id="results-section" class="glass rounded-xl p-8 mt-8 hidden">
-                <h3 class="text-3xl font-bold text-white mb-8 text-center">Your BJJ Analysis</h3>
-                
-                <div class="grid grid-cols-2 md:grid-cols-4 gap-6 mb-8">
-                    <div class="bg-gradient-to-br from-blue-500 to-blue-700 rounded-xl p-6 text-center">
-                        <div class="text-3xl font-bold text-white" id="total-count">0</div>
-                        <div class="text-blue-100">Techniques</div>
-                    </div>
-                    <div class="bg-gradient-to-br from-green-500 to-green-700 rounded-xl p-6 text-center">
-                        <div class="text-3xl font-bold text-white" id="avg-confidence">0%</div>
-                        <div class="text-green-100">Accuracy</div>
-                    </div>
-                    <div class="bg-gradient-to-br from-purple-500 to-purple-700 rounded-xl p-6 text-center">
-                        <div class="text-3xl font-bold text-white" id="video-duration">0m</div>
-                        <div class="text-purple-100">Duration</div>
-                    </div>
-                    <div class="bg-gradient-to-br from-red-500 to-red-700 rounded-xl p-6 text-center">
-                        <div class="text-3xl font-bold text-white" id="submission-count">0</div>
-                        <div class="text-red-100">Submissions</div>
-                    </div>
-                </div>
-
-                <div id="techniques-list" class="space-y-4 mb-8"></div>
-                
-                <div class="bg-white bg-opacity-10 rounded-xl p-6">
-                    <h4 class="text-2xl font-bold text-white mb-4">AI Insights</h4>
-                    <div id="insights-list"></div>
-                </div>
-            </div>
-        </div>
-
-        <div id="submissions-tab" class="tab-content">
-            <div class="glass rounded-xl p-8">
-                <h2 class="text-3xl font-bold text-white mb-8 text-center">Submission Analysis</h2>
-                
-                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
-                    <div class="bg-gradient-to-br from-red-500 to-red-700 rounded-xl p-6">
-                        <h3 class="text-xl font-bold text-white mb-4">Submission Stats</h3>
-                        <div class="space-y-4">
-                            <div class="flex justify-between">
-                                <span class="text-red-100">Success Rate</span>
-                                <span class="text-white font-bold" id="sub-success-rate">-</span>
-                            </div>
-                            <div class="flex justify-between">
-                                <span class="text-red-100">Avg Setup Time</span>
-                                <span class="text-white font-bold" id="sub-avg-time">-</span>
-                            </div>
-                            <div class="flex justify-between">
-                                <span class="text-red-100">Favorite Position</span>
-                                <span class="text-white font-bold" id="sub-fav-position">-</span>
-                            </div>
-                            <div class="flex justify-between">
-                                <span class="text-red-100">Total Attempts</span>
-                                <span class="text-white font-bold" id="sub-total-attempts">-</span>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="bg-white bg-opacity-10 rounded-xl p-6">
-                        <h3 class="text-xl font-bold text-white mb-4">Top Submissions</h3>
-                        <div id="top-submissions" class="space-y-3">
-                            <p class="text-gray-300 text-center">Upload videos to see your top submissions!</p>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="bg-white bg-opacity-10 rounded-xl p-6">
-                    <h3 class="text-xl font-bold text-white mb-4">AI Recommendations</h3>
-                    <div id="sub-recommendations" class="space-y-3">
-                        <p class="text-gray-300 text-center">Upload videos to get personalized submission recommendations!</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div id="sweeps-tab" class="tab-content">
-            <div class="glass rounded-xl p-8">
-                <h2 class="text-3xl font-bold text-white mb-8 text-center">Sweep Analysis</h2>
-                
-                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
-                    <div class="bg-gradient-to-br from-blue-500 to-blue-700 rounded-xl p-6">
-                        <h3 class="text-xl font-bold text-white mb-4">Sweep Stats</h3>
-                        <div class="space-y-4">
-                            <div class="flex justify-between">
-                                <span class="text-blue-100">Success Rate</span>
-                                <span class="text-white font-bold" id="sweep-success-rate">-</span>
-                            </div>
-                            <div class="flex justify-between">
-                                <span class="text-blue-100">Avg Execution Time</span>
+    app.run(host='0.0.0.0', port=port, debug=False)

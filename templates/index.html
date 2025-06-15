@@ -1,45 +1,25 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-  <meta charset="UTF-8" />
-  <title>BJJ AI Analyzer — Upload</title>
-  <script src="https://cdn.tailwindcss.com"></script>
+    <title>BJJ AI Analyzer</title>
 </head>
-<body class="bg-gray-900 text-white flex flex-col items-center py-16 space-y-8">
-  <h1 class="text-4xl font-bold">🥋 BJJ AI Analyzer</h1>
+<body>
+    <h1>Upload Your BJJ Roll</h1>
 
-  <form 
-    action="/upload" 
-    method="POST" 
-    enctype="multipart/form-data"
-    class="bg-gray-800 p-8 rounded shadow-md w-full max-w-md space-y-4"
-  >
-    <label for="video" class="block font-semibold">Choose your rolling video (.mp4, .mov, etc):</label>
-    <input 
-      type="file" 
-      name="video" 
-      id="video" 
-      accept="video/*"
-      required 
-      class="w-full text-black bg-white rounded p-2"
-    />
-
-    <button 
-      type="submit" 
-      class="w-full bg-green-600 hover:bg-green-700 py-2 rounded text-white font-semibold"
-    >
-      Analyze My Roll
-    </button>
-  </form>
-
-  {% with messages = get_flashed_messages() %}
-    {% if messages %}
-      <div class="bg-red-600 text-white px-4 py-2 mt-4 rounded max-w-md w-full text-center">
-        {% for msg in messages %}
-          <p>{{ msg }}</p>
+    {% with messages = get_flashed_messages() %}
+      {% if messages %}
+        <ul>
+        {% for message in messages %}
+          <li style="color:red;">{{ message }}</li>
         {% endfor %}
-      </div>
-    {% endif %}
-  {% endwith %}
+        </ul>
+      {% endif %}
+    {% endwith %}
+
+    <form action="/upload" method="POST" enctype="multipart/form-data">
+        <label>Select video file:</label><br>
+        <input type="file" name="video" accept="video/*" required><br><br>
+        <input type="submit" value="Analyze">
+    </form>
 </body>
 </html>

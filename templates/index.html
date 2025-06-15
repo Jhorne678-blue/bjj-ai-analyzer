@@ -11,20 +11,7 @@
   <h1 class="text-3xl font-bold">🥋 BJJ AI Analyzer</h1>
 
   <form action="/upload" method="POST" enctype="multipart/form-data" class="bg-gray-800 p-6 rounded shadow-md flex flex-col space-y-4">
-    <label for="video" class="font-semibold">Upload your rolling video:</label>
-    <input type="file" name="video" id="video" class="text-black" accept="video/*" required>
-    <button type="submit" class="bg-green-600 hover:bg-green-700 px-4 py-2 rounded">Analyze</button>
-  </form>
-
-  {% with messages = get_flashed_messages() %}
-    {% if messages %}
-      <div class="text-red-400 mt-4">
-        {% for msg in messages %}
-          <p>{{ msg }}</p>
-        {% endfor %}
-      </div>
-    {% endif %}
-  {% endwith %}
-
-</body>
-</html>
+  <label for="video" class="font-semibold">Upload your rolling video:</label>
+  <input type="file" name="video" id="video" class="text-black" accept="video/*" required>
+  <button type="submit" class="bg-green-600 hover:bg-green-700 px-4 py-2 rounded">Analyze</button>
+</form>

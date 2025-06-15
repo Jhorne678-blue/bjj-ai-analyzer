@@ -1,1 +1,18 @@
+[build]
+builder = "nixpacks"
+buildCommand = "pip install -r requirements.txt"
 
+[deploy]
+startCommand = "gunicorn --bind 0.0.0.0:$PORT app:app --workers 2 --timeout 300 --max-requests 1000 --preload"
+healthcheckPath = "/health"
+healthcheckTimeout = 300
+restartPolicyType = "on_failure"
+restartPolicyMaxRetries = 3
+
+[variables]
+PYTHONPATH = "/app"
+PYTHONUNBUFFERED = "1"
+PORT = "5000"
+
+[build.env]
+PYTHON_VERSION = "3.11"

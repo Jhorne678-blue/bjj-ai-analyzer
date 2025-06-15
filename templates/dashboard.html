@@ -1,1 +1,52 @@
-
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Dashboard - BJJ AI Analyzer</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 0; padding: 20px; }
+        .nav { background: #f8f9fa; padding: 10px 20px; margin-bottom: 20px; }
+        .btn { background: #007bff; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; margin: 5px; }
+        .upload-area { border: 2px dashed #ccc; padding: 40px; text-align: center; margin: 20px 0; }
+    </style>
+</head>
+<body>
+    <div class="nav">
+        <strong>BJJ AI Analyzer</strong> - Welcome {{ session.username }}!
+        <a href="/logout" style="float: right;">Logout</a>
+    </div>
+    
+    <h1>Dashboard</h1>
+    
+    <div class="upload-area">
+        <h3>Upload Your BJJ Video</h3>
+        <p>Select a video file to analyze your techniques</p>
+        <input type="file" id="videoFile" accept="video/*">
+        <br><br>
+        <button onclick="uploadVideo()" class="btn">Analyze Video</button>
+    </div>
+    
+    <div id="status" style="margin: 20px 0; padding: 10px; background: #f8f9fa; display: none;"></div>
+    
+    <script>
+        function uploadVideo() {
+            const file = document.getElementById('videoFile').files[0];
+            if (!file) {
+                alert('Please select a video file');
+                return;
+            }
+            
+            const status = document.getElementById('status');
+            status.style.display = 'block';
+            status.innerHTML = '<strong>Analysis started!</strong> This is a demo - results will appear here.';
+            
+            // Simulate analysis
+            setTimeout(() => {
+                status.innerHTML = '<strong>Analysis Complete!</strong><br>' +
+                    'Detected techniques: Armbar, Triangle Choke, Scissor Sweep<br>' +
+                    'Average confidence: 87%<br>' +
+                    'Total techniques: 3';
+            }, 3000);
+        }
+    </script>
+</body>
+</html>

@@ -1,8 +1,3 @@
-"""
-BJJ AI Analyzer - Complete Production Application
-Built for Railway deployment with full video analysis capabilities
-"""
-
 from flask import Flask, render_template, request, jsonify, session, redirect, url_for, flash, send_file
 from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename

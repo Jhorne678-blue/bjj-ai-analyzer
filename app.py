@@ -10,7 +10,12 @@ UPLOAD_FOLDER = 'uploads'
 ALLOWED_EXTENSIONS = {'mp4', 'mov', 'avi', 'mkv'}
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
-os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+# SAFELY create the upload folder
+if not os.path.isdir(UPLOAD_FOLDER):
+    try:
+        os.makedirs(UPLOAD_FOLDER)
+    except Exception as e:
+        print(f"Failed to create upload directory: {e}")
 
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS

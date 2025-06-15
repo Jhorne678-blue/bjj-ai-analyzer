@@ -14,4 +14,25 @@
   <label for="video" class="font-semibold">Upload your rolling video:</label>
   <input type="file" name="video" id="video" class="text-black" accept="video/*" required>
   <button type="submit" class="bg-green-600 hover:bg-green-700 px-4 py-2 rounded">Analyze</button>
+<form 
+  action="/upload" 
+  method="POST" 
+  enctype="multipart/form-data" 
+  class="bg-gray-800 p-6 rounded shadow-md flex flex-col space-y-4">
+
+  <label for="video" class="font-semibold">Upload your rolling video:</label>
+  <input 
+    type="file" 
+    name="video" 
+    id="video" 
+    class="text-black" 
+    accept="video/*" 
+    required />
+
+  <button 
+    type="submit" 
+    class="bg-green-600 hover:bg-green-700 px-4 py-2 rounded">
+    Analyze
+  </button>
 </form>
+

@@ -1,75 +1,368 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% if mode == 'signup' %}Sign Up{% else %}Login{% endif %} - BJJ AI Analyzer</title>
-    <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: Arial, sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; display: flex; align-items: center; justify-content: center; }
-        .auth-container { background: white; padding: 40px; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); max-width: 400px; width: 90%; }
-        .auth-header { text-align: center; margin-bottom: 30px; }
-        .auth-header h1 { color: #667eea; margin-bottom: 10px; }
-        .form-group { margin-bottom: 20px; }
-        .form-group label { display: block; margin-bottom: 5px; font-weight: bold; color: #333; }
-        .form-group input { width: 100%; padding: 12px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 16px; }
-        .form-group input:focus { outline: none; border-color: #667eea; }
-        .btn { background: #667eea; color: white; padding: 12px 24px; border: none; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; width: 100%; }
-        .btn:hover { background: #5a6fd8; }
-        .auth-footer { text-align: center; margin-top: 20px; }
-        .auth-footer a { color: #667eea; text-decoration: none; }
-        .flash-message { background: #f8d7da; color: #721c24; padding: 10px; border-radius: 5px; margin-bottom: 20px; }
-    </style>
-</head>
-<body>
-    <div class="auth-container">
-        <div class="auth-header">
-            <h1>🥋 BJJ AI</h1>
-            <h2>{% if mode == 'signup' %}Create Account{% else %}Welcome Back{% endif %}</h2>
+{% extends "base.html" %}
+
+{% block title %}Login / Sign Up - BJJ AI Analyzer{% endblock %}
+
+{% block content %}
+<div class="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+    <div class="max-w-md w-full space-y-8">
+        <!-- Header -->
+        <div class="text-center">
+            <i class="fas fa-brain text-5xl text-purple-600 mb-4"></i>
+            <h2 class="text-3xl font-extrabold text-gray-900">BJJ AI Analyzer</h2>
+            <p class="mt-2 text-gray-600">Join thousands of athletes improving their game</p>
         </div>
-
-        {% with messages = get_flashed_messages() %}
-            {% if messages %}
-                {% for message in messages %}
-                    <div class="flash-message">{{ message }}</div>
-                {% endfor %}
-            {% endif %}
-        {% endwith %}
-
-        <form method="POST">
-            {% if mode == 'signup' %}
-            <div class="form-group">
-                <label for="username">Username</label>
-                <input type="text" id="username" name="username" required>
+        
+        <!-- Auth Container -->
+        <div class="bg-white rounded-lg shadow-xl p-8">
+            <!-- Tab Navigation -->
+            <div class="flex mb-6">
+                <button onclick="switchAuthTab('login')" id="login-tab-btn" 
+                        class="auth-tab-btn active flex-1 py-2 px-4 text-center font-medium rounded-l-lg border">
+                    Login
+                </button>
+                <button onclick="switchAuthTab('signup')" id="signup-tab-btn" 
+                        class="auth-tab-btn flex-1 py-2 px-4 text-center font-medium rounded-r-lg border border-l-0">
+                    Sign Up
+                </button>
             </div>
-            {% endif %}
-
-            <div class="form-group">
-                <label for="{% if mode == 'signup' %}email{% else %}username{% endif %}">
-                    {% if mode == 'signup' %}Email{% else %}Username or Email{% endif %}
-                </label>
-                <input type="{% if mode == 'signup' %}email{% else %}text{% endif %}" 
-                       id="{% if mode == 'signup' %}email{% else %}username{% endif %}" 
-                       name="{% if mode == 'signup' %}email{% else %}username{% endif %}" required>
+            
+            <!-- Login Form -->
+            <div id="login-form-container" class="auth-form">
+                <form id="login-form" class="space-y-6">
+                    <div>
+                        <label for="login-username" class="block text-sm font-medium text-gray-700">
+                            Username or Email
+                        </label>
+                        <input id="login-username" name="username" type="text" required 
+                               class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm 
+                                      focus:outline-none focus:ring-purple-500 focus:border-purple-500">
+                    </div>
+                    
+                    <div>
+                        <label for="login-password" class="block text-sm font-medium text-gray-700">
+                            Password
+                        </label>
+                        <input id="login-password" name="password" type="password" required 
+                               class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm 
+                                      focus:outline-none focus:ring-purple-500 focus:border-purple-500">
+                    </div>
+                    
+                    <button type="submit" id="login-submit-btn" 
+                            class="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg 
+                                   shadow-sm text-sm font-medium text-white bg-purple-600 hover:bg-purple-700 
+                                   focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 
+                                   transition-colors">
+                        <i class="fas fa-sign-in-alt mr-2"></i>
+                        Sign In
+                    </button>
+                </form>
+                
+                <!-- Social Login -->
+                <div class="mt-6">
+                    <div class="relative">
+                        <div class="absolute inset-0 flex items-center">
+                            <div class="w-full border-t border-gray-300"></div>
+                        </div>
+                        <div class="relative flex justify-center text-sm">
+                            <span class="px-2 bg-white text-gray-500">Or continue with</span>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-6">
+                        <button onclick="loginWithFacebook()" 
+                                class="w-full flex justify-center items-center px-4 py-3 border border-gray-300 
+                                       rounded-lg shadow-sm text-sm font-medium text-gray-700 bg-white 
+                                       hover:bg-gray-50 transition-colors">
+                            <i class="fab fa-facebook-f text-blue-600 mr-2"></i>
+                            Continue with Facebook
+                        </button>
+                    </div>
+                </div>
             </div>
-
-            <div class="form-group">
-                <label for="password">Password</label>
-                <input type="password" id="password" name="password" required>
+            
+            <!-- Signup Form -->
+            <div id="signup-form-container" class="auth-form hidden">
+                <form id="signup-form" class="space-y-6">
+                    <div>
+                        <label for="signup-username" class="block text-sm font-medium text-gray-700">
+                            Username
+                        </label>
+                        <input id="signup-username" name="username" type="text" required 
+                               minlength="3" maxlength="20"
+                               class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm 
+                                      focus:outline-none focus:ring-purple-500 focus:border-purple-500">
+                        <p class="mt-1 text-xs text-gray-500">3-20 characters, letters and numbers only</p>
+                    </div>
+                    
+                    <div>
+                        <label for="signup-email" class="block text-sm font-medium text-gray-700">
+                            Email Address
+                        </label>
+                        <input id="signup-email" name="email" type="email" required 
+                               class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm 
+                                      focus:outline-none focus:ring-purple-500 focus:border-purple-500">
+                    </div>
+                    
+                    <div>
+                        <label for="signup-password" class="block text-sm font-medium text-gray-700">
+                            Password
+                        </label>
+                        <input id="signup-password" name="password" type="password" required 
+                               minlength="6"
+                               class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm 
+                                      focus:outline-none focus:ring-purple-500 focus:border-purple-500">
+                        <p class="mt-1 text-xs text-gray-500">Minimum 6 characters</p>
+                    </div>
+                    
+                    <div>
+                        <label for="friend-code" class="block text-sm font-medium text-gray-700">
+                            Friend Code (Optional)
+                        </label>
+                        <input id="friend-code" name="friend_code" type="text" 
+                               placeholder="Enter Black Belt friend code"
+                               class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm 
+                                      focus:outline-none focus:ring-purple-500 focus:border-purple-500">
+                        <p class="mt-1 text-xs text-gray-500">Get Black Belt access for free with a friend's code!</p>
+                    </div>
+                    
+                    <button type="submit" id="signup-submit-btn" 
+                            class="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg 
+                                   shadow-sm text-sm font-medium text-white bg-purple-600 hover:bg-purple-700 
+                                   focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 
+                                   transition-colors">
+                        <i class="fas fa-user-plus mr-2"></i>
+                        Create Account
+                    </button>
+                </form>
+                
+                <!-- Terms -->
+                <div class="mt-6 text-center">
+                    <p class="text-xs text-gray-500">
+                        By creating an account, you agree to our 
+                        <a href="#" class="text-purple-600 hover:text-purple-800">Terms of Service</a> 
+                        and 
+                        <a href="#" class="text-purple-600 hover:text-purple-800">Privacy Policy</a>
+                    </p>
+                </div>
             </div>
-
-            <button type="submit" class="btn">
-                {% if mode == 'signup' %}Create Account{% else %}Sign In{% endif %}
-            </button>
-        </form>
-
-        <div class="auth-footer">
-            {% if mode == 'signup' %}
-                <p><a href="/login">Already have an account? Sign in</a></p>
-            {% else %}
-                <p><a href="/signup">Need an account? Sign up</a></p>
-            {% endif %}
+        </div>
+        
+        <!-- Plan Information -->
+        <div class="bg-gray-50 rounded-lg p-6">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4 text-center">Choose Your Plan</h3>
+            
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <!-- Free Plan -->
+                <div class="bg-white rounded-lg p-4 border border-gray-200">
+                    <div class="text-center">
+                        <h4 class="font-semibold text-gray-900">Free</h4>
+                        <p class="text-2xl font-bold text-gray-900 mt-2">$0<span class="text-sm font-normal">/month</span></p>
+                        <ul class="text-sm text-gray-600 mt-4 space-y-2">
+                            <li><i class="fas fa-check text-green-500 mr-2"></i>3 videos/month</li>
+                            <li><i class="fas fa-check text-green-500 mr-2"></i>Basic analysis</li>
+                            <li><i class="fas fa-check text-green-500 mr-2"></i>Daily challenges</li>
+                        </ul>
+                    </div>
+                </div>
+                
+                <!-- Pro Plan -->
+                <div class="bg-white rounded-lg p-4 border-2 border-blue-500 relative">
+                    <div class="absolute -top-3 left-1/2 transform -translate-x-1/2">
+                        <span class="bg-blue-500 text-white px-3 py-1 rounded-full text-xs font-medium">POPULAR</span>
+                    </div>
+                    <div class="text-center">
+                        <h4 class="font-semibold text-gray-900">Pro</h4>
+                        <p class="text-2xl font-bold text-gray-900 mt-2">$19<span class="text-sm font-normal">/month</span></p>
+                        <ul class="text-sm text-gray-600 mt-4 space-y-2">
+                            <li><i class="fas fa-check text-green-500 mr-2"></i>Unlimited videos</li>
+                            <li><i class="fas fa-check text-green-500 mr-2"></i>Advanced analysis</li>
+                            <li><i class="fas fa-check text-green-500 mr-2"></i>Progress tracking</li>
+                        </ul>
+                    </div>
+                </div>
+                
+                <!-- Black Belt Plan -->
+                <div class="bg-black text-white rounded-lg p-4 relative">
+                    <div class="absolute -top-3 left-1/2 transform -translate-x-1/2">
+                        <span class="bg-yellow-500 text-black px-3 py-1 rounded-full text-xs font-bold">PREMIUM</span>
+                    </div>
+                    <div class="text-center">
+                        <h4 class="font-semibold">Black Belt</h4>
+                        <p class="text-2xl font-bold mt-2">$39<span class="text-sm font-normal">/month</span></p>
+                        <ul class="text-sm mt-4 space-y-2">
+                            <li><i class="fas fa-check text-yellow-400 mr-2"></i>Everything in Pro</li>
+                            <li><i class="fas fa-check text-yellow-400 mr-2"></i>Video clips extraction</li>
+                            <li><i class="fas fa-check text-yellow-400 mr-2"></i>Friend codes</li>
+                            <li><i class="fas fa-check text-yellow-400 mr-2"></i>Priority support</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
-</body>
-</html>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Auth tab switching
+function switchAuthTab(tab) {
+    const loginContainer = document.getElementById('login-form-container');
+    const signupContainer = document.getElementById('signup-form-container');
+    const loginTabBtn = document.getElementById('login-tab-btn');
+    const signupTabBtn = document.getElementById('signup-tab-btn');
+    
+    if (tab === 'login') {
+        loginContainer.classList.remove('hidden');
+        signupContainer.classList.add('hidden');
+        loginTabBtn.classList.add('active');
+        signupTabBtn.classList.remove('active');
+    } else {
+        loginContainer.classList.add('hidden');
+        signupContainer.classList.remove('hidden');
+        loginTabBtn.classList.remove('active');
+        signupTabBtn.classList.add('active');
+    }
+}
+
+// Login form submission
+document.getElementById('login-form').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    
+    const submitBtn = document.getElementById('login-submit-btn');
+    const formData = new FormData(this);
+    
+    setLoading(submitBtn, true);
+    
+    try {
+        const response = await fetch('/login', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                username: formData.get('username'),
+                password: formData.get('password')
+            })
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            showNotification(result.message, 'success');
+            
+            // Redirect to dashboard
+            setTimeout(() => {
+                window.location.href = result.redirect || '/dashboard';
+            }, 1000);
+            
+        } else {
+            throw new Error(result.message);
+        }
+        
+    } catch (error) {
+        console.error('Login error:', error);
+        showNotification(error.message || 'Login failed. Please try again.', 'error');
+    } finally {
+        setLoading(submitBtn, false);
+        submitBtn.innerHTML = '<i class="fas fa-sign-in-alt mr-2"></i>Sign In';
+    }
+});
+
+// Signup form submission
+document.getElementById('signup-form').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    
+    const submitBtn = document.getElementById('signup-submit-btn');
+    const formData = new FormData(this);
+    
+    // Basic validation
+    const username = formData.get('username');
+    const email = formData.get('email');
+    const password = formData.get('password');
+    
+    if (username.length < 3) {
+        showNotification('Username must be at least 3 characters', 'error');
+        return;
+    }
+    
+    if (password.length < 6) {
+        showNotification('Password must be at least 6 characters', 'error');
+        return;
+    }
+    
+    if (!email.includes('@')) {
+        showNotification('Please enter a valid email address', 'error');
+        return;
+    }
+    
+    setLoading(submitBtn, true);
+    
+    try {
+        const response = await fetch('/signup', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                username: username,
+                email: email,
+                password: password,
+                friend_code: formData.get('friend_code')
+            })
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            showNotification(result.message, 'success');
+            
+            // Redirect to dashboard
+            setTimeout(() => {
+                window.location.href = result.redirect || '/dashboard';
+            }, 1000);
+            
+        } else {
+            throw new Error(result.message);
+        }
+        
+    } catch (error) {
+        console.error('Signup error:', error);
+        showNotification(error.message || 'Registration failed. Please try again.', 'error');
+    } finally {
+        setLoading(submitBtn, false);
+        submitBtn.innerHTML = '<i class="fas fa-user-plus mr-2"></i>Create Account';
+    }
+});
+
+// Facebook login (placeholder - would need actual Facebook SDK)
+function loginWithFacebook() {
+    showNotification('Facebook integration coming soon!', 'info');
+}
+
+// Style auth tabs
+document.addEventListener('DOMContentLoaded', function() {
+    const style = document.createElement('style');
+    style.textContent = `
+        .auth-tab-btn {
+            background: #f9fafb;
+            color: #6b7280;
+            border-color: #d1d5db;
+            transition: all 0.2s;
+        }
+        
+        .auth-tab-btn.active {
+            background: #7c3aed;
+            color: white;
+            border-color: #7c3aed;
+        }
+        
+        .auth-tab-btn:hover:not(.active) {
+            background: #f3f4f6;
+            color: #374151;
+        }
+    `;
+    document.head.appendChild(style);
+});
+</script>
+{% endblock %}

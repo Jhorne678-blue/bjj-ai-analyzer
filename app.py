@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify, session, redirect, url_for, flash, send_file
+from flask import Flask, request, jsonify, session, redirect, url_for, flash, render_template
 from werkzeug.utils import secure_filename
 from werkzeug.security import generate_password_hash, check_password_hash
 import os
@@ -6,52 +6,25 @@ import sqlite3
 import uuid
 from datetime import datetime, timedelta
 import json
-from analyzer import BJJAnalyzer
-import yt_dlp
-import tempfile
-import threading
 from functools import wraps
 import secrets
-import paypalrestsdk
-from authlib.integrations.flask_client import OAuth
 
 app = Flask(__name__)
 app.secret_key = os.environ.get('SECRET_KEY', secrets.token_hex(32))
 
 # Configuration
 app.config['UPLOAD_FOLDER'] = 'uploads'
-app.config['MAX_CONTENT_LENGTH'] = 500 * 1024 * 1024  # 500MB max file size
+app.config['MAX_CONTENT_LENGTH'] = 100 * 1024 * 1024  # 100MB max file size
 app.config['ALLOWED_EXTENSIONS'] = {'mp4', 'avi', 'mov', 'mkv', 'webm'}
-
-# PayPal Configuration
-paypalrestsdk.configure({
-    "mode": os.environ.get('PAYPAL_MODE', 'sandbox'),
-    "client_id": os.environ.get('PAYPAL_CLIENT_ID', 'your_paypal_client_id'),
-    "client_secret": os.environ.get('PAYPAL_CLIENT_SECRET', 'your_paypal_client_secret')
-})
-
-# OAuth Configuration
-oauth = OAuth(app)
-facebook = oauth.register(
-    name='facebook',
-    client_id=os.environ.get('FACEBOOK_CLIENT_ID', 'your_facebook_client_id'),
-    client_secret=os.environ.get('FACEBOOK_CLIENT_SECRET', 'your_facebook_client_secret'),
-    server_metadata_url='https://graph.facebook.com/.well-known/openid_configuration',
-    client_kwargs={'scope': 'openid email profile'}
-)
-
-# Initialize BJJ Analyzer
-analyzer = BJJAnalyzer()
 
 # Ensure upload directory exists
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
-os.makedirs('clips', exist_ok=True)
 
 # Black Belt Access Codes
 BLACK_BELT_CODES = {
     'BJJMASTER2024': {'uses_left': 10, 'expires': '2025-12-31'},
     'FRIENDCODE123': {'uses_left': 5, 'expires': '2025-06-30'},
-    'UNLIMITED001': {'uses_left': -1, 'expires': '2026-01-01'}  # -1 = unlimited
+    'UNLIMITED001': {'uses_left': -1, 'expires': '2026-01-01'}
 }
 
 def init_db():
@@ -59,7 +32,6 @@ def init_db():
     conn = sqlite3.connect('bjj_analyzer.db')
     cursor = conn.cursor()
     
-    # Users table
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS users (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -69,33 +41,24 @@ def init_db():
             plan TEXT DEFAULT 'free',
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             subscription_expires TIMESTAMP,
-            facebook_id TEXT,
-            payment_method TEXT,
-            black_belt_code TEXT,
             total_uploads INTEGER DEFAULT 0,
             monthly_uploads INTEGER DEFAULT 0,
-            last_upload_month TEXT,
-            preferences TEXT DEFAULT '{}'
+            last_upload_month TEXT
         )
     ''')
     
-    # Videos table
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS videos (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             user_id INTEGER,
             filename TEXT NOT NULL,
             original_filename TEXT,
-            youtube_url TEXT,
             upload_timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             analysis_complete BOOLEAN DEFAULT FALSE,
-            file_size INTEGER,
-            duration REAL,
             FOREIGN KEY (user_id) REFERENCES users (id)
         )
     ''')
     
-    # Analysis results table
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS analysis_results (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -105,10 +68,6 @@ def init_db():
             confidence REAL NOT NULL,
             start_time REAL NOT NULL,
             end_time REAL NOT NULL,
-            position TEXT,
-            quality_score REAL,
-            clip_path TEXT,
-            timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             FOREIGN KEY (video_id) REFERENCES videos (id)
         )
     ''')
@@ -126,6 +85,14 @@ def login_required(f):
 
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in app.config['ALLOWED_EXTENSIONS']
+
+def get_user_plan(user_id):
+    conn = sqlite3.connect('bjj_analyzer.db')
+    cursor = conn.cursor()
+    cursor.execute('SELECT plan FROM users WHERE id = ?', (user_id,))
+    result = cursor.fetchone()
+    conn.close()
+    return result[0] if result else 'free'
 
 @app.route('/')
 def index():
@@ -192,16 +159,60 @@ def login():
     
     return render_template('auth.html', mode='login')
 
+@app.route('/logout')
+def logout():
+    session.clear()
+    flash('Logged out successfully!')
+    return redirect(url_for('index'))
+
 @app.route('/dashboard')
 @login_required
 def dashboard():
-    return render_template('dashboard.html')
+    user_id = session['user_id']
+    plan = get_user_plan(user_id)
+    
+    conn = sqlite3.connect('bjj_analyzer.db')
+    cursor = conn.cursor()
+    cursor.execute('SELECT COUNT(*) FROM videos WHERE user_id = ?', (user_id,))
+    total_videos = cursor.fetchone()[0]
+    
+    cursor.execute('SELECT monthly_uploads FROM users WHERE id = ?', (user_id,))
+    monthly_uploads = cursor.fetchone()[0]
+    
+    conn.close()
+    
+    return render_template('dashboard.html', 
+                         plan=plan, 
+                         total_videos=total_videos,
+                         monthly_uploads=monthly_uploads)
 
-@app.route('/health')
-def health():
-    return jsonify({'status': 'running', 'message': 'BJJ AI Analyzer is ready!'})
-
-if __name__ == '__main__':
-    init_db()
-    port = int(os.environ.get('PORT', 5000))
-    app.run(host='0.0.0.0', port=port, debug=os.environ.get('DEBUG', 'False').lower() == 'true')
+@app.route('/upload', methods=['POST'])
+@login_required
+def upload_video():
+    user_id = session['user_id']
+    
+    if 'video' not in request.files:
+        return jsonify({'error': 'No video file provided'}), 400
+    
+    file = request.files['video']
+    if file.filename == '' or not allowed_file(file.filename):
+        return jsonify({'error': 'Invalid file'}), 400
+    
+    filename = str(uuid.uuid4()) + '_' + secure_filename(file.filename)
+    filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+    file.save(filepath)
+    
+    # Save to database
+    conn = sqlite3.connect('bjj_analyzer.db')
+    cursor = conn.cursor()
+    cursor.execute('''
+        INSERT INTO videos (user_id, filename, original_filename)
+        VALUES (?, ?, ?)
+    ''', (user_id, filename, file.filename))
+    video_id = cursor.lastrowid
+    
+    # Simulate analysis results
+    import random
+    techniques = [
+        {'name': 'armbar', 'category': 'submission', 'confidence': 0.87, 'start_time': 45.2, 'end_time': 52.1},
+        {'name': 'triangle_c

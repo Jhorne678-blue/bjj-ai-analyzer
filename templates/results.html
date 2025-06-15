@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Analysis Result | BJJ Analyzer</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-800 text-white flex flex-col items-center py-16 space-y-8">
+  <h1 class="text-3xl font-bold">🧠 Analysis Result</h1>
+  <p class="italic">Video: <strong>{{ filename }}</strong></p>
+
+  <div class="bg-gray-700 p-8 rounded shadow-md w-full max-w-md space-y-4">
+    <p>Sweeps: <strong>{{ stats.sweeps }}</strong></p>
+    <p>Submissions: <strong>{{ stats.submissions }}</strong></p>
+    <p>Takedowns: <strong>{{ stats.takedowns }}</strong></p>
+    <p>Guard Retention: <strong>{{ stats.guard_retention_sec }} seconds</strong></p>
+  </div>
+
+  <a href="/" class="text-blue-400 hover:underline">← Upload Another Video</a>
+</body>
+</html>

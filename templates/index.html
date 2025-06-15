@@ -1,15 +1,55 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>BJJ AI Analyzer</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BJJ AI Analyzer - Professional BJJ Video Analysis</title>
     <style>
-        body { font-family: Arial, sans-serif; text-align: center; padding: 50px; }
-        .btn { background: #007bff; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: Arial, sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; }
+        .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+        .hero { text-align: center; color: white; padding: 100px 20px; }
+        .hero h1 { font-size: 3rem; margin-bottom: 20px; }
+        .hero p { font-size: 1.2rem; margin-bottom: 30px; opacity: 0.9; }
+        .btn { display: inline-block; background: white; color: #667eea; padding: 15px 30px; text-decoration: none; border-radius: 8px; font-weight: bold; margin: 10px; transition: transform 0.3s; }
+        .btn:hover { transform: translateY(-2px); }
+        .features { background: white; padding: 60px 20px; }
+        .features h2 { text-align: center; margin-bottom: 40px; font-size: 2.5rem; }
+        .feature-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 30px; }
+        .feature { text-align: center; padding: 30px; border-radius: 10px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
+        .feature h3 { margin-bottom: 15px; color: #333; }
+        .feature p { color: #666; line-height: 1.6; }
     </style>
 </head>
 <body>
-    <h1>BJJ AI Analyzer</h1>
-    <p>Professional Brazilian Jiu-Jitsu Video Analysis</p>
-    <a href="/signup" class="btn">Get Started</a>
+    <div class="hero">
+        <div class="container">
+            <h1>🥋 BJJ AI Analyzer</h1>
+            <p>Professional Brazilian Jiu-Jitsu Video Analysis Powered by AI</p>
+            <p>Analyze your techniques, track your progress, improve your game</p>
+            <a href="/signup" class="btn">Start Free Analysis</a>
+            <a href="/login" class="btn">Login</a>
+        </div>
+    </div>
+    
+    <div class="features">
+        <div class="container">
+            <h2>Advanced BJJ Analysis Features</h2>
+            <div class="feature-grid">
+                <div class="feature">
+                    <h3>🤖 AI-Powered Detection</h3>
+                    <p>Advanced computer vision detects BJJ techniques including submissions, sweeps, guard passes, and takedowns with high precision.</p>
+                </div>
+                <div class="feature">
+                    <h3>⏱️ Precise Timing</h3>
+                    <p>Get exact timestamps for technique setups, executions, and transitions to improve your timing and flow.</p>
+                </div>
+                <div class="feature">
+                    <h3>📊 Performance Tracking</h3>
+                    <p>Track your progress over time with detailed analytics on technique success rates and improvement areas.</p>
+                </div>
+            </div>
+        </div>
+    </div>
 </body>
 </html>

@@ -1,20 +1,16 @@
 import cv2
-import os
-import numpy as np
 import mediapipe as mp
+import numpy as np
+from trainer import save_pose_sequence
+
+mp_pose = mp.solutions.pose
+pose = mp_pose.Pose()
 
 def run_fake_analysis(filename):
-    filepath = os.path.join("uploads", filename)
-    cap = cv2.VideoCapture(filepath)
+    cap = cv2.VideoCapture(f'uploads/{filename}')
+    pose_sequence = []
 
-    if not cap.isOpened():
-        raise Exception("Failed to open video.")
-
-    mp_pose = mp.solutions.pose
-    pose = mp_pose.Pose()
-    keypoints_data = []
-
-    while True:
+    while cap.isOpened():
         ret, frame = cap.read()
         if not ret:
             break
@@ -24,13 +20,16 @@ def run_fake_analysis(filename):
 
         if results.pose_landmarks:
             landmarks = results.pose_landmarks.landmark
-            keypoints = [(lm.x, lm.y, lm.z) for lm in landmarks]
-            keypoints_data.append(keypoints)
+            pose_frame = [[lm.x, lm.y, lm.z] for lm in landmarks]
+            pose_sequence.append(pose_frame)
 
     cap.release()
 
+    # Save pose data for learning
+    save_pose_sequence(filename, pose_sequence)
+
     return {
-        "summary": f"Video '{filename}' analyzed using real grappling pose tracking.",
-        "keypoints": f"{len(keypoints_data)} frames processed.",
-        "technique_preview": "Classifier coming soon with 80+ techniques."
+        'status': 'Analysis Complete',
+        'frames_processed': len(pose_sequence),
+        'sample_pose': pose_sequence[0] if pose_sequence else 'No poses found'
     }

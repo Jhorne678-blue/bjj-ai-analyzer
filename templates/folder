@@ -1,0 +1,6 @@
+/bjj-ai-analyzer
+├── app.py
+├── requirements.txt
+├── Procfile
+├── templates
+│   └── index.html   <--- this is what’s missing!

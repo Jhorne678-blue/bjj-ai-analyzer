@@ -1,4 +1,692 @@
-from flask import Flask, request, jsonify, session
+<!-- Sweeps Tab -->
+        <div id="sweeps-tab" class="tab-content">
+            <div class="glass rounded-xl p-8">
+                <h2 class="text-3xl font-bold text-white mb-8 text-center">🌊 Sweep Analysis</h2>
+                
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+                    <div class="bg-gradient-to-br from-blue-500 to-blue-700 rounded-xl p-6">
+                        <h3 class="text-xl font-bold text-white mb-4">📊 Sweep Stats</h3>
+                        <div class="space-y-4">
+                            <div class="flex justify-between">
+                                <span class="text-blue-100">Success Rate</span>
+                                <span class="text-white font-bold" id="sweep-success-rate">-</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-blue-100">Avg Execution Time</span>
+                                <span class="text-white font-bold" id="sweep-avg-time">-</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-blue-100">Favorite Guard</span>
+                                <span class="text-white font-bold" id="sweep-fav-guard">-</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-blue-100">Total Attempts</span>
+                                <span class="text-white font-bold" id="sweep-total-attempts">-</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-white bg-opacity-10 rounded-xl p-6">
+                        <h3 class="text-xl font-bold text-white mb-4">🏆 Top Sweeps</h3>
+                        <div id="top-sweeps" class="space-y-3">
+                            <p class="text-gray-300 text-center">Upload videos to see your top sweeps!</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="bg-white bg-opacity-10 rounded-xl p-6">
+                    <h3 class="text-xl font-bold text-white mb-4">🌊 AI Recommendations</h3>
+                    <div id="sweep-recommendations" class="space-y-3">
+                        <p class="text-gray-300 text-center">Upload videos to get personalized sweep recommendations!</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Takedowns Tab -->
+        <div id="takedowns-tab" class="tab-content">
+            <div class="glass rounded-xl p-8">
+                <h2 class="text-3xl font-bold text-white mb-8 text-center">🤼 Takedown Analysis</h2>
+                
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+                    <div class="bg-gradient-to-br from-orange-500 to-orange-700 rounded-xl p-6">
+                        <h3 class="text-xl font-bold text-white mb-4">📊 Takedown Stats</h3>
+                        <div class="space-y-4">
+                            <div class="flex justify-between">
+                                <span class="text-orange-100">Success Rate</span>
+                                <span class="text-white font-bold" id="takedown-success-rate">-</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-orange-100">Avg Setup Time</span>
+                                <span class="text-white font-bold" id="takedown-avg-time">-</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-orange-100">Favorite Style</span>
+                                <span class="text-white font-bold" id="takedown-fav-style">-</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-orange-100">Total Attempts</span>
+                                <span class="text-white font-bold" id="takedown-total-attempts">-</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-white bg-opacity-10 rounded-xl p-6">
+                        <h3 class="text-xl font-bold text-white mb-4">🏆 Top Takedowns</h3>
+                        <div id="top-takedowns" class="space-y-3">
+                            <p class="text-gray-300 text-center">Upload videos to see your top takedowns!</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="bg-white bg-opacity-10 rounded-xl p-6">
+                    <h3 class="text-xl font-bold text-white mb-4">🤼 AI Recommendations</h3>
+                    <div id="takedown-recommendations" class="space-y-3">
+                        <p class="text-gray-300 text-center">Upload videos to get personalized takedown recommendations!</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Analytics Tab -->
+        <div id="analytics-tab" class="tab-content">
+            <div class="glass rounded-xl p-8">
+                <h2 class="text-3xl font-bold text-white mb-8 text-center">📊 Your BJJ Analytics</h2>
+                
+                <!-- Overall Performance -->
+                <div class="bg-gradient-to-r from-purple-600 to-blue-600 rounded-xl p-6 mb-8">
+                    <h3 class="text-2xl font-bold text-white mb-4">🏆 Overall Performance</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                        <div class="bg-white bg-opacity-20 rounded-lg p-4 text-center">
+                            <div class="text-2xl font-bold text-white" id="total-videos-analyzed">0</div>
+                            <div class="text-purple-100">Videos Analyzed</div>
+                        </div>
+                        <div class="bg-white bg-opacity-20 rounded-lg p-4 text-center">
+                            <div class="text-2xl font-bold text-white" id="total-techniques-found">0</div>
+                            <div class="text-purple-100">Total Techniques</div>
+                        </div>
+                        <div class="bg-white bg-opacity-20 rounded-lg p-4 text-center">
+                            <div class="text-2xl font-bold text-white" id="overall-success-rate">0%</div>
+                            <div class="text-purple-100">Success Rate</div>
+                        </div>
+                        <div class="bg-white bg-opacity-20 rounded-lg p-4 text-center">
+                            <div class="text-2xl font-bold text-white" id="improvement-trend">-</div>
+                            <div class="text-purple-100">Trend</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Category Breakdown -->
+                <div class="bg-white bg-opacity-10 rounded-xl p-6 mb-6">
+                    <h3 class="text-xl font-bold text-white mb-4">📈 Category Breakdown</h3>
+                    <div id="category-breakdown" class="space-y-3">
+                        <p class="text-gray-300 text-center">Upload videos to see your technique category breakdown!</p>
+                    </div>
+                </div>
+
+                <!-- Recent Progress -->
+                <div class="bg-white bg-opacity-10 rounded-xl p-6 mb-6">
+                    <h3 class="text-xl font-bold text-white mb-4">📹 Recent Sessions</h3>
+                    <div id="recent-sessions" class="space-y-3">
+                        <p class="text-gray-300 text-center">Upload videos to track your recent training sessions!</p>
+                    </div>
+                </div>
+
+                <!-- AI Insights -->
+                <div class="bg-white bg-opacity-10 rounded-xl p-6">
+                    <h3 class="text-xl font-bold text-white mb-4">🧠 AI Training Insights</h3>
+                    <div id="ai-training-insights" class="space-y-3">
+                        <p class="text-gray-300 text-center">Upload videos to get personalized AI training insights!</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const userPlan = "{user_plan}";
+        let monthlyUploads = {monthly_uploads};
+        const maxUploads = {max_uploads};
+        const userEmail = "{user_email or ''}";
+
+        function createAccount() {{
+            var email = document.getElementById('userEmail').value.trim();
+            var name = document.getElementById('userName').value.trim();
+            
+            if (!email || !name) {{
+                alert('Please enter both email and name!');
+                return;
+            }}
+            
+            if (!email.includes('@')) {{
+                alert('Please enter a valid email address!');
+                return;
+            }}
+            
+            fetch('/api/create-account', {{
+                method: 'POST',
+                headers: {{'Content-Type': 'application/json'}},
+                body: JSON.stringify({{email: email, name: name}})
+            }})
+            .then(response => response.json())
+            .then(data => {{
+                if (data.success) {{
+                    alert('🎉 Account created successfully!\\n\\nYour progress will now be saved and AI will learn your fighting style.');
+                    location.reload();
+                }} else {{
+                    alert('❌ Error: ' + data.message);
+                }}
+            }})
+            .catch(error => {{
+                alert('Error creating account: ' + error.message);
+            }});
+        }}
+
+        function showTab(tabName) {{
+            document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
+            document.getElementById(tabName + '-tab').classList.add('active');
+            event.target.classList.add('active');
+        }}
+
+        function showPricing() {{
+            document.getElementById('pricing-modal').classList.remove('hidden');
+        }}
+
+        function hidePricing() {{
+            document.getElementById('pricing-modal').classList.add('hidden');
+        }}
+
+        function selectPlan(plan) {{
+            if (plan === 'free') {{
+                alert('You are already on the free plan!');
+                return;
+            }}
+            
+            const planNames = {{'pro': 'Pro ($29/month)', 'blackbelt': 'Black Belt ($59/month)'}};
+            const planFeatures = {{
+                'pro': '✅ 4 uploads/month\\n✅ Detailed breakdowns\\n✅ Video timestamps\\n✅ Challenges & Social',
+                'blackbelt': '✅ UNLIMITED uploads\\n✅ Advanced breakdowns\\n✅ Competition analytics\\n✅ AI coaching\\n✅ 3D analysis'
+            }};
+            
+            const confirmUpgrade = confirm(`🚀 UPGRADE TO ${{planNames[plan].toUpperCase()}}\\n\\n${{planFeatures[plan]}}\\n\\nThis would redirect to payment in the real app.\\n\\nProceed with upgrade?`);
+            
+            if (confirmUpgrade) {{
+                alert(`🎉 CONGRATULATIONS!\\n\\nYou've been upgraded to ${{planNames[plan]}}!\\n\\nYour new upload limits are now active.`);
+                setTimeout(() => {{
+                    location.reload();
+                }}, 2000);
+            }}
+        }}
+
+        function analyzeVideo() {{
+            const fileInput = document.getElementById('videoFile');
+            if (!fileInput.files[0]) {{
+                alert('Please select a video file first!');
+                return;
+            }}
+
+            // STRICT UPLOAD LIMIT ENFORCEMENT
+            if (userPlan === 'free' && monthlyUploads >= 1) {{
+                alert('🚫 DEMO MODE LIMIT REACHED!\\n\\nFree users get 1 upload per month.\\n\\nUpgrade to Pro for 4 uploads/month or Black Belt for unlimited uploads.');
+                showPricing();
+                return;
+            }}
+            
+            if (userPlan === 'pro' && monthlyUploads >= 4) {{
+                alert('🚫 PRO PLAN LIMIT REACHED!\\n\\nPro users get 4 uploads per month.\\n\\nUpgrade to Black Belt for unlimited uploads.');
+                showPricing();
+                return;
+            }}
+
+            // Show confirmation before using upload
+            if (userPlan === 'free') {{
+                const remaining = 1 - monthlyUploads;
+                if (remaining === 1) {{
+                    const confirmDemo = confirm('🆓 DEMO MODE UPLOAD\\n\\nThis will use your 1 free upload for this month.\\n\\nContinue with analysis?');
+                    if (!confirmDemo) return;
+                }}
+            }} else if (userPlan === 'pro') {{
+                const remaining = 4 - monthlyUploads;
+                const confirmPro = confirm(`🥋 PRO PLAN UPLOAD\\n\\nYou have ${{remaining}} uploads remaining this month.\\n\\nContinue with analysis?`);
+                if (!confirmPro) return;
+            }}
+
+            document.getElementById('progress-section').classList.remove('hidden');
+            let progress = 0;
+            const progressBar = document.getElementById('progress-bar');
+            
+            const interval = setInterval(() => {{
+                progress += Math.random() * 12;
+                if (progress > 100) progress = 100;
+                progressBar.style.width = progress + '%';
+                
+                if (progress >= 100) {{
+                    clearInterval(interval);
+                    performAnalysis();
+                }}
+            }}, 400);
+        }}
+
+        function performAnalysis() {{
+            const formData = new FormData();
+            formData.append('video', document.getElementById('videoFile').files[0]);
+
+            fetch('/api/analyze', {{
+                method: 'POST',
+                body: formData
+            }})
+            .then(response => response.json())
+            .then(results => {{
+                if (results.error) {{
+                    alert('❌ ' + results.error);
+                    document.getElementById('progress-section').classList.add('hidden');
+                    return;
+                }}
+                
+                // SUCCESS - Update counters and display results
+                monthlyUploads++;
+                displayResults(results);
+                updateUIAfterUpload();
+            }})
+            .catch(error => {{
+                alert('Analysis failed: ' + error.message);
+                document.getElementById('progress-section').classList.add('hidden');
+            }});
+        }}
+
+        function updateUIAfterUpload() {{
+            // Show success message
+            setTimeout(() => {{
+                if (userPlan === 'free') {{
+                    alert('✅ VIDEO ANALYZED!\\n\\n🆓 Demo uploads used: ' + monthlyUploads + '/1\\n\\nUpgrade for more uploads!');
+                }} else if (userPlan === 'pro') {{
+                    const remaining = 4 - monthlyUploads;
+                    alert('✅ VIDEO ANALYZED!\\n\\n🥋 Pro uploads remaining: ' + remaining + '/4');
+                }} else {{
+                    alert('✅ VIDEO ANALYZED!\\n\\n🥇 Black Belt: Unlimited uploads');
+                }}
+            }}, 1000);
+
+            // Update upload counter display
+            const counterDisplay = document.getElementById('upload-counter-display');
+            if (counterDisplay) {{
+                let newHTML = '';
+                if (userPlan === 'free' && monthlyUploads >= 1) {{
+                    newHTML = '<p style="color: #ef4444; font-weight: bold;">⚠️ DEMO LIMIT REACHED - UPGRADE TO CONTINUE</p>';
+                }} else if (userPlan === 'pro' && monthlyUploads >= 4) {{
+                    newHTML = '<p style="color: #ef4444; font-weight: bold;">⚠️ PRO LIMIT REACHED - UPGRADE TO BLACK BELT</p>';
+                }} else if (userPlan === 'free') {{
+                    const remaining = Math.max(0, 1 - monthlyUploads);
+                    newHTML = '<p>📊 Monthly uploads remaining: <strong>' + remaining + '</strong></p>';
+                }} else {{
+                    const maxDisplay = userPlan === 'blackbelt' ? '∞' : (userPlan === 'pro' ? '4' : '1');
+                    newHTML = '<p>📊 Monthly uploads: <strong>' + monthlyUploads + '/' + maxDisplay + '</strong></p>';
+                }}
+                counterDisplay.innerHTML = newHTML;
+            }}
+
+            // Disable button if limit reached
+            const uploadButton = document.querySelector('button[onclick="analyzeVideo()"]');
+            if (uploadButton) {{
+                const limitReached = (userPlan === 'free' && monthlyUploads >= 1) || (userPlan === 'pro' && monthlyUploads >= 4);
+                if (limitReached) {{
+                    uploadButton.disabled = true;
+                    uploadButton.className += ' opacity-50 cursor-not-allowed';
+                    uploadButton.textContent = '🚫 MONTHLY LIMIT REACHED';
+                }}
+            }}
+        }}
+
+        function displayResults(results) {{
+            document.getElementById('progress-section').classList.add('hidden');
+            document.getElementById('results-section').classList.remove('hidden');
+
+            document.getElementById('total-count').textContent = results.total_techniques_detected || 0;
+            document.getElementById('avg-confidence').textContent = Math.round((results.average_confidence || 0) * 100) + '%';
+            document.getElementById('video-duration').textContent = Math.round((results.video_duration || 0) / 60) + 'm';
+            
+            const submissionCount = (results.detected_techniques || []).filter(t => t.category === 'submission').length;
+            document.getElementById('submission-count').textContent = submissionCount;
+
+            displayTechniques(results.detected_techniques || []);
+            displayInsights(results.insights || []);
+            updateTabAnalytics(results.detected_techniques || []);
+        }}
+
+        function displayTechniques(techniques) {{
+            const techniquesList = document.getElementById('techniques-list');
+            techniquesList.innerHTML = '';
+
+            techniques.forEach(technique => {{
+                const techniqueDiv = document.createElement('div');
+                techniqueDiv.className = 'bg-white bg-opacity-10 rounded-xl p-6 border-l-4 border-blue-500';
+                
+                let timestampHTML = '';
+                if (technique.has_timestamp) {{
+                    timestampHTML = `
+                        <button onclick="alert('🎬 Timestamp: ${{Math.floor(technique.start_time/60)}}:${{(technique.start_time%60).toString().padStart(2, '0')}}')" 
+                                class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded text-sm ml-3">
+                            🎬 ${{Math.floor(technique.start_time/60)}}:${{(technique.start_time%60).toString().padStart(2, '0')}}
+                        </button>
+                    `;
+                }}
+
+                let breakdownHTML = '';
+                if (technique.has_breakdown) {{
+                    breakdownHTML = `
+                        <button onclick="alert('📋 Full breakdown available for ${{technique.technique.replace(/_/g, ' ')}}!')" 
+                                class="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded text-sm ml-2">
+                            📋 Breakdown
+                        </button>
+                    `;
+                }}
+
+                techniqueDiv.innerHTML = `
+                    <div class="flex justify-between items-center">
+                        <div class="flex-1">
+                            <div class="flex items-center mb-2">
+                                <h4 class="text-xl font-bold text-white">${{technique.technique.replace(/_/g, ' ').replace(/\\b\\w/g, l => l.toUpperCase())}}</h4>
+                                <span class="ml-3 px-3 py-1 bg-blue-600 rounded-full text-xs text-white">
+                                    ${{technique.category.replace('_', ' ').toUpperCase()}}
+                                </span>
+                                ${{timestampHTML}}
+                                ${{breakdownHTML}}
+                            </div>
+                            <p class="text-gray-300">Position: ${{technique.position}} • Quality: ${{technique.quality}}</p>
+                        </div>
+                        <div class="text-right">
+                            <div class="text-2xl font-bold text-white">${{Math.round(technique.confidence * 100)}}%</div>
+                            <div class="text-gray-300 text-sm">Confidence</div>
+                        </div>
+                    </div>
+                `;
+                
+                techniquesList.appendChild(techniqueDiv);
+            }});
+        }}
+
+        function displayInsights(insights) {{
+            const insightsList = document.getElementById('insights-list');
+            insightsList.innerHTML = '';
+
+            insights.forEach(insight => {{
+                const insightDiv = document.createElement('div');
+                insightDiv.className = 'bg-white bg-opacity-10 rounded-lg p-4 mb-3';
+                insightDiv.innerHTML = `<p class="text-white text-lg">${{insight}}</p>`;
+                insightsList.appendChild(insightDiv);
+            }});
+        }}
+
+        function updateTabAnalytics(techniques) {{
+            // Update submissions tab
+            const submissions = techniques.filter(t => t.category === 'submission');
+            if (submissions.length > 0) {{
+                const avgConfidence = submissions.reduce((sum, t) => sum + t.confidence, 0) / submissions.length;
+                const avgTime = submissions.reduce((sum, t) => sum + (t.end_time - t.start_time), 0) / submissions.length;
+                const positions = submissions.map(t => t.position);
+                const favPosition = getMostFrequent(positions);
+                
+                document.getElementById('sub-success-rate').textContent = Math.round(avgConfidence * 100) + '%';
+                document.getElementById('sub-avg-time').textContent = avgTime.toFixed(1) + 's';
+                document.getElementById('sub-fav-position').textContent = favPosition || 'N/A';
+                document.getElementById('sub-total-attempts').textContent = submissions.length;
+                
+                updateTopList('top-submissions', submissions);
+                updateRecommendations('sub-recommendations', submissions);
+            }}
+
+            // Update sweeps tab
+            const sweeps = techniques.filter(t => t.category === 'sweep');
+            if (sweeps.length > 0) {{
+                const avgConfidence = sweeps.reduce((sum, t) => sum + t.confidence, 0) / sweeps.length;
+                const avgTime = sweeps.reduce((sum, t) => sum + (t.end_time - t.start_time), 0) / sweeps.length;
+                const positions = sweeps.map(t => t.position);
+                const favGuard = getMostFrequent(positions);
+                
+                document.getElementById('sweep-success-rate').textContent = Math.round(avgConfidence * 100) + '%';
+                document.getElementById('sweep-avg-time').textContent = avgTime.toFixed(1) + 's';
+                document.getElementById('sweep-fav-guard').textContent = favGuard || 'N/A';
+                document.getElementById('sweep-total-attempts').textContent = sweeps.length;
+                
+                updateTopList('top-sweeps', sweeps);
+                updateRecommendations('sweep-recommendations', sweeps);
+            }}
+
+            // Update takedowns tab
+            const takedowns = techniques.filter(t => t.category === 'takedown');
+            if (takedowns.length > 0) {{
+                const avgConfidence = takedowns.reduce((sum, t) => sum + t.confidence, 0) / takedowns.length;
+                const avgTime = takedowns.reduce((sum, t) => sum + (t.end_time - t.start_time), 0) / takedowns.length;
+                const wrestlingTakedowns = ['double_leg_takedown', 'single_leg_takedown', 'high_crotch', 'ankle_pick'];
+                const judoTakedowns = ['hip_toss', 'foot_sweep', 'osoto_gari', 'seoi_nage', 'uchi_mata'];
+                const wrestling = takedowns.filter(t => wrestlingTakedowns.includes(t.technique)).length;
+                const judo = takedowns.filter(t => judoTakedowns.includes(t.technique)).length;
+                const favStyle = wrestling > judo ? 'Wrestling' : judo > wrestling ? 'Judo' : 'Mixed';
+                
+                document.getElementById('takedown-success-rate').textContent = Math.round(avgConfidence * 100) + '%';
+                document.getElementById('takedown-avg-time').textContent = avgTime.toFixed(1) + 's';
+                document.getElementById('takedown-fav-style').textContent = favStyle;
+                document.getElementById('takedown-total-attempts').textContent = takedowns.length;
+                
+                updateTopList('top-takedowns', takedowns);
+                updateRecommendations('takedown-recommendations', takedowns);
+            }}
+
+            // Update analytics tab
+            updateAnalyticsTab(techniques);
+        }}
+
+        function getMostFrequent(arr) {{
+            const frequency = {{}};
+            let maxCount = 0;
+            let mostFrequent = '';
+            
+            arr.forEach(item => {{
+                frequency[item] = (frequency[item] || 0) + 1;
+                if (frequency[item] > maxCount) {{
+                    maxCount = frequency[item];
+                    mostFrequent = item;
+                }}
+            }});
+            
+            return mostFrequent.replace(/_/g, ' ').replace(/\\b\\w/g, l => l.toUpperCase());
+        }}
+
+        function updateTopList(elementId, techniques) {{
+            const element = document.getElementById(elementId);
+            element.innerHTML = '';
+            
+            const sorted = [...techniques].sort((a, b) => b.confidence - a.confidence).slice(0, 4);
+            
+            sorted.forEach(technique => {{
+                const div = document.createElement('div');
+                div.className = 'flex justify-between items-center bg-white bg-opacity-10 rounded-lg p-3';
+                
+                const confidence = Math.round(technique.confidence * 100);
+                const color = confidence >= 85 ? 'text-green-400' : confidence >= 70 ? 'text-yellow-400' : 'text-orange-400';
+                
+                div.innerHTML = `
+                    <span class="text-white">${{technique.technique.replace(/_/g, ' ').replace(/\\b\\w/g, l => l.toUpperCase())}}</span>
+                    <span class="${{color}} font-bold">${{confidence}}%</span>
+                `;
+                element.appendChild(div);
+            }});
+        }}
+
+        function updateRecommendations(elementId, techniques) {{
+            const element = document.getElementById(elementId);
+            element.innerHTML = '';
+            
+            if (techniques.length === 0) return;
+            
+            const lowest = techniques.reduce((min, t) => t.confidence < min.confidence ? t : min, techniques[0]);
+            const highest = techniques.reduce((max, t) => t.confidence > max.confidence ? t : max, techniques[0]);
+            
+            const focusDiv = document.createElement('div');
+            focusDiv.className = 'bg-blue-900 bg-opacity-50 rounded-lg p-4';
+            focusDiv.innerHTML = `
+                <div class="text-white font-bold mb-2">🔧 Focus Area: ${{lowest.technique.replace(/_/g, ' ').replace(/\\b\\w/g, l => l.toUpperCase())}}</div>
+                <p class="text-gray-300 text-sm">${{Math.round(lowest.confidence * 100)}}% success rate. Work on timing and technique fundamentals to improve consistency.</p>
+            `;
+            element.appendChild(focusDiv);
+            
+            const strengthDiv = document.createElement('div');
+            strengthDiv.className = 'bg-green-900 bg-opacity-50 rounded-lg p-4';
+            strengthDiv.innerHTML = `
+                <div class="text-white font-bold mb-2">💪 Strength: ${{highest.technique.replace(/_/g, ' ').replace(/\\b\\w/g, l => l.toUpperCase())}}</div>
+                <p class="text-gray-300 text-sm">Excellent ${{Math.round(highest.confidence * 100)}}% success rate! This is a reliable technique in your arsenal.</p>
+            `;
+            element.appendChild(strengthDiv);
+        }}
+
+        function updateAnalyticsTab(techniques) {{
+            document.getElementById('total-videos-analyzed').textContent = monthlyUploads;
+            document.getElementById('total-techniques-found').textContent = techniques.length;
+            
+            const avgConfidence = techniques.reduce((sum, t) => sum + t.confidence, 0) / techniques.length;
+            document.getElementById('overall-success-rate').textContent = Math.round(avgConfidence * 100) + '%';
+            document.getElementById('improvement-trend').textContent = '+12%';
+            
+            // Category breakdown
+            const categories = {{}};
+            techniques.forEach(t => {{
+                categories[t.category] = (categories[t.category] || 0) + 1;
+            }});
+            
+            const breakdownElement = document.getElementById('category-breakdown');
+            breakdownElement.innerHTML = '';
+            
+            Object.entries(categories).forEach(([category, count]) => {{
+                const div = document.createElement('div');
+                div.className = 'flex justify-between items-center bg-white bg-opacity-10 rounded-lg p-3';
+                div.innerHTML = `
+                    <span class="text-white">${{category.replace('_', ' ').replace(/\\b\\w/g, l => l.toUpperCase())}}</span>
+                    <span class="text-blue-400 font-bold">${{count}} techniques</span>
+                `;
+                breakdownElement.appendChild(div);
+            }});
+            
+            // Recent sessions
+            const sessionsElement = document.getElementById('recent-sessions');
+            sessionsElement.innerHTML = `
+                <div class="bg-white bg-opacity-10 rounded-lg p-4">
+                    <div class="flex justify-between items-center">
+                        <div>
+                            <div class="text-white font-bold">Latest Session</div>
+                            <div class="text-gray-300 text-sm">${{techniques.length}} techniques • Just analyzed</div>
+                        </div>
+                        <div class="text-green-400 font-bold">${{Math.round(avgConfidence * 100)}}%</div>
+                    </div>
+                </div>
+            `;
+            
+            // AI insights
+            const insightsElement = document.getElementById('ai-training-insights');
+            insightsElement.innerHTML = '';
+            
+            const insights = [
+                "Focus on drilling your lowest confidence techniques during warm-ups",
+                "Your submission game is strong - consider teaching these techniques to training partners",
+                "Work on position-specific drills to improve technique consistency",
+                "Your timing on transitions shows significant improvement"
+            ];
+            
+            insights.slice(0, 2).forEach(insight => {{
+                const div = document.createElement('div');
+                div.className = 'bg-purple-900 bg-opacity-50 rounded-lg p-4';
+                div.innerHTML = `
+                    <div class="text-white font-bold mb-2">🎯 Training Tip</div>
+                    <p class="text-gray-300 text-sm">${{insight}}</p>
+                `;
+                insightsElement.appendChild(div);
+            }});
+        }}
+    </script>
+</body>
+</html>'''
+
+@app.route('/api/create-account', methods=['POST'])
+def create_account():
+    user_id = get_user_id()
+    data = request.get_json()
+    email = data.get('email', '').strip()
+    name = data.get('name', '').strip()
+    
+    if not email or not name:
+        return jsonify({'success': False, 'message': 'Email and name are required'}), 400
+    
+    if '@' not in email:
+        return jsonify({'success': False, 'message': 'Please enter a valid email'}), 400
+    
+    # Update user with account info
+    if user_id in users:
+        users[user_id]['email'] = email
+        users[user_id]['name'] = name
+        users[user_id]['account_created'] = datetime.now().isoformat()
+        return jsonify({'success': True, 'message': 'Account created successfully!'})
+    else:
+        return jsonify({'success': False, 'message': 'User session not found'}), 400
+
+@app.route('/api/analyze', methods=['POST'])
+def analyze():
+    user_id = get_user_id()
+    
+    # Ensure user exists
+    if user_id not in users:
+        return jsonify({'error': 'User session not found'}), 400
+        
+    user = users[user_id]
+    user_plan = user['plan']
+    
+    # Check monthly upload limits
+    current_month = datetime.now().strftime('%Y-%m')
+    if user['last_upload_month'] != current_month:
+        user['monthly_uploads'] = 0
+        user['last_upload_month'] = current_month
+    
+    if user_plan == 'free' and user['monthly_uploads'] >= 1:
+        return jsonify({'error': 'Monthly upload limit reached! Upgrade to Pro for 4 uploads per month.'}), 403
+    
+    if user_plan == 'pro' and user['monthly_uploads'] >= 4:
+        return jsonify({'error': 'Monthly upload limit reached! Upgrade to Black Belt for unlimited uploads.'}), 403
+    
+    # Simulate processing time
+    time.sleep(2)
+    
+    # Generate analysis
+    analysis_result = generate_analysis(user_plan)
+    
+    # Store the analysis
+    if user_id not in user_videos:
+        user_videos[user_id] = []
+    user_videos[user_id].append(analysis_result)
+    
+    # Update counters
+    user['monthly_uploads'] += 1
+    users[user_id]['videos_count'] += 1
+    
+    return jsonify(analysis_result)
+
+@app.route('/api/upgrade', methods=['POST'])
+def upgrade():
+    user_id = get_user_id()
+    data = request.get_json()
+    new_plan = data.get('plan')
+    
+    if new_plan in ['pro', 'blackbelt']:
+        users[user_id]['plan'] = new_plan
+        return jsonify({'success': True, 'message': f'Successfully upgraded to {new_plan}!'})
+    else:
+        return jsonify({'success': False, 'message': 'Invalid plan'}), 400
+
+@app.route('/health')
+def health():
+    return jsonify({'status': 'running', 'message': 'BJJ AI Analyzer Pro is ready!'})
+
+if __name__ == '__main__':
+    port = int(os.environ.get('PORT', 5000))
+    app.run(host='0.0.0.0', port=port, debug=False)from flask import Flask, request, jsonify, session
 import os
 import json
 import time
@@ -212,6 +900,11 @@ def home():
     monthly_uploads = user['monthly_uploads']
     user_email = user.get('email', None)
     
+    # Calculate upload limits and status
+    max_uploads = 1 if user_plan == 'free' else (4 if user_plan == 'pro' else 999)
+    uploads_remaining = max(0, max_uploads - monthly_uploads) if user_plan != 'blackbelt' else 999
+    is_limit_reached = (user_plan == 'free' and monthly_uploads >= 1) or (user_plan == 'pro' and monthly_uploads >= 4)
+    
     return f'''<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -263,14 +956,10 @@ def home():
                 💎 UPGRADE NOW
             </button>
             <div class="inline-block">
-                {"" if user_plan != "free" else f'''
-                <span class="text-yellow-300 font-bold {'text-red-400' if monthly_uploads >= 1 else ''}">
-                    Monthly Uploads: {monthly_uploads}/1 {'- LIMIT REACHED!' if monthly_uploads >= 1 else ''}
-                </span>'''}
-                {"" if user_plan == "free" else f'''
-                <span class="text-green-300 font-bold {'text-red-400' if user_plan == 'pro' and monthly_uploads >= 4 else 'text-yellow-300' if user_plan == 'pro' and monthly_uploads >= 3 else ''}">
-                    Monthly Uploads: {monthly_uploads}/{4 if user_plan == "pro" else "∞"} {('- LIMIT REACHED!' if user_plan == 'pro' and monthly_uploads >= 4 else '- ALMOST FULL!' if user_plan == 'pro' and monthly_uploads >= 3 else '')}
-                </span>'''}
+                <span class="font-bold {'text-red-400' if is_limit_reached else 'text-yellow-300' if user_plan == 'free' else 'text-green-300'}">
+                    Monthly Uploads: {monthly_uploads}/{max_uploads if user_plan != 'blackbelt' else '∞'}
+                    {'- LIMIT REACHED!' if is_limit_reached else ''}
+                </span>
             </div>
         </div>
     </div>
@@ -384,18 +1073,17 @@ def home():
                     <input type="file" id="videoFile" accept="video/*" class="mb-6 text-white bg-white bg-opacity-20 p-4 rounded-lg">
                     <br>
                     <button onclick="analyzeVideo()" 
-                            class="bg-white text-blue-600 font-bold py-4 px-8 rounded-lg text-xl hover:bg-gray-100 
-                                   {('opacity-50 cursor-not-allowed' if (user_plan == 'free' and monthly_uploads >= 1) or (user_plan == 'pro' and monthly_uploads >= 4) else '')}"
-                            {'disabled' if (user_plan == 'free' and monthly_uploads >= 1) or (user_plan == 'pro' and monthly_uploads >= 4) else ''}>
-                        {'🚫 MONTHLY LIMIT REACHED' if (user_plan == 'free' and monthly_uploads >= 1) or (user_plan == 'pro' and monthly_uploads >= 4) else '🤖 ANALYZE MY TECHNIQUES'}
+                            class="bg-white text-blue-600 font-bold py-4 px-8 rounded-lg text-xl hover:bg-gray-100 {'opacity-50 cursor-not-allowed' if is_limit_reached else ''}"
+                            {'disabled' if is_limit_reached else ''}>
+                        {'🚫 MONTHLY LIMIT REACHED' if is_limit_reached else '🤖 ANALYZE MY TECHNIQUES'}
                     </button>
                     
                     <div class="mt-6 text-white">
                         <div id="upload-counter-display">
-                            {"" if user_plan != "free" else f'<p>📊 Monthly uploads remaining: <strong>{max(0, 1 - monthly_uploads)}</strong></p>'}
-                            {"" if user_plan == "free" else f'<p>📊 Monthly uploads: <strong>{monthly_uploads}/{4 if user_plan == "pro" else "∞"}</strong></p>'}
-                            {f'<p style="color: #ef4444; font-weight: bold;">⚠️ DEMO LIMIT REACHED - UPGRADE TO CONTINUE</p>' if user_plan == "free" and monthly_uploads >= 1 else ""}
-                            {f'<p style="color: #ef4444; font-weight: bold;">⚠️ PRO LIMIT REACHED - UPGRADE TO BLACK BELT</p>' if user_plan == "pro" and monthly_uploads >= 4 else ""}
+                            {'<p style="color: #ef4444; font-weight: bold;">⚠️ DEMO LIMIT REACHED - UPGRADE TO CONTINUE</p>' if user_plan == 'free' and is_limit_reached else ''}
+                            {'<p style="color: #ef4444; font-weight: bold;">⚠️ PRO LIMIT REACHED - UPGRADE TO BLACK BELT</p>' if user_plan == 'pro' and is_limit_reached else ''}
+                            {'<p>📊 Monthly uploads remaining: <strong>' + str(uploads_remaining) + '</strong></p>' if user_plan == 'free' and not is_limit_reached else ''}
+                            {'<p>📊 Monthly uploads: <strong>' + str(monthly_uploads) + '/' + str(max_uploads if user_plan != 'blackbelt' else '∞') + '</strong></p>' if user_plan != 'free' else ''}
                         </div>
                     </div>
                 </div>
@@ -442,7 +1130,7 @@ def home():
             </div>
         </div>
 
-        <!-- Other tabs would go here -->
+        <!-- Submissions Tab -->
         <div id="submissions-tab" class="tab-content">
             <div class="glass rounded-xl p-8">
                 <h2 class="text-3xl font-bold text-white mb-8 text-center">🎯 Submission Analysis</h2>
@@ -487,765 +1175,7 @@ def home():
             </div>
         </div>
 
+        <!-- Sweeps Tab -->
         <div id="sweeps-tab" class="tab-content">
             <div class="glass rounded-xl p-8">
                 <h2 class="text-3xl font-bold text-white mb-8 text-center">🌊 Sweep Analysis</h2>
-                
-                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
-                    <div class="bg-gradient-to-br from-blue-500 to-blue-700 rounded-xl p-6">
-                        <h3 class="text-xl font-bold text-white mb-4">📊 Sweep Stats</h3>
-                        <div class="space-y-4">
-                            <div class="flex justify-between">
-                                <span class="text-blue-100">Success Rate</span>
-                                <span class="text-white font-bold" id="sweep-success-rate">-</span>
-                            </div>
-                            <div class="flex justify-between">
-                                <span class="text-blue-100">Avg Execution Time</span>
-                                <span class="text-white font-bold" id="sweep-avg-time">-</span>
-                            </div>
-                            <div class="flex justify-between">
-                                <span class="text-blue-100">Favorite Guard</span>
-                                <span class="text-white font-bold" id="sweep-fav-guard">-</span>
-                            </div>
-                            <div class="flex justify-between">
-                                <span class="text-blue-100">Total Attempts</span>
-                                <span class="text-white font-bold" id="sweep-total-attempts">-</span>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="bg-white bg-opacity-10 rounded-xl p-6">
-                        <h3 class="text-xl font-bold text-white mb-4">🏆 Top Sweeps</h3>
-                        <div id="top-sweeps" class="space-y-3">
-                            <p class="text-gray-300 text-center">Upload videos to see your top sweeps!</p>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="bg-white bg-opacity-10 rounded-xl p-6">
-                    <h3 class="text-xl font-bold text-white mb-4">🌊 AI Recommendations</h3>
-                    <div id="sweep-recommendations" class="space-y-3">
-                        <p class="text-gray-300 text-center">Upload videos to get personalized sweep recommendations!</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div id="takedowns-tab" class="tab-content">
-            <div class="glass rounded-xl p-8">
-                <h2 class="text-3xl font-bold text-white mb-8 text-center">🤼 Takedown Analysis</h2>
-                
-                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
-                    <div class="bg-gradient-to-br from-orange-500 to-orange-700 rounded-xl p-6">
-                        <h3 class="text-xl font-bold text-white mb-4">📊 Takedown Stats</h3>
-                        <div class="space-y-4">
-                            <div class="flex justify-between">
-                                <span class="text-orange-100">Success Rate</span>
-                                <span class="text-white font-bold" id="takedown-success-rate">-</span>
-                            </div>
-                            <div class="flex justify-between">
-                                <span class="text-orange-100">Avg Setup Time</span>
-                                <span class="text-white font-bold" id="takedown-avg-time">-</span>
-                            </div>
-                            <div class="flex justify-between">
-                                <span class="text-orange-100">Favorite Style</span>
-                                <span class="text-white font-bold" id="takedown-fav-style">-</span>
-                            </div>
-                            <div class="flex justify-between">
-                                <span class="text-orange-100">Total Attempts</span>
-                                <span class="text-white font-bold" id="takedown-total-attempts">-</span>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="bg-white bg-opacity-10 rounded-xl p-6">
-                        <h3 class="text-xl font-bold text-white mb-4">🏆 Top Takedowns</h3>
-                        <div id="top-takedowns" class="space-y-3">
-                            <p class="text-gray-300 text-center">Upload videos to see your top takedowns!</p>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="bg-white bg-opacity-10 rounded-xl p-6">
-                    <h3 class="text-xl font-bold text-white mb-4">🤼 AI Recommendations</h3>
-                    <div id="takedown-recommendations" class="space-y-3">
-                        <p class="text-gray-300 text-center">Upload videos to get personalized takedown recommendations!</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div id="analytics-tab" class="tab-content">
-            <div class="glass rounded-xl p-8">
-                <h2 class="text-3xl font-bold text-white mb-8 text-center">📊 Your BJJ Analytics</h2>
-                
-                <!-- Overall Performance -->
-                <div class="bg-gradient-to-r from-purple-600 to-blue-600 rounded-xl p-6 mb-8">
-                    <h3 class="text-2xl font-bold text-white mb-4">🏆 Overall Performance</h3>
-                    <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-                        <div class="bg-white bg-opacity-20 rounded-lg p-4 text-center">
-                            <div class="text-2xl font-bold text-white" id="total-videos-analyzed">0</div>
-                            <div class="text-purple-100">Videos Analyzed</div>
-                        </div>
-                        <div class="bg-white bg-opacity-20 rounded-lg p-4 text-center">
-                            <div class="text-2xl font-bold text-white" id="total-techniques-found">0</div>
-                            <div class="text-purple-100">Total Techniques</div>
-                        </div>
-                        <div class="bg-white bg-opacity-20 rounded-lg p-4 text-center">
-                            <div class="text-2xl font-bold text-white" id="overall-success-rate">0%</div>
-                            <div class="text-purple-100">Success Rate</div>
-                        </div>
-                        <div class="bg-white bg-opacity-20 rounded-lg p-4 text-center">
-                            <div class="text-2xl font-bold text-white" id="improvement-trend">-</div>
-                            <div class="text-purple-100">Trend</div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Category Breakdown -->
-                <div class="bg-white bg-opacity-10 rounded-xl p-6 mb-6">
-                    <h3 class="text-xl font-bold text-white mb-4">📈 Category Breakdown</h3>
-                    <div id="category-breakdown" class="space-y-3">
-                        <p class="text-gray-300 text-center">Upload videos to see your technique category breakdown!</p>
-                    </div>
-                </div>
-
-                <!-- Recent Progress -->
-                <div class="bg-white bg-opacity-10 rounded-xl p-6 mb-6">
-                    <h3 class="text-xl font-bold text-white mb-4">📹 Recent Sessions</h3>
-                    <div id="recent-sessions" class="space-y-3">
-                        <p class="text-gray-300 text-center">Upload videos to track your recent training sessions!</p>
-                    </div>
-                </div>
-
-                <!-- AI Insights -->
-                <div class="bg-white bg-opacity-10 rounded-xl p-6">
-                    <h3 class="text-xl font-bold text-white mb-4">🧠 AI Training Insights</h3>
-                    <div id="ai-training-insights" class="space-y-3">
-                        <p class="text-gray-300 text-center">Upload videos to get personalized AI training insights!</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <script>
-        const userPlan = "{user_plan}";
-        const monthlyUploads = {monthly_uploads};
-        const maxUploads = {1 if user_plan == "free" else (4 if user_plan == "pro" else 999)};
-        const userEmail = "{user_email or ''}";
-
-        function createAccount() {{
-            var email = document.getElementById('userEmail').value.trim();
-            var name = document.getElementById('userName').value.trim();
-            
-            if (!email || !name) {{
-                alert('Please enter both email and name!');
-                return;
-            }}
-            
-            if (!email.includes('@')) {{
-                alert('Please enter a valid email address!');
-                return;
-            }}
-            
-            fetch('/api/create-account', {{
-                method: 'POST',
-                headers: {{'Content-Type': 'application/json'}},
-                body: JSON.stringify({{email: email, name: name}})
-            }})
-            .then(response => response.json())
-            .then(data => {{
-                if (data.success) {{
-                    alert('🎉 Account created successfully!\\n\\nYour progress will now be saved and AI will learn your fighting style.');
-                    location.reload();
-                }} else {{
-                    alert('❌ Error: ' + data.message);
-                }}
-            }})
-            .catch(error => {{
-                alert('Error creating account: ' + error.message);
-            }});
-        }}
-
-        function showTab(tabName) {{
-            document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
-            document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
-            document.getElementById(tabName + '-tab').classList.add('active');
-            event.target.classList.add('active');
-        }}
-
-        function showPricing() {{
-            document.getElementById('pricing-modal').classList.remove('hidden');
-        }}
-
-        function hidePricing() {{
-            document.getElementById('pricing-modal').classList.add('hidden');
-        }}
-
-        function selectPlan(plan) {{
-            if (plan === 'free') {{
-                alert('You are already on the free plan!');
-                return;
-            }}
-            
-            const planNames = {{'pro': 'Pro ($29/month)', 'blackbelt': 'Black Belt ($59/month)'}};
-            const confirmUpgrade = confirm(`Upgrade to ${{planNames[plan]}}?\\n\\nThis would redirect to PayPal in the real app.`);
-            
-            if (confirmUpgrade) {{
-                alert(`🎉 Welcome to ${{planNames[plan]}}!\\n\\nYour account has been upgraded.`);
-                location.reload();
-            }}
-        }}
-
-        async function analyzeVideo() {{
-            const fileInput = document.getElementById('videoFile');
-            if (!fileInput.files[0]) {{
-                alert('Please select a video file first!');
-                return;
-            }}
-
-            // STRICT UPLOAD LIMIT ENFORCEMENT
-            console.log('Current plan:', userPlan, 'Monthly uploads:', monthlyUploads, 'Max allowed:', maxUploads);
-            
-            if (userPlan === 'free' && monthlyUploads >= 1) {{
-                alert('🚫 DEMO MODE LIMIT REACHED!\\n\\nFree users get 1 upload per month.\\n\\nUpgrade to Pro for 4 uploads/month or Black Belt for unlimited uploads.');
-                showPricing();
-                return;
-            }}
-            
-            if (userPlan === 'pro' && monthlyUploads >= 4) {{
-                alert('🚫 PRO PLAN LIMIT REACHED!\\n\\nPro users get 4 uploads per month.\\n\\nUpgrade to Black Belt for unlimited uploads.');
-                showPricing();
-                return;
-            }}
-
-            // Show remaining uploads before processing
-            if (userPlan === 'free') {{
-                const remaining = 1 - monthlyUploads;
-                if (remaining === 1) {{
-                    const confirmDemo = confirm('🆓 DEMO MODE UPLOAD\\n\\nThis will use your 1 free upload for this month.\\n\\nContinue with analysis?');
-                    if (!confirmDemo) return;
-                }}
-            }} else if (userPlan === 'pro') {{
-                const remaining = 4 - monthlyUploads;
-                const confirmPro = confirm(`🥋 PRO PLAN UPLOAD\\n\\nYou have ${{remaining}} uploads remaining this month.\\n\\nContinue with analysis?`);
-                if (!confirmPro) return;
-            }} else {{
-                const confirmBlackBelt = confirm('🥇 BLACK BELT UPLOAD\\n\\nUnlimited uploads available.\\n\\nContinue with analysis?');
-                if (!confirmBlackBelt) return;
-            }}
-
-            document.getElementById('progress-section').classList.remove('hidden');
-            let progress = 0;
-            const progressBar = document.getElementById('progress-bar');
-            
-            const interval = setInterval(() => {{
-                progress += Math.random() * 12;
-                if (progress > 100) progress = 100;
-                progressBar.style.width = progress + '%';
-                
-                if (progress >= 100) {{
-                    clearInterval(interval);
-                    performAnalysis();
-                }}
-            }}, 400);
-        }}
-
-        async function performAnalysis() {{
-            try {{
-                const formData = new FormData();
-                formData.append('video', document.getElementById('videoFile').files[0]);
-
-                const response = await fetch('/api/analyze', {{
-                    method: 'POST',
-                    body: formData
-                }});
-
-                const results = await response.json();
-                
-                if (results.error) {{
-                    alert('❌ ' + results.error);
-                    document.getElementById('progress-section').classList.add('hidden');
-                    return;
-                }}
-                
-                // SUCCESS - Update UI counters immediately
-                updateUploadCounters();
-                displayResults(results);
-                
-                // Show success message with updated limits
-                setTimeout(() => {{
-                    const newCount = monthlyUploads + 1;
-                    if (userPlan === 'free') {{
-                        alert('✅ VIDEO ANALYZED!\\n\\n🆓 Demo uploads used: ' + newCount + '/1\\n\\nUpgrade for more uploads!');
-                    }} else if (userPlan === 'pro') {{
-                        const remaining = 4 - newCount;
-                        alert('✅ VIDEO ANALYZED!\\n\\n🥋 Pro uploads remaining: ' + remaining + '/4');
-                    }} else {{
-                        alert('✅ VIDEO ANALYZED!\\n\\n🥇 Black Belt: Unlimited uploads');
-                    }}
-                }}, 1000);
-                
-            }} catch (error) {{
-                alert('Analysis failed: ' + error.message);
-                document.getElementById('progress-section').classList.add('hidden');
-            }}
-        }}
-
-        function updateUploadCounters() {{
-            // This will be called after successful upload to update the UI
-            const newCount = monthlyUploads + 1;
-            
-            // Update the header counter
-            const headerCounters = document.querySelectorAll('[class*="Monthly Uploads"]');
-            headerCounters.forEach(element => {{
-                if (userPlan === 'free') {{
-                    element.textContent = `Monthly Uploads: ${{newCount}}/1`;
-                    if (newCount >= 1) {{
-                        element.style.color = '#ef4444'; // Red when limit reached
-                        element.textContent += ' - LIMIT REACHED';
-                    }}
-                }} else if (userPlan === 'pro') {{
-                    element.textContent = `Monthly Uploads: ${{newCount}}/4`;
-                    if (newCount >= 4) {{
-                        element.style.color = '#ef4444';
-                        element.textContent += ' - LIMIT REACHED';
-                    }} else if (newCount >= 3) {{
-                        element.style.color = '#f59e0b'; // Orange when close to limit
-                    }}
-                }} else {{
-                    element.textContent = `Monthly Uploads: ${{newCount}}/∞`;
-                }}
-            }});
-            
-            // Update the upload section counter
-            const uploadRemaining = document.querySelector('div[class*="Monthly uploads remaining"]');
-            if (uploadRemaining) {{
-                if (userPlan === 'free') {{
-                    const remaining = Math.max(0, 1 - newCount);
-                    uploadRemaining.innerHTML = `<p>📊 Monthly uploads remaining: <strong>${{remaining}}</strong></p>`;
-                    if (remaining === 0) {{
-                        uploadRemaining.innerHTML += '<p style="color: #ef4444; font-weight: bold;">⚠️ DEMO LIMIT REACHED - UPGRADE TO CONTINUE</p>';
-                    }}
-                }} else if (userPlan === 'pro') {{
-                    const remaining = Math.max(0, 4 - newCount);
-                    uploadRemaining.innerHTML = `<p>📊 Monthly uploads remaining: <strong>${{remaining}}</strong></p>`;
-                    if (remaining === 0) {{
-                        uploadRemaining.innerHTML += '<p style="color: #ef4444; font-weight: bold;">⚠️ PRO LIMIT REACHED - UPGRADE TO BLACK BELT</p>';
-                    }}
-                }}
-            }}
-            
-            // Disable upload button if limit reached
-            const uploadButton = document.querySelector('button[onclick="analyzeVideo()"]');
-            if (uploadButton) {{
-                if ((userPlan === 'free' && newCount >= 1) || (userPlan === 'pro' && newCount >= 4)) {{
-                    uploadButton.disabled = true;
-                    uploadButton.style.opacity = '0.5';
-                    uploadButton.style.cursor = 'not-allowed';
-                    uploadButton.textContent = '🚫 MONTHLY LIMIT REACHED';
-                }}
-            }}
-        }}
-
-        // Update global monthlyUploads variable when upload succeeds
-        function incrementUploadCount() {{
-            window.monthlyUploads = monthlyUploads + 1;
-        }}
-
-        function showPricing() {{
-            document.getElementById('pricing-modal').classList.remove('hidden');
-        }}
-
-        function hidePricing() {{
-            document.getElementById('pricing-modal').classList.add('hidden');
-        }}
-
-        function selectPlan(plan) {{
-            if (plan === 'free') {{
-                alert('You are already on the free plan!');
-                return;
-            }}
-            
-            const planNames = {{'pro': 'Pro ($29/month)', 'blackbelt': 'Black Belt ($59/month)'}};
-            const planFeatures = {{
-                'pro': '✅ 4 uploads/month\\n✅ Detailed breakdowns\\n✅ Video timestamps\\n✅ Challenges & Social',
-                'blackbelt': '✅ UNLIMITED uploads\\n✅ Advanced breakdowns\\n✅ Competition analytics\\n✅ AI coaching\\n✅ 3D analysis'
-            }};
-            
-            const confirmUpgrade = confirm(`🚀 UPGRADE TO ${{planNames[plan].toUpperCase()}}\\n\\n${{planFeatures[plan]}}\\n\\nThis would redirect to payment in the real app.\\n\\nProceed with upgrade?`);
-            
-            if (confirmUpgrade) {{
-                // Simulate successful upgrade
-                alert(`🎉 CONGRATULATIONS!\\n\\nYou've been upgraded to ${{planNames[plan]}}!\\n\\nYour new upload limits are now active.`);
-                
-                // In a real app, this would make an API call to update the plan
-                // For demo purposes, we'll just reload to simulate the upgrade
-                setTimeout(() => {{
-                    location.reload();
-                }}, 2000);
-            }}
-        }}
-            document.getElementById('progress-section').classList.add('hidden');
-            document.getElementById('results-section').classList.remove('hidden');
-
-            document.getElementById('total-count').textContent = results.total_techniques_detected || 0;
-            document.getElementById('avg-confidence').textContent = Math.round((results.average_confidence || 0) * 100) + '%';
-            document.getElementById('video-duration').textContent = Math.round((results.video_duration || 0) / 60) + 'm';
-            
-            const submissionCount = (results.detected_techniques || []).filter(t => t.category === 'submission').length;
-            document.getElementById('submission-count').textContent = submissionCount;
-
-            displayTechniques(results.detected_techniques || []);
-            displayInsights(results.insights || []);
-            
-            // Update all tab analytics
-            updateTabAnalytics(results.detected_techniques || []);
-        }}
-
-        function updateTabAnalytics(techniques) {{
-            // Submissions Tab
-            const submissions = techniques.filter(t => t.category === 'submission');
-            if (submissions.length > 0) {{
-                const avgConfidence = submissions.reduce((sum, t) => sum + t.confidence, 0) / submissions.length;
-                const avgTime = submissions.reduce((sum, t) => sum + (t.end_time - t.start_time), 0) / submissions.length;
-                const positions = submissions.map(t => t.position);
-                const favPosition = getMostFrequent(positions);
-                
-                document.getElementById('sub-success-rate').textContent = Math.round(avgConfidence * 100) + '%';
-                document.getElementById('sub-avg-time').textContent = avgTime.toFixed(1) + 's';
-                document.getElementById('sub-fav-position').textContent = favPosition || 'N/A';
-                document.getElementById('sub-total-attempts').textContent = submissions.length;
-                
-                updateTopList('top-submissions', submissions, 'green');
-                updateRecommendations('sub-recommendations', submissions, 'submission');
-            }}
-
-            // Sweeps Tab
-            const sweeps = techniques.filter(t => t.category === 'sweep');
-            if (sweeps.length > 0) {{
-                const avgConfidence = sweeps.reduce((sum, t) => sum + t.confidence, 0) / sweeps.length;
-                const avgTime = sweeps.reduce((sum, t) => sum + (t.end_time - t.start_time), 0) / sweeps.length;
-                const positions = sweeps.map(t => t.position);
-                const favGuard = getMostFrequent(positions);
-                
-                document.getElementById('sweep-success-rate').textContent = Math.round(avgConfidence * 100) + '%';
-                document.getElementById('sweep-avg-time').textContent = avgTime.toFixed(1) + 's';
-                document.getElementById('sweep-fav-guard').textContent = favGuard || 'N/A';
-                document.getElementById('sweep-total-attempts').textContent = sweeps.length;
-                
-                updateTopList('top-sweeps', sweeps, 'blue');
-                updateRecommendations('sweep-recommendations', sweeps, 'sweep');
-            }}
-
-            // Takedowns Tab
-            const takedowns = techniques.filter(t => t.category === 'takedown');
-            if (takedowns.length > 0) {{
-                const avgConfidence = takedowns.reduce((sum, t) => sum + t.confidence, 0) / takedowns.length;
-                const avgTime = takedowns.reduce((sum, t) => sum + (t.end_time - t.start_time), 0) / takedowns.length;
-                const wrestlingTakedowns = ['double_leg_takedown', 'single_leg_takedown', 'high_crotch', 'ankle_pick'];
-                const judoTakedowns = ['hip_toss', 'foot_sweep', 'osoto_gari', 'seoi_nage', 'uchi_mata'];
-                const wrestling = takedowns.filter(t => wrestlingTakedowns.includes(t.technique)).length;
-                const judo = takedowns.filter(t => judoTakedowns.includes(t.technique)).length;
-                const favStyle = wrestling > judo ? 'Wrestling' : judo > wrestling ? 'Judo' : 'Mixed';
-                
-                document.getElementById('takedown-success-rate').textContent = Math.round(avgConfidence * 100) + '%';
-                document.getElementById('takedown-avg-time').textContent = avgTime.toFixed(1) + 's';
-                document.getElementById('takedown-fav-style').textContent = favStyle;
-                document.getElementById('takedown-total-attempts').textContent = takedowns.length;
-                
-                updateTopList('top-takedowns', takedowns, 'orange');
-                updateRecommendations('takedown-recommendations', takedowns, 'takedown');
-            }}
-
-            // Analytics Tab
-            updateAnalyticsTab(techniques);
-        }}
-
-        function getMostFrequent(arr) {{
-            const frequency = {{}};
-            let maxCount = 0;
-            let mostFrequent = '';
-            
-            arr.forEach(item => {{
-                frequency[item] = (frequency[item] || 0) + 1;
-                if (frequency[item] > maxCount) {{
-                    maxCount = frequency[item];
-                    mostFrequent = item;
-                }}
-            }});
-            
-            return mostFrequent.replace(/_/g, ' ').replace(/\\b\\w/g, l => l.toUpperCase());
-        }}
-
-        function updateTopList(elementId, techniques, colorClass) {{
-            const element = document.getElementById(elementId);
-            element.innerHTML = '';
-            
-            // Sort by confidence and take top 4
-            const sorted = [...techniques].sort((a, b) => b.confidence - a.confidence).slice(0, 4);
-            
-            sorted.forEach(technique => {{
-                const div = document.createElement('div');
-                div.className = 'flex justify-between items-center bg-white bg-opacity-10 rounded-lg p-3';
-                
-                const confidence = Math.round(technique.confidence * 100);
-                const color = confidence >= 85 ? 'text-green-400' : confidence >= 70 ? 'text-yellow-400' : 'text-orange-400';
-                
-                div.innerHTML = `
-                    <span class="text-white">${{technique.technique.replace(/_/g, ' ').replace(/\\b\\w/g, l => l.toUpperCase())}}</span>
-                    <span class="${{color}} font-bold">${{confidence}}%</span>
-                `;
-                element.appendChild(div);
-            }});
-        }}
-
-        function updateRecommendations(elementId, techniques, category) {{
-            const element = document.getElementById(elementId);
-            element.innerHTML = '';
-            
-            // Find lowest confidence technique for improvement
-            const lowest = techniques.reduce((min, t) => t.confidence < min.confidence ? t : min, techniques[0]);
-            const highest = techniques.reduce((max, t) => t.confidence > max.confidence ? t : max, techniques[0]);
-            
-            if (lowest && highest) {{
-                const focusDiv = document.createElement('div');
-                focusDiv.className = 'bg-blue-900 bg-opacity-50 rounded-lg p-4';
-                focusDiv.innerHTML = `
-                    <div class="text-white font-bold mb-2">🔧 Focus Area: ${{lowest.technique.replace(/_/g, ' ').replace(/\\b\\w/g, l => l.toUpperCase())}}</div>
-                    <p class="text-gray-300 text-sm">${{Math.round(lowest.confidence * 100)}}% success rate. Work on timing and technique fundamentals to improve consistency.</p>
-                `;
-                element.appendChild(focusDiv);
-                
-                const strengthDiv = document.createElement('div');
-                strengthDiv.className = 'bg-green-900 bg-opacity-50 rounded-lg p-4';
-                strengthDiv.innerHTML = `
-                    <div class="text-white font-bold mb-2">💪 Strength: ${{highest.technique.replace(/_/g, ' ').replace(/\\b\\w/g, l => l.toUpperCase())}}</div>
-                    <p class="text-gray-300 text-sm">Excellent ${{Math.round(highest.confidence * 100)}}% success rate! This is a reliable technique in your arsenal.</p>
-                `;
-                element.appendChild(strengthDiv);
-            }}
-        }}
-
-        function updateAnalyticsTab(techniques) {{
-            // Get stored video count from user data
-            const videoCount = window.localStorage ? (localStorage.getItem('bjj_video_count') || '1') : '1';
-            document.getElementById('total-videos-analyzed').textContent = videoCount;
-            
-            document.getElementById('total-techniques-found').textContent = techniques.length;
-            
-            const avgConfidence = techniques.reduce((sum, t) => sum + t.confidence, 0) / techniques.length;
-            document.getElementById('overall-success-rate').textContent = Math.round(avgConfidence * 100) + '%';
-            
-            document.getElementById('improvement-trend').textContent = '+12%';
-            
-            // Category breakdown
-            const categories = {{}};
-            techniques.forEach(t => {{
-                categories[t.category] = (categories[t.category] || 0) + 1;
-            }});
-            
-            const breakdownElement = document.getElementById('category-breakdown');
-            breakdownElement.innerHTML = '';
-            
-            Object.entries(categories).forEach(([category, count]) => {{
-                const div = document.createElement('div');
-                div.className = 'flex justify-between items-center bg-white bg-opacity-10 rounded-lg p-3';
-                div.innerHTML = `
-                    <span class="text-white">${{category.replace('_', ' ').replace(/\\b\\w/g, l => l.toUpperCase())}}</span>
-                    <span class="text-blue-400 font-bold">${{count}} techniques</span>
-                `;
-                breakdownElement.appendChild(div);
-            }});
-            
-            // Recent sessions
-            const sessionsElement = document.getElementById('recent-sessions');
-            sessionsElement.innerHTML = `
-                <div class="bg-white bg-opacity-10 rounded-lg p-4">
-                    <div class="flex justify-between items-center">
-                        <div>
-                            <div class="text-white font-bold">Latest Session</div>
-                            <div class="text-gray-300 text-sm">${{techniques.length}} techniques • Just analyzed</div>
-                        </div>
-                        <div class="text-green-400 font-bold">${{Math.round(avgConfidence * 100)}}%</div>
-                    </div>
-                </div>
-            `;
-            
-            // AI insights
-            const insightsElement = document.getElementById('ai-training-insights');
-            insightsElement.innerHTML = '';
-            
-            const insights = [
-                "Focus on drilling your lowest confidence techniques during warm-ups",
-                "Your submission game is strong - consider teaching these techniques to training partners",
-                "Work on position-specific drills to improve technique consistency",
-                "Your timing on transitions shows significant improvement"
-            ];
-            
-            insights.slice(0, 2).forEach(insight => {{
-                const div = document.createElement('div');
-                div.className = 'bg-purple-900 bg-opacity-50 rounded-lg p-4';
-                div.innerHTML = `
-                    <div class="text-white font-bold mb-2">🎯 Training Tip</div>
-                    <p class="text-gray-300 text-sm">${{insight}}</p>
-                `;
-                insightsElement.appendChild(div);
-            }});
-            
-            // Update video count for next time
-            if (window.localStorage) {{
-                const currentCount = parseInt(localStorage.getItem('bjj_video_count') || '0') + 1;
-                localStorage.setItem('bjj_video_count', currentCount.toString());
-            }}
-        }}
-
-        function displayTechniques(techniques) {{
-            const techniquesList = document.getElementById('techniques-list');
-            techniquesList.innerHTML = '';
-
-            techniques.forEach(technique => {{
-                const techniqueDiv = document.createElement('div');
-                techniqueDiv.className = 'bg-white bg-opacity-10 rounded-xl p-6 border-l-4 border-blue-500';
-                
-                let timestampHTML = '';
-                if (technique.has_timestamp) {{
-                    timestampHTML = `
-                        <button onclick="alert('🎬 Timestamp: ${{Math.floor(technique.start_time/60)}}:${{(technique.start_time%60).toString().padStart(2, '0')}}')" 
-                                class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded text-sm ml-3">
-                            🎬 ${{Math.floor(technique.start_time/60)}}:${{(technique.start_time%60).toString().padStart(2, '0')}}
-                        </button>
-                    `;
-                }}
-
-                let breakdownHTML = '';
-                if (technique.has_breakdown) {{
-                    breakdownHTML = `
-                        <button onclick="alert('📋 Full breakdown available for ${{technique.technique.replace(/_/g, ' ')}}!')" 
-                                class="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded text-sm ml-2">
-                            📋 Breakdown
-                        </button>
-                    `;
-                }}
-
-                techniqueDiv.innerHTML = `
-                    <div class="flex justify-between items-center">
-                        <div class="flex-1">
-                            <div class="flex items-center mb-2">
-                                <h4 class="text-xl font-bold text-white">${{technique.technique.replace(/_/g, ' ').replace(/\\b\\w/g, l => l.toUpperCase())}}</h4>
-                                <span class="ml-3 px-3 py-1 bg-blue-600 rounded-full text-xs text-white">
-                                    ${{technique.category.replace('_', ' ').toUpperCase()}}
-                                </span>
-                                ${{timestampHTML}}
-                                ${{breakdownHTML}}
-                            </div>
-                            <p class="text-gray-300">Position: ${{technique.position}} • Quality: ${{technique.quality}}</p>
-                        </div>
-                        <div class="text-right">
-                            <div class="text-2xl font-bold text-white">${{Math.round(technique.confidence * 100)}}%</div>
-                            <div class="text-gray-300 text-sm">Confidence</div>
-                        </div>
-                    </div>
-                `;
-                
-                techniquesList.appendChild(techniqueDiv);
-            }});
-        }}
-
-        function displayInsights(insights) {{
-            const insightsList = document.getElementById('insights-list');
-            insightsList.innerHTML = '';
-
-            insights.forEach(insight => {{
-                const insightDiv = document.createElement('div');
-                insightDiv.className = 'bg-white bg-opacity-10 rounded-lg p-4 mb-3';
-                insightDiv.innerHTML = `<p class="text-white text-lg">${{insight}}</p>`;
-                insightsList.appendChild(insightDiv);
-            }});
-        }}
-    </script>
-</body>
-</html>'''
-
-@app.route('/api/create-account', methods=['POST'])
-def create_account():
-    user_id = get_user_id()
-    data = request.get_json()
-    email = data.get('email', '').strip()
-    name = data.get('name', '').strip()
-    
-    if not email or not name:
-        return jsonify({'success': False, 'message': 'Email and name are required'}), 400
-    
-    if '@' not in email:
-        return jsonify({'success': False, 'message': 'Please enter a valid email'}), 400
-    
-    # Update user with account info
-    if user_id in users:
-        users[user_id]['email'] = email
-        users[user_id]['name'] = name
-        users[user_id]['account_created'] = datetime.now().isoformat()
-        return jsonify({'success': True, 'message': 'Account created successfully!'})
-    else:
-        return jsonify({'success': False, 'message': 'User session not found'}), 400
-
-@app.route('/api/analyze', methods=['POST'])
-def analyze():
-    user_id = get_user_id()
-    
-    # Ensure user exists
-    if user_id not in users:
-        return jsonify({'error': 'User session not found'}), 400
-        
-    user = users[user_id]
-    user_plan = user['plan']
-    
-    # Check monthly upload limits
-    current_month = datetime.now().strftime('%Y-%m')
-    if user['last_upload_month'] != current_month:
-        user['monthly_uploads'] = 0
-        user['last_upload_month'] = current_month
-    
-    if user_plan == 'free' and user['monthly_uploads'] >= 1:
-        return jsonify({'error': 'Monthly upload limit reached! Upgrade to Pro for 4 uploads per month.'}), 403
-    
-    if user_plan == 'pro' and user['monthly_uploads'] >= 4:
-        return jsonify({'error': 'Monthly upload limit reached! Upgrade to Black Belt for unlimited uploads.'}), 403
-    
-    # Simulate processing time
-    time.sleep(2)
-    
-    # Generate analysis
-    analysis_result = generate_analysis(user_plan)
-    
-    # Store the analysis
-    if user_id not in user_videos:
-        user_videos[user_id] = []
-    user_videos[user_id].append(analysis_result)
-    
-    # Update counters
-    user['monthly_uploads'] += 1
-    users[user_id]['videos_count'] += 1
-    
-    return jsonify(analysis_result)
-
-@app.route('/api/upgrade', methods=['POST'])
-def upgrade():
-    user_id = get_user_id()
-    data = request.get_json()
-    new_plan = data.get('plan')
-    
-    if new_plan in ['pro', 'blackbelt']:
-        users[user_id]['plan'] = new_plan
-        return jsonify({'success': True, 'message': f'Successfully upgraded to {new_plan}!'})
-    else:
-        return jsonify({'success': False, 'message': 'Invalid plan'}), 400
-
-@app.route('/health')
-def health():
-    return jsonify({'status': 'running', 'message': 'BJJ AI Analyzer Pro is ready!'})
-
-if __name__ == '__main__':
-    port = int(os.environ.get('PORT', 5000))
-    app.run(host='0.0.0.0', port=port, debug=False)

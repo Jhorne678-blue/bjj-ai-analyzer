@@ -1,4 +1,13 @@
-<!-- Sweeps Tab -->
+<div class="bg-white bg-opacity-10 rounded-xl p-6">
+                    <h3 class="text-xl font-bold text-white mb-4">🎯 AI Recommendations</h3>
+                    <div id="sub-recommendations" class="space-y-3">
+                        <p class="text-gray-300 text-center">Upload videos to get personalized submission recommendations!</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sweeps Tab -->
         <div id="sweeps-tab" class="tab-content">
             <div class="glass rounded-xl p-8">
                 <h2 class="text-3xl font-bold text-white mb-8 text-center">🌊 Sweep Analysis</h2>
@@ -143,7 +152,10 @@
         </div>
     </div>
 
-    <script>
+    <script>'''
+    
+    # JavaScript variables
+    html_content += f'''
         const userPlan = "{user_plan}";
         let monthlyUploads = {monthly_uploads};
         const maxUploads = {max_uploads};
@@ -605,6 +617,8 @@
     </script>
 </body>
 </html>'''
+    
+    return html_content
 
 @app.route('/api/create-account', methods=['POST'])
 def create_account():
@@ -686,7 +700,8 @@ def health():
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
-    app.run(host='0.0.0.0', port=port, debug=False)from flask import Flask, request, jsonify, session
+    app.run(host='0.0.0.0', port=port, debug=False)
+                from flask import Flask, request, jsonify, session
 import os
 import json
 import time
@@ -905,7 +920,8 @@ def home():
     uploads_remaining = max(0, max_uploads - monthly_uploads) if user_plan != 'blackbelt' else 999
     is_limit_reached = (user_plan == 'free' and monthly_uploads >= 1) or (user_plan == 'pro' and monthly_uploads >= 4)
     
-    return f'''<!DOCTYPE html>
+    # Build the HTML response
+    html_content = '''<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -914,11 +930,11 @@ def home():
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        body {{ background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }}
-        .glass {{ background: rgba(255, 255, 255, 0.1); backdrop-filter: blur(10px); }}
-        .tab-content {{ display: none; }}
-        .tab-content.active {{ display: block; }}
-        .tab-button.active {{ background: rgba(255, 255, 255, 0.2); }}
+        body { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+        .glass { background: rgba(255, 255, 255, 0.1); backdrop-filter: blur(10px); }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        .tab-button.active { background: rgba(255, 255, 255, 0.2); }
     </style>
 </head>
 <body class="min-h-screen">
@@ -927,8 +943,10 @@ def home():
         <h1 class="text-5xl font-bold text-white mb-4">🥋 BJJ AI Analyzer Pro</h1>
         <p class="text-xl text-gray-200">Complete BJJ Analytics Platform</p>
         
-        <!-- Login/Account Section -->
-        {"" if user_email else '''
+        <!-- Login/Account Section -->'''
+    
+    if not user_email:
+        html_content += '''
         <div class="mt-6 mb-4">
             <div class="bg-yellow-600 bg-opacity-20 rounded-lg p-4 max-w-md mx-auto border border-yellow-500">
                 <h3 class="text-lg font-bold text-white mb-2">📧 Create Your Account</h3>
@@ -943,23 +961,36 @@ def home():
                     </button>
                 </div>
             </div>
-        </div>'''}
-        
+        </div>'''
+    
+    html_content += f'''
         <div class="mt-4">
             <span class="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-6 py-3 rounded-lg text-lg font-bold">
-                {user_plan.upper()} PLAN • {video_count} Videos Analyzed
-                {"" if not user_email else f" • {user.get('name', 'User')}"}
+                {user_plan.upper()} PLAN • {video_count} Videos Analyzed'''
+    
+    if user_email:
+        html_content += f''' • {user.get('name', 'User')}'''
+    
+    html_content += '''
             </span>
         </div>
         <div class="mt-4 space-x-4">
             <button onclick="showPricing()" class="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg font-bold text-lg">
                 💎 UPGRADE NOW
             </button>
-            <div class="inline-block">
-                <span class="font-bold {'text-red-400' if is_limit_reached else 'text-yellow-300' if user_plan == 'free' else 'text-green-300'}">
-                    Monthly Uploads: {monthly_uploads}/{max_uploads if user_plan != 'blackbelt' else '∞'}
-                    {'- LIMIT REACHED!' if is_limit_reached else ''}
-                </span>
+            <div class="inline-block">'''
+    
+    # Upload counter display
+    counter_color = 'text-red-400' if is_limit_reached else ('text-yellow-300' if user_plan == 'free' else 'text-green-300')
+    max_display = '∞' if user_plan == 'blackbelt' else str(max_uploads)
+    limit_text = '- LIMIT REACHED!' if is_limit_reached else ''
+    
+    html_content += f'''
+                <span class="font-bold {counter_color}">
+                    Monthly Uploads: {monthly_uploads}/{max_display}{limit_text}
+                </span>'''
+    
+    html_content += '''
             </div>
         </div>
     </div>
@@ -1071,19 +1102,38 @@ def home():
                     <p class="text-white mb-6">Upload your training footage and get instant AI-powered technique analysis</p>
                     
                     <input type="file" id="videoFile" accept="video/*" class="mb-6 text-white bg-white bg-opacity-20 p-4 rounded-lg">
-                    <br>
-                    <button onclick="analyzeVideo()" 
-                            class="bg-white text-blue-600 font-bold py-4 px-8 rounded-lg text-xl hover:bg-gray-100 {'opacity-50 cursor-not-allowed' if is_limit_reached else ''}"
-                            {'disabled' if is_limit_reached else ''}>
-                        {'🚫 MONTHLY LIMIT REACHED' if is_limit_reached else '🤖 ANALYZE MY TECHNIQUES'}
+                    <br>'''
+    
+    # Upload button with conditional styling
+    button_class = "bg-white text-blue-600 font-bold py-4 px-8 rounded-lg text-xl hover:bg-gray-100"
+    if is_limit_reached:
+        button_class += " opacity-50 cursor-not-allowed"
+        button_text = "🚫 MONTHLY LIMIT REACHED"
+        button_disabled = "disabled"
+    else:
+        button_text = "🤖 ANALYZE MY TECHNIQUES"
+        button_disabled = ""
+    
+    html_content += f'''
+                    <button onclick="analyzeVideo()" class="{button_class}" {button_disabled}>
+                        {button_text}
                     </button>
                     
                     <div class="mt-6 text-white">
-                        <div id="upload-counter-display">
-                            {'<p style="color: #ef4444; font-weight: bold;">⚠️ DEMO LIMIT REACHED - UPGRADE TO CONTINUE</p>' if user_plan == 'free' and is_limit_reached else ''}
-                            {'<p style="color: #ef4444; font-weight: bold;">⚠️ PRO LIMIT REACHED - UPGRADE TO BLACK BELT</p>' if user_plan == 'pro' and is_limit_reached else ''}
-                            {'<p>📊 Monthly uploads remaining: <strong>' + str(uploads_remaining) + '</strong></p>' if user_plan == 'free' and not is_limit_reached else ''}
-                            {'<p>📊 Monthly uploads: <strong>' + str(monthly_uploads) + '/' + str(max_uploads if user_plan != 'blackbelt' else '∞') + '</strong></p>' if user_plan != 'free' else ''}
+                        <div id="upload-counter-display">'''
+    
+    # Upload counter status
+    if user_plan == 'free' and is_limit_reached:
+        html_content += '<p style="color: #ef4444; font-weight: bold;">⚠️ DEMO LIMIT REACHED - UPGRADE TO CONTINUE</p>'
+    elif user_plan == 'pro' and is_limit_reached:
+        html_content += '<p style="color: #ef4444; font-weight: bold;">⚠️ PRO LIMIT REACHED - UPGRADE TO BLACK BELT</p>'
+    elif user_plan == 'free' and not is_limit_reached:
+        html_content += f'<p>📊 Monthly uploads remaining: <strong>{uploads_remaining}</strong></p>'
+    elif user_plan != 'free':
+        max_display = '∞' if user_plan == 'blackbelt' else str(max_uploads)
+        html_content += f'<p>📊 Monthly uploads: <strong>{monthly_uploads}/{max_display}</strong></p>'
+    
+    html_content += '''
                         </div>
                     </div>
                 </div>
@@ -1167,15 +1217,4 @@ def home():
                 </div>
                 
                 <div class="bg-white bg-opacity-10 rounded-xl p-6">
-                    <h3 class="text-xl font-bold text-white mb-4">🎯 AI Recommendations</h3>
-                    <div id="sub-recommendations" class="space-y-3">
-                        <p class="text-gray-300 text-center">Upload videos to get personalized submission recommendations!</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Sweeps Tab -->
-        <div id="sweeps-tab" class="tab-content">
-            <div class="glass rounded-xl p-8">
-                <h2 class="text-3xl font-bold text-white mb-8 text-center">🌊 Sweep Analysis</h2>
+                    <h3 class="text-xl font-bold text-white mb-4">🎯 AI

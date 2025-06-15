@@ -3,4 +3,4 @@
 ├── requirements.txt
 ├── Procfile
 ├── templates
-│   └── index.html   <--- this is what’s missing!
+│   └── index.html

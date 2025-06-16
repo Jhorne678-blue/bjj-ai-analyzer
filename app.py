@@ -178,552 +178,6 @@ def auth():
                     alert(result.message);
                 }
             } catch (error) {
-                alert('Upload failed. Please try again.');
-                resetUpload();
-            }
-        }
-        
-        function resetUpload() {
-            uploadProgress.classList.add('hidden');
-            uploadArea.style.display = 'block';
-            progressBar.style.width = '0%';
-            videoInput.value = '';
-        }
-        </script>
-    </body>
-    </html>
-    '''
-
-@app.route('/upload_video', methods=['POST'])
-def upload_video():
-    """Handle video upload and analysis"""
-    try:
-        if 'user_id' not in session:
-            return jsonify({'success': False, 'message': 'Please log in first'})
-        
-        if 'video' not in request.files:
-            return jsonify({'success': False, 'message': 'No video file provided'})
-        
-        file = request.files['video']
-        if file.filename == '':
-            return jsonify({'success': False, 'message': 'No file selected'})
-        
-        if not allowed_file(file.filename):
-            return jsonify({'success': False, 'message': 'Invalid file type'})
-        
-        # Secure filename and save
-        filename = secure_filename(file.filename)
-        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S_')
-        unique_filename = timestamp + filename
-        filepath = os.path.join(app.config['UPLOAD_FOLDER'], unique_filename)
-        
-        file.save(filepath)
-        logger.info(f"Video saved: {filepath}")
-        
-        # Get user plan for analysis
-        user_id = session['user_id']
-        plan = session.get('plan', 'free')
-        
-        # Analyze video with BJJ AI
-        analysis_result = bjj_analyzer.analyze_video(filepath, plan, user_id)
-        
-        # Save to database
-        conn = get_db()
-        cursor = conn.cursor()
-        
-        cursor.execute('''
-            INSERT INTO videos (user_id, filename, original_filename, analysis_complete, 
-                              analysis_data, total_techniques, average_confidence, duration)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-        ''', (
-            user_id, unique_filename, filename, True,
-            json.dumps(analysis_result), analysis_result.get('total_techniques', 0),
-            analysis_result.get('average_confidence', 0.0), analysis_result.get('duration', 0.0)
-        ))
-        
-        video_id = cursor.lastrowid
-        
-        # Update user stats
-        cursor.execute('UPDATE users SET total_uploads = total_uploads + 1 WHERE id = ?', (user_id,))
-        
-        conn.commit()
-        conn.close()
-        
-        return jsonify({
-            'success': True, 
-            'message': 'Video analyzed successfully!',
-            'video_id': video_id,
-            'analysis': analysis_result
-        })
-        
-    except Exception as e:
-        logger.error(f"Upload error: {str(e)}")
-        return jsonify({'success': False, 'message': 'Upload failed. Please try again.'})
-
-@app.route('/analysis/<int:video_id>')
-def analysis_results(video_id):
-    """Display comprehensive analysis results with tabs"""
-    try:
-        if 'user_id' not in session:
-            return redirect(url_for('auth'))
-        
-        conn = get_db()
-        cursor = conn.cursor()
-        
-        # Get video and analysis data
-        cursor.execute('''
-            SELECT * FROM videos WHERE id = ? AND user_id = ?
-        ''', (video_id, session['user_id']))
-        
-        video = cursor.fetchone()
-        if not video:
-            return redirect(url_for('dashboard'))
-        
-        analysis_data = json.loads(video['analysis_data'])
-        conn.close()
-        
-        return f'''
-        <!DOCTYPE html>
-        <html>
-        <head>
-            <title>Analysis Results - BJJ AI Analyzer</title>
-            <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <script src="https://cdn.tailwindcss.com"></script>
-            <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-        </head>
-        <body class="bg-gray-50">
-            <div class="min-h-screen">
-                <nav class="bg-white shadow-lg">
-                    <div class="max-w-7xl mx-auto px-4">
-                        <div class="flex justify-between items-center h-16">
-                            <div class="flex items-center">
-                                <span class="text-xl font-bold text-gray-800">🥋 BJJ AI Analyzer</span>
-                            </div>
-                            <div class="flex items-center space-x-4">
-                                <a href="/dashboard" class="text-purple-600 hover:text-purple-800">← Back to Dashboard</a>
-                            </div>
-                        </div>
-                    </div>
-                </nav>
-                
-                <div class="max-w-7xl mx-auto px-4 py-8">
-                    <div class="mb-8">
-                        <h1 class="text-3xl font-bold text-gray-900 mb-2">Analysis Results</h1>
-                        <p class="text-gray-600">Video: {video['original_filename']}</p>
-                        <p class="text-sm text-gray-500">Analyzed on {video['upload_timestamp']}</p>
-                    </div>
-                    
-                    <!-- Summary Cards -->
-                    <div class="grid md:grid-cols-4 gap-6 mb-8">
-                        <div class="bg-white rounded-xl shadow-md p-6 text-center">
-                            <div class="text-3xl font-bold text-purple-600">{analysis_data.get('total_techniques', 0)}</div>
-                            <div class="text-sm text-gray-600">Total Techniques</div>
-                        </div>
-                        <div class="bg-white rounded-xl shadow-md p-6 text-center">
-                            <div class="text-3xl font-bold text-green-600">{analysis_data.get('average_confidence', 0):.1%}</div>
-                            <div class="text-sm text-gray-600">Avg Confidence</div>
-                        </div>
-                        <div class="bg-white rounded-xl shadow-md p-6 text-center">
-                            <div class="text-3xl font-bold text-blue-600">{analysis_data.get('duration', 0):.1f}s</div>
-                            <div class="text-sm text-gray-600">Video Duration</div>
-                        </div>
-                        <div class="bg-white rounded-xl shadow-md p-6 text-center">
-                            <div class="text-3xl font-bold text-yellow-600">{analysis_data.get('techniques_per_minute', 0):.1f}</div>
-                            <div class="text-sm text-gray-600">Techniques/Min</div>
-                        </div>
-                    </div>
-                    
-                    <!-- Tabs Navigation -->
-                    <div class="bg-white rounded-t-xl shadow-md">
-                        <div class="border-b border-gray-200">
-                            <nav class="flex space-x-8 px-6" aria-label="Tabs">
-                                <button onclick="showTab('overview')" class="tab-button active border-b-2 border-purple-500 py-4 px-1 text-sm font-medium text-purple-600">
-                                    Overview
-                                </button>
-                                <button onclick="showTab('submissions')" class="tab-button border-b-2 border-transparent py-4 px-1 text-sm font-medium text-gray-500 hover:text-gray-700">
-                                    Submissions
-                                </button>
-                                <button onclick="showTab('sweeps')" class="tab-button border-b-2 border-transparent py-4 px-1 text-sm font-medium text-gray-500 hover:text-gray-700">
-                                    Sweeps
-                                </button>
-                                <button onclick="showTab('takedowns')" class="tab-button border-b-2 border-transparent py-4 px-1 text-sm font-medium text-gray-500 hover:text-gray-700">
-                                    Takedowns
-                                </button>
-                                <button onclick="showTab('overall')" class="tab-button border-b-2 border-transparent py-4 px-1 text-sm font-medium text-gray-500 hover:text-gray-700">
-                                    Overall Stats
-                                </button>
-                            </nav>
-                        </div>
-                    </div>
-                    
-                    <!-- Tab Content -->
-                    <div class="bg-white rounded-b-xl shadow-md p-6">
-                        <!-- Overview Tab -->
-                        <div id="overview-tab" class="tab-content">
-                            <h2 class="text-2xl font-bold mb-6">Training Session Overview</h2>
-                            
-                            <div class="grid md:grid-cols-2 gap-8">
-                                <div>
-                                    <h3 class="text-lg font-semibold mb-4">Category Breakdown</h3>
-                                    <div class="space-y-3">
-                                        {self._generate_category_breakdown_html(analysis_data.get('category_breakdown', {}))}
-                                    </div>
-                                </div>
-                                
-                                <div>
-                                    <h3 class="text-lg font-semibold mb-4">Key Insights</h3>
-                                    <div class="space-y-2">
-                                        {self._generate_insights_html(analysis_data.get('insights', []))}
-                                    </div>
-                                </div>
-                            </div>
-                            
-                            <div class="mt-8">
-                                <h3 class="text-lg font-semibold mb-4">Quality Metrics</h3>
-                                <div class="grid md:grid-cols-4 gap-4">
-                                    {self._generate_quality_metrics_html(analysis_data.get('quality_metrics', {}))}
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <!-- Submissions Tab -->
-                        <div id="submissions-tab" class="tab-content hidden">
-                            <h2 class="text-2xl font-bold mb-6">Submissions Analysis</h2>
-                            {self._generate_technique_category_html(analysis_data.get('techniques', []), 'submissions', analysis_data.get('success_analytics', {}), analysis_data.get('failure_analytics', {}))}
-                        </div>
-                        
-                        <!-- Sweeps Tab -->
-                        <div id="sweeps-tab" class="tab-content hidden">
-                            <h2 class="text-2xl font-bold mb-6">Sweeps Analysis</h2>
-                            {self._generate_technique_category_html(analysis_data.get('techniques', []), 'sweeps', analysis_data.get('success_analytics', {}), analysis_data.get('failure_analytics', {}))}
-                        </div>
-                        
-                        <!-- Takedowns Tab -->
-                        <div id="takedowns-tab" class="tab-content hidden">
-                            <h2 class="text-2xl font-bold mb-6">Takedowns Analysis</h2>
-                            {self._generate_technique_category_html(analysis_data.get('techniques', []), 'takedowns', analysis_data.get('success_analytics', {}), analysis_data.get('failure_analytics', {}))}
-                        </div>
-                        
-                        <!-- Overall Tab -->
-                        <div id="overall-tab" class="tab-content hidden">
-                            <h2 class="text-2xl font-bold mb-6">Complete Technique List</h2>
-                            {self._generate_all_techniques_html(analysis_data.get('techniques', []))}
-                        </div>
-                    </div>
-                </div>
-            </div>
-            
-            <script>
-            function showTab(tabName) {{
-                // Hide all tab contents
-                document.querySelectorAll('.tab-content').forEach(tab => {{
-                    tab.classList.add('hidden');
-                }});
-                
-                // Remove active class from all buttons
-                document.querySelectorAll('.tab-button').forEach(btn => {{
-                    btn.classList.remove('active', 'border-purple-500', 'text-purple-600');
-                    btn.classList.add('border-transparent', 'text-gray-500');
-                }});
-                
-                // Show selected tab
-                document.getElementById(tabName + '-tab').classList.remove('hidden');
-                
-                // Add active class to clicked button
-                event.target.classList.add('active', 'border-purple-500', 'text-purple-600');
-                event.target.classList.remove('border-transparent', 'text-gray-500');
-            }}
-            </script>
-        </body>
-        </html>
-        '''
-        
-    except Exception as e:
-        logger.error(f"Analysis display error: {str(e)}")
-        return redirect(url_for('dashboard'))
-
-def _generate_category_breakdown_html(self, category_breakdown):
-    """Generate HTML for category breakdown"""
-    html = ""
-    for category, data in category_breakdown.items():
-        category_name = category.replace('_', ' ').title()
-        confidence_pct = data.get('avg_confidence', 0) * 100
-        html += f'''
-        <div class="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
-            <div>
-                <div class="font-medium">{category_name}</div>
-                <div class="text-sm text-gray-500">{data.get('count', 0)} techniques</div>
-            </div>
-            <div class="text-right">
-                <div class="font-bold text-purple-600">{confidence_pct:.1f}%</div>
-                <div class="text-xs text-gray-500">avg confidence</div>
-            </div>
-        </div>
-        '''
-    return html
-
-def _generate_insights_html(self, insights):
-    """Generate HTML for insights"""
-    html = ""
-    for insight in insights:
-        html += f'''
-        <div class="flex items-start space-x-2">
-            <div class="text-green-500 mt-1">✓</div>
-            <div class="text-gray-700">{insight}</div>
-        </div>
-        '''
-    return html
-
-def _generate_quality_metrics_html(self, quality_metrics):
-    """Generate HTML for quality metrics"""
-    html = ""
-    for metric, value in quality_metrics.items():
-        metric_name = metric.replace('_', ' ').title()
-        html += f'''
-        <div class="text-center">
-            <div class="text-2xl font-bold text-blue-600">{value}%</div>
-            <div class="text-sm text-gray-600">{metric_name}</div>
-        </div>
-        '''
-    return html
-
-def _generate_technique_category_html(self, techniques, category, success_analytics, failure_analytics):
-    """Generate HTML for specific technique category with success/failure analytics"""
-    category_techniques = [t for t in techniques if t.get('category') == category]
-    
-    if not category_techniques:
-        return f'<p class="text-gray-500 text-center py-8">No {category} detected in this video.</p>'
-    
-    # Get success/failure data for this category
-    success_data = success_analytics.get(category, [])
-    failure_data = failure_analytics.get(category, [])
-    
-    html = f'''
-    <div class="grid md:grid-cols-2 gap-8 mb-8">
-        <!-- Your Success Rates -->
-        <div class="bg-green-50 rounded-lg p-6">
-            <h3 class="text-lg font-semibold text-green-800 mb-4">📈 Your Success Rates (Best to Worst)</h3>
-            {self._generate_success_chart_html(success_data)}
-        </div>
-        
-        <!-- What You Get Caught With -->
-        <div class="bg-red-50 rounded-lg p-6">
-            <h3 class="text-lg font-semibent text-red-800 mb-4">🎯 Most Caught With (Defend Better)</h3>
-            {self._generate_failure_chart_html(failure_data)}
-        </div>
-    </div>
-    
-    <div class="mb-6">
-        <div class="text-lg text-gray-600 mb-4">All {len(category_techniques)} {category} techniques detected</div>
-    </div>
-    <div class="space-y-4">
-    '''
-    
-    for tech in category_techniques:
-        confidence_pct = tech.get('confidence', 0) * 100
-        start_time = tech.get('start_time', 0)
-        end_time = tech.get('end_time', 0)
-        is_yours = tech.get('is_your_technique', True)
-        outcome = tech.get('outcome', 'Unknown')
-        
-        # Color coding based on who did it and outcome
-        if is_yours:
-            outcome_class = 'bg-green-100 text-green-800' if outcome == 'Success' else 'bg-yellow-100 text-yellow-800'
-            outcome_prefix = 'Your'
-        else:
-            outcome_class = 'bg-red-100 text-red-800' if outcome == 'Success' else 'bg-blue-100 text-blue-800'
-            outcome_prefix = 'Opponent'
-        
-        html += f'''
-        <div class="border border-gray-200 rounded-lg p-4">
-            <div class="flex justify-between items-start mb-2">
-                <h3 class="text-lg font-semibold">{tech.get('name', 'Unknown Technique')}</h3>
-                <div class="flex space-x-2">
-                    <span class="bg-purple-100 text-purple-800 text-sm px-2 py-1 rounded-full">{confidence_pct:.1f}%</span>
-                    <span class="{outcome_class} text-sm px-2 py-1 rounded-full">{outcome_prefix} {outcome}</span>
-                </div>
-            </div>
-            <div class="grid md:grid-cols-3 gap-4 text-sm">
-                <div>
-                    <span class="text-gray-500">Time:</span> {start_time:.1f}s - {end_time:.1f}s
-                </div>
-                <div>
-                    <span class="text-gray-500">Position:</span> {tech.get('position', 'Unknown')}
-                </div>
-                <div>
-                    <span class="text-gray-500">Quality Score:</span> {tech.get('quality_score', 0):.1f}/100
-                </div>
-            </div>
-            <div class="mt-3">
-                <div class="text-xs text-gray-500 mb-1">Execution Rating:</div>
-                <span class="bg-{self._get_rating_color(tech.get('execution_rating', ''))} text-white text-xs px-2 py-1 rounded">
-                    {tech.get('execution_rating', 'Unknown')}
-                </span>
-            </div>
-            <div class="mt-3 text-sm text-gray-600">
-                <strong>{'Success Tip' if is_yours and outcome == 'Success' else 'Improvement Tip'}:</strong> 
-                {tech.get('improvement_tips', 'Keep practicing this technique.')}
-            </div>
-        </div>
-        '''
-    
-    html += '</div>'
-    return html
-
-def _generate_all_techniques_html(self, techniques):
-    """Generate HTML for all techniques overview"""
-    if not techniques:
-        return '<p class="text-gray-500 text-center py-8">No techniques detected in this video.</p>'
-    
-    html = f'''
-    <div class="mb-6">
-        <div class="text-lg text-gray-600 mb-4">Complete analysis of all {len(techniques)} detected techniques</div>
-    </div>
-    <div class="overflow-x-auto">
-        <table class="min-w-full divide-y divide-gray-200">
-            <thead class="bg-gray-50">
-                <tr>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Technique</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Category</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Time</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Confidence</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Quality</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Rating</th>
-                </tr>
-            </thead>
-            <tbody class="bg-white divide-y divide-gray-200">
-    '''
-    
-    for tech in techniques:
-        confidence_pct = tech.get('confidence', 0) * 100
-        category_name = tech.get('category', '').replace('_', ' ').title()
-        
-        html += f'''
-                <tr>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{tech.get('name', 'Unknown')}</td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{category_name}</td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{tech.get('start_time', 0):.1f}s</td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{confidence_pct:.1f}%</td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{tech.get('quality_score', 0):.1f}/100</td>
-                    <td class="px-6 py-4 whitespace-nowrap">
-                        <span class="bg-{self._get_rating_color(tech.get('execution_rating', ''))} text-white text-xs px-2 py-1 rounded">
-                            {tech.get('execution_rating', 'Unknown')}
-                        </span>
-                    </td>
-                </tr>
-        '''
-    
-    html += '''
-            </tbody>
-        </table>
-    </div>
-    '''
-    return html
-
-def _generate_success_chart_html(self, success_data):
-    """Generate HTML for success rate chart"""
-    if not success_data:
-        return '<p class="text-gray-500 text-center py-4">No data available for this session</p>'
-    
-    html = '<div class="space-y-3">'
-    for i, data in enumerate(success_data[:5]):  # Top 5
-        percentage = data['success_rate']
-        attempts = data['attempts']
-        successes = data['successes']
-        
-        # Color based on success rate
-        if percentage >= 80:
-            bar_color = 'bg-green-500'
-            text_color = 'text-green-700'
-        elif percentage >= 60:
-            bar_color = 'bg-yellow-500'
-            text_color = 'text-yellow-700'
-        else:
-            bar_color = 'bg-red-500'
-            text_color = 'text-red-700'
-        
-        html += f'''
-        <div class="relative">
-            <div class="flex justify-between items-center mb-1">
-                <span class="text-sm font-medium truncate">{data['technique']}</span>
-                <span class="{text_color} text-sm font-bold">{percentage}%</span>
-            </div>
-            <div class="w-full bg-gray-200 rounded-full h-2">
-                <div class="{bar_color} h-2 rounded-full" style="width: {percentage}%"></div>
-            </div>
-            <div class="text-xs text-gray-500 mt-1">{successes}/{attempts} attempts</div>
-        </div>
-        '''
-    
-    html += '</div>'
-    return html
-
-def _generate_failure_chart_html(self, failure_data):
-    """Generate HTML for failure/caught rate chart"""
-    if not failure_data:
-        return '<p class="text-gray-500 text-center py-4">No data available for this session</p>'
-    
-    html = '<div class="space-y-3">'
-    for i, data in enumerate(failure_data[:5]):  # Top 5
-        percentage = data['caught_rate']
-        attempts = data['attempts']
-        caught = data['times_caught']
-        
-        # Color based on how often caught (red = bad, green = good defense)
-        if percentage >= 80:
-            bar_color = 'bg-red-500'
-            text_color = 'text-red-700'
-        elif percentage >= 60:
-            bar_color = 'bg-orange-500'
-            text_color = 'text-orange-700'
-        elif percentage >= 40:
-            bar_color = 'bg-yellow-500'
-            text_color = 'text-yellow-700'
-        else:
-            bar_color = 'bg-green-500'
-            text_color = 'text-green-700'
-        
-        html += f'''
-        <div class="relative">
-            <div class="flex justify-between items-center mb-1">
-                <span class="text-sm font-medium truncate">{data['technique']}</span>
-                <span class="{text_color} text-sm font-bold">{percentage}%</span>
-            </div>
-            <div class="w-full bg-gray-200 rounded-full h-2">
-                <div class="{bar_color} h-2 rounded-full" style="width: {percentage}%"></div>
-            </div>
-            <div class="text-xs text-gray-500 mt-1">Caught {caught}/{attempts} times</div>
-        </div>
-        '''
-    
-    html += '</div>'
-    return html
-    """Get Tailwind color class for execution rating"""
-    rating_colors = {
-        'Excellent': 'green-500',
-        'Good': 'blue-500',
-        'Fair': 'yellow-500',
-        'Needs Work': 'red-500'
-    }
-    return rating_colors.get(rating, 'gray-500')
-
-# Add these methods to the app for the HTML generation
-app._generate_category_breakdown_html = _generate_category_breakdown_html.__get__(app)
-app._generate_insights_html = _generate_insights_html.__get__(app)
-app._generate_quality_metrics_html = _generate_quality_metrics_html.__get__(app)
-app._generate_technique_category_html = _generate_technique_category_html.__get__(app)
-app._generate_all_techniques_html = _generate_all_techniques_html.__get__(app)
-app._get_rating_color = _get_rating_color.__get__(app)
-
-# Initialize database on startup
-try:
-    init_database()
-except Exception as e:
-    logger.error(f"Database initialization failed: {str(e)}")
-
-if __name__ == '__main__':
-    port = int(os.environ.get('PORT', 8080))
-    app.run(debug=False, host='0.0.0.0', port=port)
                 alert('Signup failed. Please try again.');
             }
         });
@@ -925,3 +379,569 @@ def dashboard():
                     resetUpload();
                 }
             } catch (error) {
+                alert('Upload failed. Please try again.');
+                resetUpload();
+            }
+        }
+        
+        function resetUpload() {
+            uploadProgress.classList.add('hidden');
+            uploadArea.style.display = 'block';
+            progressBar.style.width = '0%';
+            videoInput.value = '';
+        }
+        </script>
+    </body>
+    </html>
+    '''
+
+@app.route('/upload_video', methods=['POST'])
+def upload_video():
+    """Handle video upload and analysis"""
+    try:
+        if 'user_id' not in session:
+            return jsonify({'success': False, 'message': 'Please log in first'})
+        
+        if 'video' not in request.files:
+            return jsonify({'success': False, 'message': 'No video file provided'})
+        
+        file = request.files['video']
+        if file.filename == '':
+            return jsonify({'success': False, 'message': 'No file selected'})
+        
+        if not allowed_file(file.filename):
+            return jsonify({'success': False, 'message': 'Invalid file type'})
+        
+        # Secure filename and save
+        filename = secure_filename(file.filename)
+        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S_')
+        unique_filename = timestamp + filename
+        filepath = os.path.join(app.config['UPLOAD_FOLDER'], unique_filename)
+        
+        file.save(filepath)
+        logger.info(f"Video saved: {filepath}")
+        
+        # Get user plan for analysis
+        user_id = session['user_id']
+        plan = session.get('plan', 'free')
+        
+        # Analyze video with BJJ AI
+        analysis_result = bjj_analyzer.analyze_video(filepath, plan, user_id)
+        
+        # Save to database
+        conn = get_db()
+        cursor = conn.cursor()
+        
+        cursor.execute('''
+            INSERT INTO videos (user_id, filename, original_filename, analysis_complete, 
+                              analysis_data, total_techniques, average_confidence, duration)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        ''', (
+            user_id, unique_filename, filename, True,
+            json.dumps(analysis_result), analysis_result.get('total_techniques', 0),
+            analysis_result.get('average_confidence', 0.0), analysis_result.get('duration', 0.0)
+        ))
+        
+        video_id = cursor.lastrowid
+        
+        # Update user stats
+        cursor.execute('UPDATE users SET total_uploads = total_uploads + 1 WHERE id = ?', (user_id,))
+        
+        conn.commit()
+        conn.close()
+        
+        return jsonify({
+            'success': True, 
+            'message': 'Video analyzed successfully!',
+            'video_id': video_id,
+            'analysis': analysis_result
+        })
+        
+    except Exception as e:
+        logger.error(f"Upload error: {str(e)}")
+        return jsonify({'success': False, 'message': 'Upload failed. Please try again.'})
+
+@app.route('/analysis/<int:video_id>')
+def analysis_results(video_id):
+    """Display comprehensive analysis results with tabs"""
+    try:
+        if 'user_id' not in session:
+            return redirect(url_for('auth'))
+        
+        conn = get_db()
+        cursor = conn.cursor()
+        
+        # Get video and analysis data
+        cursor.execute('''
+            SELECT * FROM videos WHERE id = ? AND user_id = ?
+        ''', (video_id, session['user_id']))
+        
+        video = cursor.fetchone()
+        if not video:
+            return redirect(url_for('dashboard'))
+        
+        analysis_data = json.loads(video['analysis_data'])
+        conn.close()
+        
+        return f'''
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <title>Analysis Results - BJJ AI Analyzer</title>
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <script src="https://cdn.tailwindcss.com"></script>
+            <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+        </head>
+        <body class="bg-gray-50">
+            <div class="min-h-screen">
+                <nav class="bg-white shadow-lg">
+                    <div class="max-w-7xl mx-auto px-4">
+                        <div class="flex justify-between items-center h-16">
+                            <div class="flex items-center">
+                                <span class="text-xl font-bold text-gray-800">🥋 BJJ AI Analyzer</span>
+                            </div>
+                            <div class="flex items-center space-x-4">
+                                <a href="/dashboard" class="text-purple-600 hover:text-purple-800">← Back to Dashboard</a>
+                            </div>
+                        </div>
+                    </div>
+                </nav>
+                
+                <div class="max-w-7xl mx-auto px-4 py-8">
+                    <div class="mb-8">
+                        <h1 class="text-3xl font-bold text-gray-900 mb-2">Analysis Results</h1>
+                        <p class="text-gray-600">Video: {video['original_filename']}</p>
+                        <p class="text-sm text-gray-500">Analyzed on {video['upload_timestamp']}</p>
+                    </div>
+                    
+                    <!-- Summary Cards -->
+                    <div class="grid md:grid-cols-4 gap-6 mb-8">
+                        <div class="bg-white rounded-xl shadow-md p-6 text-center">
+                            <div class="text-3xl font-bold text-purple-600">{analysis_data.get('total_techniques', 0)}</div>
+                            <div class="text-sm text-gray-600">Total Techniques</div>
+                        </div>
+                        <div class="bg-white rounded-xl shadow-md p-6 text-center">
+                            <div class="text-3xl font-bold text-green-600">{analysis_data.get('average_confidence', 0):.1%}</div>
+                            <div class="text-sm text-gray-600">Avg Confidence</div>
+                        </div>
+                        <div class="bg-white rounded-xl shadow-md p-6 text-center">
+                            <div class="text-3xl font-bold text-blue-600">{analysis_data.get('duration', 0):.1f}s</div>
+                            <div class="text-sm text-gray-600">Video Duration</div>
+                        </div>
+                        <div class="bg-white rounded-xl shadow-md p-6 text-center">
+                            <div class="text-3xl font-bold text-yellow-600">{analysis_data.get('techniques_per_minute', 0):.1f}</div>
+                            <div class="text-sm text-gray-600">Techniques/Min</div>
+                        </div>
+                    </div>
+                    
+                    <!-- Tabs Navigation -->
+                    <div class="bg-white rounded-t-xl shadow-md">
+                        <div class="border-b border-gray-200">
+                            <nav class="flex space-x-8 px-6" aria-label="Tabs">
+                                <button onclick="showTab('overview')" class="tab-button active border-b-2 border-purple-500 py-4 px-1 text-sm font-medium text-purple-600">
+                                    Overview
+                                </button>
+                                <button onclick="showTab('submissions')" class="tab-button border-b-2 border-transparent py-4 px-1 text-sm font-medium text-gray-500 hover:text-gray-700">
+                                    Submissions
+                                </button>
+                                <button onclick="showTab('sweeps')" class="tab-button border-b-2 border-transparent py-4 px-1 text-sm font-medium text-gray-500 hover:text-gray-700">
+                                    Sweeps
+                                </button>
+                                <button onclick="showTab('takedowns')" class="tab-button border-b-2 border-transparent py-4 px-1 text-sm font-medium text-gray-500 hover:text-gray-700">
+                                    Takedowns
+                                </button>
+                                <button onclick="showTab('overall')" class="tab-button border-b-2 border-transparent py-4 px-1 text-sm font-medium text-gray-500 hover:text-gray-700">
+                                    Overall Stats
+                                </button>
+                            </nav>
+                        </div>
+                    </div>
+                    
+                    <!-- Tab Content -->
+                    <div class="bg-white rounded-b-xl shadow-md p-6">
+                        <!-- Overview Tab -->
+                        <div id="overview-tab" class="tab-content">
+                            <h2 class="text-2xl font-bold mb-6">Training Session Overview</h2>
+                            
+                            <div class="grid md:grid-cols-2 gap-8">
+                                <div>
+                                    <h3 class="text-lg font-semibold mb-4">Category Breakdown</h3>
+                                    <div class="space-y-3">
+                                        {app._generate_category_breakdown_html(analysis_data.get('category_breakdown', {}))}
+                                    </div>
+                                </div>
+                                
+                                <div>
+                                    <h3 class="text-lg font-semibold mb-4">Key Insights</h3>
+                                    <div class="space-y-2">
+                                        {app._generate_insights_html(analysis_data.get('insights', []))}
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="mt-8">
+                                <h3 class="text-lg font-semibold mb-4">Quality Metrics</h3>
+                                <div class="grid md:grid-cols-4 gap-4">
+                                    {app._generate_quality_metrics_html(analysis_data.get('quality_metrics', {}))}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Submissions Tab -->
+                        <div id="submissions-tab" class="tab-content hidden">
+                            <h2 class="text-2xl font-bold mb-6">Submissions Analysis</h2>
+                            {app._generate_technique_category_html(analysis_data.get('techniques', []), 'submissions', analysis_data.get('success_analytics', {}), analysis_data.get('failure_analytics', {}))}
+                        </div>
+                        
+                        <!-- Sweeps Tab -->
+                        <div id="sweeps-tab" class="tab-content hidden">
+                            <h2 class="text-2xl font-bold mb-6">Sweeps Analysis</h2>
+                            {app._generate_technique_category_html(analysis_data.get('techniques', []), 'sweeps', analysis_data.get('success_analytics', {}), analysis_data.get('failure_analytics', {}))}
+                        </div>
+                        
+                        <!-- Takedowns Tab -->
+                        <div id="takedowns-tab" class="tab-content hidden">
+                            <h2 class="text-2xl font-bold mb-6">Takedowns Analysis</h2>
+                            {app._generate_technique_category_html(analysis_data.get('techniques', []), 'takedowns', analysis_data.get('success_analytics', {}), analysis_data.get('failure_analytics', {}))}
+                        </div>
+                        
+                        <!-- Overall Tab -->
+                        <div id="overall-tab" class="tab-content hidden">
+                            <h2 class="text-2xl font-bold mb-6">Complete Technique List</h2>
+                            {app._generate_all_techniques_html(analysis_data.get('techniques', []))}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <script>
+            function showTab(tabName) {{
+                // Hide all tab contents
+                document.querySelectorAll('.tab-content').forEach(tab => {{
+                    tab.classList.add('hidden');
+                }});
+                
+                // Remove active class from all buttons
+                document.querySelectorAll('.tab-button').forEach(btn => {{
+                    btn.classList.remove('active', 'border-purple-500', 'text-purple-600');
+                    btn.classList.add('border-transparent', 'text-gray-500');
+                }});
+                
+                // Show selected tab
+                document.getElementById(tabName + '-tab').classList.remove('hidden');
+                
+                // Add active class to clicked button
+                event.target.classList.add('active', 'border-purple-500', 'text-purple-600');
+                event.target.classList.remove('border-transparent', 'text-gray-500');
+            }}
+            </script>
+        </body>
+        </html>
+        '''
+        
+    except Exception as e:
+        logger.error(f"Analysis display error: {str(e)}")
+        return redirect(url_for('dashboard'))
+
+def _generate_category_breakdown_html(category_breakdown):
+    """Generate HTML for category breakdown"""
+    html = ""
+    for category, data in category_breakdown.items():
+        category_name = category.replace('_', ' ').title()
+        confidence_pct = data.get('avg_confidence', 0) * 100
+        html += f'''
+        <div class="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+            <div>
+                <div class="font-medium">{category_name}</div>
+                <div class="text-sm text-gray-500">{data.get('count', 0)} techniques</div>
+            </div>
+            <div class="text-right">
+                <div class="font-bold text-purple-600">{confidence_pct:.1f}%</div>
+                <div class="text-xs text-gray-500">avg confidence</div>
+            </div>
+        </div>
+        '''
+    return html
+
+def _generate_insights_html(insights):
+    """Generate HTML for insights"""
+    html = ""
+    for insight in insights:
+        html += f'''
+        <div class="flex items-start space-x-2">
+            <div class="text-green-500 mt-1">✓</div>
+            <div class="text-gray-700">{insight}</div>
+        </div>
+        '''
+    return html
+
+def _generate_quality_metrics_html(quality_metrics):
+    """Generate HTML for quality metrics"""
+    html = ""
+    for metric, value in quality_metrics.items():
+        metric_name = metric.replace('_', ' ').title()
+        html += f'''
+        <div class="text-center">
+            <div class="text-2xl font-bold text-blue-600">{value}%</div>
+            <div class="text-sm text-gray-600">{metric_name}</div>
+        </div>
+        '''
+    return html
+
+def _generate_technique_category_html(techniques, category, success_analytics, failure_analytics):
+    """Generate HTML for specific technique category with success/failure analytics"""
+    category_techniques = [t for t in techniques if t.get('category') == category]
+    
+    if not category_techniques:
+        return f'<p class="text-gray-500 text-center py-8">No {category} detected in this video.</p>'
+    
+    # Get success/failure data for this category
+    success_data = success_analytics.get(category, [])
+    failure_data = failure_analytics.get(category, [])
+    
+    html = f'''
+    <div class="grid md:grid-cols-2 gap-8 mb-8">
+        <!-- Your Success Rates -->
+        <div class="bg-green-50 rounded-lg p-6">
+            <h3 class="text-lg font-semibold text-green-800 mb-4">📈 Your Success Rates (Best to Worst)</h3>
+            {_generate_success_chart_html(success_data)}
+        </div>
+        
+        <!-- What You Get Caught With -->
+        <div class="bg-red-50 rounded-lg p-6">
+            <h3 class="text-lg font-semibold text-red-800 mb-4">🎯 Most Caught With (Defend Better)</h3>
+            {_generate_failure_chart_html(failure_data)}
+        </div>
+    </div>
+    
+    <div class="mb-6">
+        <div class="text-lg text-gray-600 mb-4">All {len(category_techniques)} {category} techniques detected</div>
+    </div>
+    <div class="space-y-4">
+    '''
+    
+    for tech in category_techniques:
+        confidence_pct = tech.get('confidence', 0) * 100
+        start_time = tech.get('start_time', 0)
+        end_time = tech.get('end_time', 0)
+        is_yours = tech.get('is_your_technique', True)
+        outcome = tech.get('outcome', 'Unknown')
+        
+        # Color coding based on who did it and outcome
+        if is_yours:
+            outcome_class = 'bg-green-100 text-green-800' if outcome == 'Success' else 'bg-yellow-100 text-yellow-800'
+            outcome_prefix = 'Your'
+        else:
+            outcome_class = 'bg-red-100 text-red-800' if outcome == 'Success' else 'bg-blue-100 text-blue-800'
+            outcome_prefix = 'Opponent'
+        
+        html += f'''
+        <div class="border border-gray-200 rounded-lg p-4">
+            <div class="flex justify-between items-start mb-2">
+                <h3 class="text-lg font-semibold">{tech.get('name', 'Unknown Technique')}</h3>
+                <div class="flex space-x-2">
+                    <span class="bg-purple-100 text-purple-800 text-sm px-2 py-1 rounded-full">{confidence_pct:.1f}%</span>
+                    <span class="{outcome_class} text-sm px-2 py-1 rounded-full">{outcome_prefix} {outcome}</span>
+                </div>
+            </div>
+            <div class="grid md:grid-cols-3 gap-4 text-sm">
+                <div>
+                    <span class="text-gray-500">Time:</span> {start_time:.1f}s - {end_time:.1f}s
+                </div>
+                <div>
+                    <span class="text-gray-500">Position:</span> {tech.get('position', 'Unknown')}
+                </div>
+                <div>
+                    <span class="text-gray-500">Quality Score:</span> {tech.get('quality_score', 0):.1f}/100
+                </div>
+            </div>
+            <div class="mt-3">
+                <div class="text-xs text-gray-500 mb-1">Execution Rating:</div>
+                <span class="bg-{_get_rating_color(tech.get('execution_rating', ''))} text-white text-xs px-2 py-1 rounded">
+                    {tech.get('execution_rating', 'Unknown')}
+                </span>
+            </div>
+            <div class="mt-3 text-sm text-gray-600">
+                <strong>{'Success Tip' if is_yours and outcome == 'Success' else 'Improvement Tip'}:</strong> 
+                {tech.get('improvement_tips', 'Keep practicing this technique.')}
+            </div>
+        </div>
+        '''
+    
+    html += '</div>'
+    return html
+
+def _generate_success_chart_html(success_data):
+    """Generate HTML for success rate chart"""
+    if not success_data:
+        return '<p class="text-gray-500 text-center py-4">No data available for this session</p>'
+    
+    html = '<div class="space-y-3">'
+    for i, data in enumerate(success_data[:5]):  # Top 5
+        percentage = data['success_rate']
+        attempts = data['attempts']
+        successes = data['successes']
+        
+        # Color based on success rate
+        if percentage >= 80:
+            bar_color = 'bg-green-500'
+            text_color = 'text-green-700'
+        elif percentage >= 60:
+            bar_color = 'bg-yellow-500'
+            text_color = 'text-yellow-700'
+        else:
+            bar_color = 'bg-red-500'
+            text_color = 'text-red-700'
+        
+        html += f'''
+        <div class="relative">
+            <div class="flex justify-between items-center mb-1">
+                <span class="text-sm font-medium truncate">{data['technique']}</span>
+                <span class="{text_color} text-sm font-bold">{percentage}%</span>
+            </div>
+            <div class="w-full bg-gray-200 rounded-full h-2">
+                <div class="{bar_color} h-2 rounded-full" style="width: {percentage}%"></div>
+            </div>
+            <div class="text-xs text-gray-500 mt-1">{successes}/{attempts} attempts</div>
+        </div>
+        '''
+    
+    html += '</div>'
+    return html
+
+def _generate_failure_chart_html(failure_data):
+    """Generate HTML for failure/caught rate chart"""
+    if not failure_data:
+        return '<p class="text-gray-500 text-center py-4">No data available for this session</p>'
+    
+    html = '<div class="space-y-3">'
+    for i, data in enumerate(failure_data[:5]):  # Top 5
+        percentage = data['caught_rate']
+        attempts = data['attempts']
+        caught = data['times_caught']
+        
+        # Color based on how often caught (red = bad, green = good defense)
+        if percentage >= 80:
+            bar_color = 'bg-red-500'
+            text_color = 'text-red-700'
+        elif percentage >= 60:
+            bar_color = 'bg-orange-500'
+            text_color = 'text-orange-700'
+        elif percentage >= 40:
+            bar_color = 'bg-yellow-500'
+            text_color = 'text-yellow-700'
+        else:
+            bar_color = 'bg-green-500'
+            text_color = 'text-green-700'
+        
+        html += f'''
+        <div class="relative">
+            <div class="flex justify-between items-center mb-1">
+                <span class="text-sm font-medium truncate">{data['technique']}</span>
+                <span class="{text_color} text-sm font-bold">{percentage}%</span>
+            </div>
+            <div class="w-full bg-gray-200 rounded-full h-2">
+                <div class="{bar_color} h-2 rounded-full" style="width: {percentage}%"></div>
+            </div>
+            <div class="text-xs text-gray-500 mt-1">Caught {caught}/{attempts} times</div>
+        </div>
+        '''
+    
+    html += '</div>'
+    return html
+
+def _generate_all_techniques_html(techniques):
+    """Generate HTML for all techniques overview"""
+    if not techniques:
+        return '<p class="text-gray-500 text-center py-8">No techniques detected in this video.</p>'
+    
+    html = f'''
+    <div class="mb-6">
+        <div class="text-lg text-gray-600 mb-4">Complete analysis of all {len(techniques)} detected techniques</div>
+    </div>
+    <div class="overflow-x-auto">
+        <table class="min-w-full divide-y divide-gray-200">
+            <thead class="bg-gray-50">
+                <tr>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Technique</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Category</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Time</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Confidence</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Quality</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Rating</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Outcome</th>
+                </tr>
+            </thead>
+            <tbody class="bg-white divide-y divide-gray-200">
+    '''
+    
+    for tech in techniques:
+        confidence_pct = tech.get('confidence', 0) * 100
+        category_name = tech.get('category', '').replace('_', ' ').title()
+        is_yours = tech.get('is_your_technique', True)
+        outcome = tech.get('outcome', 'Unknown')
+        
+        # Color coding for outcome
+        if is_yours:
+            outcome_class = 'bg-green-100 text-green-800' if outcome == 'Success' else 'bg-yellow-100 text-yellow-800'
+            outcome_text = f'Your {outcome}'
+        else:
+            outcome_class = 'bg-red-100 text-red-800' if outcome == 'Success' else 'bg-blue-100 text-blue-800'
+            outcome_text = f'Opponent {outcome}'
+        
+        html += f'''
+                <tr>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{tech.get('name', 'Unknown')}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{category_name}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{tech.get('start_time', 0):.1f}s</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{confidence_pct:.1f}%</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{tech.get('quality_score', 0):.1f}/100</td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <span class="bg-{_get_rating_color(tech.get('execution_rating', ''))} text-white text-xs px-2 py-1 rounded">
+                            {tech.get('execution_rating', 'Unknown')}
+                        </span>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <span class="{outcome_class} text-xs px-2 py-1 rounded">
+                            {outcome_text}
+                        </span>
+                    </td>
+                </tr>
+        '''
+    
+    html += '''
+            </tbody>
+        </table>
+    </div>
+    '''
+    return html
+
+def _get_rating_color(rating):
+    """Get Tailwind color class for execution rating"""
+    rating_colors = {
+        'Excellent': 'green-500',
+        'Good': 'blue-500',
+        'Fair': 'yellow-500',
+        'Needs Work': 'red-500'
+    }
+    return rating_colors.get(rating, 'gray-500')
+
+# Add these methods to the app for the HTML generation
+app._generate_category_breakdown_html = _generate_category_breakdown_html
+app._generate_insights_html = _generate_insights_html
+app._generate_quality_metrics_html = _generate_quality_metrics_html
+app._generate_technique_category_html = _generate_technique_category_html
+app._generate_all_techniques_html = _generate_all_techniques_html
+app._generate_success_chart_html = _generate_success_chart_html
+app._generate_failure_chart_html = _generate_failure_chart_html
+app._get_rating_color = _get_rating_color
+
+# Initialize database on startup
+try:
+    init_database()
+except Exception as e:
+    logger.error(f"Database initialization failed: {str(e)}")
+
+if __name__ == '__main__':
+    port = int(os.environ.get('PORT', 8080))
+    app.run(debug=False, host='0.0.0.0', port=port)

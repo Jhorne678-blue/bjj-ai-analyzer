@@ -1,6 +1,3 @@
-"""
-BJJ AI Analyzer - Enhanced with 100+ Techniques
-"""
 import json
 import os
 import logging
@@ -119,7 +116,7 @@ class BJJAnalyzer:
         logger.info(f"BJJ Analyzer initialized with {len(self.all_techniques)} techniques")
     
     def analyze_video(self, video_path, plan='free', user_id=None):
-        """Enhanced video analysis with realistic BJJ technique detection"""
+        """Enhanced video analysis with realistic BJJ technique detection and success/failure tracking"""
         try:
             # Simulate video duration analysis
             duration = random.uniform(60, 300)  # 1-5 minutes
@@ -135,20 +132,31 @@ class BJJAnalyzer:
                 max_techniques = 40
                 confidence_boost = 0.15
             
-            # Generate realistic technique detection
+            # Generate realistic technique detection with success/failure tracking
             num_techniques = random.randint(max(3, max_techniques//2), max_techniques)
             detected_techniques = []
+            your_successes = []
+            opponent_successes = []
             
             for i in range(num_techniques):
                 tech = random.choice(self.all_techniques)
                 start_time = random.uniform(0, duration - 15)
                 duration_tech = random.uniform(2, 12)
                 
+                # Determine if this was your technique or opponent's
+                is_your_technique = random.choice([True, False])
+                
+                # Determine success/failure
+                if is_your_technique:
+                    success = random.choice([True, False])  # 50/50 for realism
+                else:
+                    success = random.choice([True, False])  # Opponent's success against you
+                
                 # More realistic confidence based on technique complexity
                 base_confidence = self._get_technique_confidence(tech['internal_name'])
                 confidence = min(0.95, base_confidence + confidence_boost + random.uniform(-0.1, 0.1))
                 
-                detected_techniques.append({
+                technique_data = {
                     'name': tech['name'],
                     'internal_name': tech['internal_name'],
                     'category': tech['category'],
@@ -158,11 +166,46 @@ class BJJAnalyzer:
                     'position': random.choice(self.positions).replace('_', ' ').title(),
                     'quality_score': round(random.uniform(65, 98), 1),
                     'execution_rating': self._get_execution_rating(confidence),
-                    'improvement_tips': self._get_improvement_tips(tech['internal_name'])
-                })
+                    'improvement_tips': self._get_improvement_tips(tech['internal_name']),
+                    'is_your_technique': is_your_technique,
+                    'success': success,
+                    'outcome': 'Success' if success else 'Failed'
+                }
+                
+                detected_techniques.append(technique_data)
+                
+                # Track for success/failure analytics
+                if is_your_technique:
+                    your_successes.append({
+                        'technique': tech['name'],
+                        'internal_name': tech['internal_name'],
+                        'category': tech['category'],
+                        'success': success
+                    })
+                else:
+                    opponent_successes.append({
+                        'technique': tech['name'],
+                        'internal_name': tech['internal_name'],
+                        'category': tech['category'],
+                        'success': success  # Success means they got you
+                    })
             
-            # Calculate comprehensive statistics
+            # Calculate comprehensive statistics including success/failure analytics
             category_breakdown = {}
+            success_analytics = {}
+            failure_analytics = {}
+            
+            # Process each category for success/failure rates
+            for category in self.techniques_db.keys():
+                # Your techniques in this category
+                your_category_techniques = [t for t in your_successes if t['category'] == category]
+                opponent_category_techniques = [t for t in opponent_successes if t['category'] == category]
+                
+                if your_category_techniques or opponent_category_techniques:
+                    success_analytics[category] = self._calculate_success_rates(your_category_techniques)
+                    failure_analytics[category] = self._calculate_failure_rates(opponent_category_techniques)
+            
+            # Original category breakdown
             for tech in detected_techniques:
                 cat = tech['category']
                 if cat not in category_breakdown:
@@ -188,6 +231,8 @@ class BJJAnalyzer:
                 'average_quality': round(avg_quality, 1),
                 'analysis_timestamp': datetime.now().isoformat(),
                 'category_breakdown': category_breakdown,
+                'success_analytics': success_analytics,
+                'failure_analytics': failure_analytics,
                 'techniques_per_minute': round(len(detected_techniques) / (duration / 60), 1),
                 'insights': self._generate_insights(detected_techniques, category_breakdown, avg_confidence),
                 'quality_metrics': {
@@ -278,3 +323,63 @@ class BJJAnalyzer:
             insights.append("Good training intensity with solid technique variety.")
         
         return insights[:5]  # Return top 5 insights
+    
+    def _calculate_success_rates(self, your_techniques):
+        """Calculate success rates for your techniques (best to worst)"""
+        if not your_techniques:
+            return []
+        
+        # Count successes and attempts per technique
+        technique_stats = {}
+        for tech in your_techniques:
+            name = tech['technique']
+            if name not in technique_stats:
+                technique_stats[name] = {'attempts': 0, 'successes': 0}
+            technique_stats[name]['attempts'] += 1
+            if tech['success']:
+                technique_stats[name]['successes'] += 1
+        
+        # Calculate success rates and sort by percentage (best to worst)
+        success_rates = []
+        for technique, stats in technique_stats.items():
+            success_rate = (stats['successes'] / stats['attempts']) * 100
+            success_rates.append({
+                'technique': technique,
+                'success_rate': round(success_rate, 1),
+                'attempts': stats['attempts'],
+                'successes': stats['successes'],
+                'failures': stats['attempts'] - stats['successes']
+            })
+        
+        # Sort by success rate (highest to lowest)
+        return sorted(success_rates, key=lambda x: x['success_rate'], reverse=True)
+    
+    def _calculate_failure_rates(self, opponent_techniques):
+        """Calculate what techniques you get caught with most (worst defended)"""
+        if not opponent_techniques:
+            return []
+        
+        # Count how often opponent succeeds with each technique against you
+        technique_stats = {}
+        for tech in opponent_techniques:
+            name = tech['technique']
+            if name not in technique_stats:
+                technique_stats[name] = {'attempts': 0, 'opponent_successes': 0}
+            technique_stats[name]['attempts'] += 1
+            if tech['success']:  # Opponent succeeded against you
+                technique_stats[name]['opponent_successes'] += 1
+        
+        # Calculate failure rates (how often you get caught)
+        failure_rates = []
+        for technique, stats in technique_stats.items():
+            caught_rate = (stats['opponent_successes'] / stats['attempts']) * 100
+            failure_rates.append({
+                'technique': technique,
+                'caught_rate': round(caught_rate, 1),
+                'attempts': stats['attempts'],
+                'times_caught': stats['opponent_successes'],
+                'times_defended': stats['attempts'] - stats['opponent_successes']
+            })
+        
+        # Sort by caught rate (most caught with to least)
+        return sorted(failure_rates, key=lambda x: x['caught_rate'], reverse=True)

@@ -389,19 +389,19 @@ def analysis_results(video_id):
                         <!-- Submissions Tab -->
                         <div id="submissions-tab" class="tab-content hidden">
                             <h2 class="text-2xl font-bold mb-6">Submissions Analysis</h2>
-                            {self._generate_technique_category_html(analysis_data.get('techniques', []), 'submissions')}
+                            {self._generate_technique_category_html(analysis_data.get('techniques', []), 'submissions', analysis_data.get('success_analytics', {}), analysis_data.get('failure_analytics', {}))}
                         </div>
                         
                         <!-- Sweeps Tab -->
                         <div id="sweeps-tab" class="tab-content hidden">
                             <h2 class="text-2xl font-bold mb-6">Sweeps Analysis</h2>
-                            {self._generate_technique_category_html(analysis_data.get('techniques', []), 'sweeps')}
+                            {self._generate_technique_category_html(analysis_data.get('techniques', []), 'sweeps', analysis_data.get('success_analytics', {}), analysis_data.get('failure_analytics', {}))}
                         </div>
                         
                         <!-- Takedowns Tab -->
                         <div id="takedowns-tab" class="tab-content hidden">
                             <h2 class="text-2xl font-bold mb-6">Takedowns Analysis</h2>
-                            {self._generate_technique_category_html(analysis_data.get('techniques', []), 'takedowns')}
+                            {self._generate_technique_category_html(analysis_data.get('techniques', []), 'takedowns', analysis_data.get('success_analytics', {}), analysis_data.get('failure_analytics', {}))}
                         </div>
                         
                         <!-- Overall Tab -->
@@ -487,16 +487,34 @@ def _generate_quality_metrics_html(self, quality_metrics):
         '''
     return html
 
-def _generate_technique_category_html(self, techniques, category):
-    """Generate HTML for specific technique category"""
+def _generate_technique_category_html(self, techniques, category, success_analytics, failure_analytics):
+    """Generate HTML for specific technique category with success/failure analytics"""
     category_techniques = [t for t in techniques if t.get('category') == category]
     
     if not category_techniques:
         return f'<p class="text-gray-500 text-center py-8">No {category} detected in this video.</p>'
     
+    # Get success/failure data for this category
+    success_data = success_analytics.get(category, [])
+    failure_data = failure_analytics.get(category, [])
+    
     html = f'''
+    <div class="grid md:grid-cols-2 gap-8 mb-8">
+        <!-- Your Success Rates -->
+        <div class="bg-green-50 rounded-lg p-6">
+            <h3 class="text-lg font-semibold text-green-800 mb-4">📈 Your Success Rates (Best to Worst)</h3>
+            {self._generate_success_chart_html(success_data)}
+        </div>
+        
+        <!-- What You Get Caught With -->
+        <div class="bg-red-50 rounded-lg p-6">
+            <h3 class="text-lg font-semibent text-red-800 mb-4">🎯 Most Caught With (Defend Better)</h3>
+            {self._generate_failure_chart_html(failure_data)}
+        </div>
+    </div>
+    
     <div class="mb-6">
-        <div class="text-lg text-gray-600 mb-4">Found {len(category_techniques)} {category} techniques</div>
+        <div class="text-lg text-gray-600 mb-4">All {len(category_techniques)} {category} techniques detected</div>
     </div>
     <div class="space-y-4">
     '''
@@ -505,12 +523,25 @@ def _generate_technique_category_html(self, techniques, category):
         confidence_pct = tech.get('confidence', 0) * 100
         start_time = tech.get('start_time', 0)
         end_time = tech.get('end_time', 0)
+        is_yours = tech.get('is_your_technique', True)
+        outcome = tech.get('outcome', 'Unknown')
+        
+        # Color coding based on who did it and outcome
+        if is_yours:
+            outcome_class = 'bg-green-100 text-green-800' if outcome == 'Success' else 'bg-yellow-100 text-yellow-800'
+            outcome_prefix = 'Your'
+        else:
+            outcome_class = 'bg-red-100 text-red-800' if outcome == 'Success' else 'bg-blue-100 text-blue-800'
+            outcome_prefix = 'Opponent'
         
         html += f'''
         <div class="border border-gray-200 rounded-lg p-4">
             <div class="flex justify-between items-start mb-2">
                 <h3 class="text-lg font-semibold">{tech.get('name', 'Unknown Technique')}</h3>
-                <span class="bg-purple-100 text-purple-800 text-sm px-2 py-1 rounded-full">{confidence_pct:.1f}% confidence</span>
+                <div class="flex space-x-2">
+                    <span class="bg-purple-100 text-purple-800 text-sm px-2 py-1 rounded-full">{confidence_pct:.1f}%</span>
+                    <span class="{outcome_class} text-sm px-2 py-1 rounded-full">{outcome_prefix} {outcome}</span>
+                </div>
             </div>
             <div class="grid md:grid-cols-3 gap-4 text-sm">
                 <div>
@@ -530,7 +561,8 @@ def _generate_technique_category_html(self, techniques, category):
                 </span>
             </div>
             <div class="mt-3 text-sm text-gray-600">
-                <strong>Tip:</strong> {tech.get('improvement_tips', 'Keep practicing this technique.')}
+                <strong>{'Success Tip' if is_yours and outcome == 'Success' else 'Improvement Tip'}:</strong> 
+                {tech.get('improvement_tips', 'Keep practicing this technique.')}
             </div>
         </div>
         '''
@@ -588,7 +620,84 @@ def _generate_all_techniques_html(self, techniques):
     '''
     return html
 
-def _get_rating_color(self, rating):
+def _generate_success_chart_html(self, success_data):
+    """Generate HTML for success rate chart"""
+    if not success_data:
+        return '<p class="text-gray-500 text-center py-4">No data available for this session</p>'
+    
+    html = '<div class="space-y-3">'
+    for i, data in enumerate(success_data[:5]):  # Top 5
+        percentage = data['success_rate']
+        attempts = data['attempts']
+        successes = data['successes']
+        
+        # Color based on success rate
+        if percentage >= 80:
+            bar_color = 'bg-green-500'
+            text_color = 'text-green-700'
+        elif percentage >= 60:
+            bar_color = 'bg-yellow-500'
+            text_color = 'text-yellow-700'
+        else:
+            bar_color = 'bg-red-500'
+            text_color = 'text-red-700'
+        
+        html += f'''
+        <div class="relative">
+            <div class="flex justify-between items-center mb-1">
+                <span class="text-sm font-medium truncate">{data['technique']}</span>
+                <span class="{text_color} text-sm font-bold">{percentage}%</span>
+            </div>
+            <div class="w-full bg-gray-200 rounded-full h-2">
+                <div class="{bar_color} h-2 rounded-full" style="width: {percentage}%"></div>
+            </div>
+            <div class="text-xs text-gray-500 mt-1">{successes}/{attempts} attempts</div>
+        </div>
+        '''
+    
+    html += '</div>'
+    return html
+
+def _generate_failure_chart_html(self, failure_data):
+    """Generate HTML for failure/caught rate chart"""
+    if not failure_data:
+        return '<p class="text-gray-500 text-center py-4">No data available for this session</p>'
+    
+    html = '<div class="space-y-3">'
+    for i, data in enumerate(failure_data[:5]):  # Top 5
+        percentage = data['caught_rate']
+        attempts = data['attempts']
+        caught = data['times_caught']
+        
+        # Color based on how often caught (red = bad, green = good defense)
+        if percentage >= 80:
+            bar_color = 'bg-red-500'
+            text_color = 'text-red-700'
+        elif percentage >= 60:
+            bar_color = 'bg-orange-500'
+            text_color = 'text-orange-700'
+        elif percentage >= 40:
+            bar_color = 'bg-yellow-500'
+            text_color = 'text-yellow-700'
+        else:
+            bar_color = 'bg-green-500'
+            text_color = 'text-green-700'
+        
+        html += f'''
+        <div class="relative">
+            <div class="flex justify-between items-center mb-1">
+                <span class="text-sm font-medium truncate">{data['technique']}</span>
+                <span class="{text_color} text-sm font-bold">{percentage}%</span>
+            </div>
+            <div class="w-full bg-gray-200 rounded-full h-2">
+                <div class="{bar_color} h-2 rounded-full" style="width: {percentage}%"></div>
+            </div>
+            <div class="text-xs text-gray-500 mt-1">Caught {caught}/{attempts} times</div>
+        </div>
+        '''
+    
+    html += '</div>'
+    return html
     """Get Tailwind color class for execution rating"""
     rating_colors = {
         'Excellent': 'green-500',

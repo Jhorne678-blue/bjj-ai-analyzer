@@ -1,580 +1,7 @@
-from flask import Flask, render_template, request, jsonify, session, redirect, url_for, flash
-from werkzeug.security import generate_password_hash, check_password_hash
-from werkzeug.utils import secure_filename
-import sqlite3
-import os
-import json
-import secrets
-import logging
-from datetime import datetime, timedelta
-from analyzer import BJJAnalyzer
-
-# Configure logging
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
-
-app = Flask(__name__)
-app.secret_key = os.environ.get('SECRET_KEY', 'bjj-ai-analyzer-secret-key-2024')
-
-# Configuration
-UPLOAD_FOLDER = 'uploads'
-DATABASE = 'bjj_analyzer.db'
-ALLOWED_EXTENSIONS = {'mp4', 'avi', 'mov', 'mkv', 'webm'}
-
-app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
-app.config['MAX_CONTENT_LENGTH'] = 500 * 1024 * 1024  # 500MB
-
-# Ensure directories exist
-os.makedirs(UPLOAD_FOLDER, exist_ok=True)
-
-# Initialize BJJ Analyzer
-bjj_analyzer = BJJAnalyzer()
-
-def init_database():
-    """Initialize SQLite database"""
-    conn = sqlite3.connect(DATABASE)
-    cursor = conn.cursor()
-    
-    # Users table
-    cursor.execute('''
-        CREATE TABLE IF NOT EXISTS users (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            username TEXT UNIQUE NOT NULL,
-            email TEXT UNIQUE NOT NULL,
-            password_hash TEXT NOT NULL,
-            plan TEXT DEFAULT 'free',
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            total_uploads INTEGER DEFAULT 0,
-            points INTEGER DEFAULT 0
-        )
-    ''')
-    
-    # Videos table - Enhanced with analysis data
-    cursor.execute('''
-        CREATE TABLE IF NOT EXISTS videos (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            user_id INTEGER NOT NULL,
-            filename TEXT,
-            original_filename TEXT,
-            upload_timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            analysis_complete BOOLEAN DEFAULT FALSE,
-            analysis_data TEXT,
-            total_techniques INTEGER DEFAULT 0,
-            average_confidence REAL DEFAULT 0.0,
-            duration REAL DEFAULT 0.0,
-            FOREIGN KEY (user_id) REFERENCES users (id)
-        )
-    ''')
-    
-    conn.commit()
-    conn.close()
-    logger.info("Database initialized successfully")
-
-def get_db():
-    """Get database connection"""
-    conn = sqlite3.connect(DATABASE)
-    conn.row_factory = sqlite3.Row
-    return conn
-
-def allowed_file(filename):
-    """Check if file extension is allowed"""
-    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
-
-def login_required(f):
-    """Decorator to require login"""
-    from functools import wraps
-    @wraps(f)
-    def decorated_function(*args, **kwargs):
-        if 'user_id' not in session:
-            return redirect(url_for('auth'))
-        return f(*args, **kwargs)
-    return decorated_function
-
-# Routes
-@app.route('/')
-def index():
-    """Landing page"""
-    return '''
-    <!DOCTYPE html>
-    <html>
-    <head>
-        <title>BJJ AI Analyzer</title>
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <script src="https://cdn.tailwindcss.com"></script>
-    </head>
-    <body class="bg-gray-50">
-        <div class="min-h-screen flex items-center justify-center">
-            <div class="max-w-md w-full bg-white rounded-lg shadow-xl p-8 text-center">
-                <h1 class="text-3xl font-bold text-gray-900 mb-4">🥋 BJJ AI Analyzer</h1>
-                <p class="text-gray-600 mb-6">Professional Brazilian Jiu-Jitsu Video Analysis with 100+ Techniques</p>
-                <a href="/auth" class="bg-purple-600 text-white px-6 py-3 rounded-lg hover:bg-purple-700 transition-colors">
-                    Get Started
-                </a>
-            </div>
-        </div>
-    </body>
-    </html>
-    '''
-
-@app.route('/auth')
-def auth():
-    """Authentication page"""
-    return '''
-    <!DOCTYPE html>
-    <html>
-    <head>
-        <title>Login - BJJ AI Analyzer</title>
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <script src="https://cdn.tailwindcss.com"></script>
-    </head>
-    <body class="bg-gray-50">
-        <div class="min-h-screen flex items-center justify-center">
-            <div class="max-w-md w-full bg-white rounded-lg shadow-xl p-8">
-                <h2 class="text-2xl font-bold text-center mb-6">BJJ AI Analyzer</h2>
-                
-                <!-- Signup Form -->
-                <form id="signup-form" class="space-y-4">
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700">Username</label>
-                        <input type="text" name="username" required class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md">
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700">Email</label>
-                        <input type="email" name="email" required class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md">
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700">Password</label>
-                        <input type="password" name="password" required class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md">
-                    </div>
-                    <button type="submit" class="w-full bg-purple-600 text-white py-2 px-4 rounded-md hover:bg-purple-700">
-                        Create Account
-                    </button>
-                </form>
-                
-                <div class="mt-4 text-center">
-                    <a href="/dashboard" class="text-purple-600 hover:text-purple-800">Already have an account? Go to Dashboard</a>
-                </div>
-            </div>
-        </div>
-        
-        <script>
-        document.getElementById('signup-form').addEventListener('submit', async function(e) {
-            e.preventDefault();
-            const formData = new FormData(this);
-            
-            try {
-                const response = await fetch('/signup', {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify(Object.fromEntries(formData))
-                });
-                
-                const result = await response.json();
-                
-                if (result.success) {
-                    alert('Account created successfully!');
-                    window.location.href = '/dashboard';
-                } else {
-                    alert(result.message);
-                }
-            } catch (error) {
-                alert('Signup failed. Please try again.');
-            }
-        });
-        </script>
-    </body>
-    </html>
-    '''
-
-@app.route('/signup', methods=['POST'])
-def signup():
-    """User registration"""
-    try:
-        data = request.get_json()
-        username = data.get('username', '').strip()
-        email = data.get('email', '').strip().lower()
-        password = data.get('password', '')
-        
-        if not username or not email or not password:
-            return jsonify({'success': False, 'message': 'All fields required'})
-        
-        conn = get_db()
-        cursor = conn.cursor()
-        
-        # Check if user exists
-        cursor.execute('SELECT id FROM users WHERE username = ? OR email = ?', (username, email))
-        if cursor.fetchone():
-            conn.close()
-            return jsonify({'success': False, 'message': 'Username or email already exists'})
-        
-        # Create user
-        password_hash = generate_password_hash(password)
-        cursor.execute('''
-            INSERT INTO users (username, email, password_hash, plan)
-            VALUES (?, ?, ?, 'free')
-        ''', (username, email, password_hash))
-        
-        user_id = cursor.lastrowid
-        conn.commit()
-        conn.close()
-        
-        # Set session
-        session['user_id'] = user_id
-        session['username'] = username
-        session['plan'] = 'free'
-        
-        return jsonify({'success': True, 'message': 'Account created successfully!'})
-        
-    except Exception as e:
-        logger.error(f"Signup error: {str(e)}")
-        return jsonify({'success': False, 'message': 'Registration failed'})
-
-@app.route('/dashboard')
-def dashboard():
-    """Enhanced dashboard with upload functionality"""
-    return '''
-    <!DOCTYPE html>
-    <html>
-    <head>
-        <title>Dashboard - BJJ AI Analyzer</title>
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <script src="https://cdn.tailwindcss.com"></script>
-    </head>
-    <body class="bg-gray-50">
-        <div class="min-h-screen">
-            <nav class="bg-white shadow-lg">
-                <div class="max-w-7xl mx-auto px-4">
-                    <div class="flex justify-between items-center h-16">
-                        <div class="flex items-center">
-                            <span class="text-xl font-bold text-gray-800">🥋 BJJ AI Analyzer</span>
-                        </div>
-                        <div class="text-sm text-gray-600">Welcome to your dashboard!</div>
-                    </div>
-                </div>
-            </nav>
-            
-            <div class="max-w-7xl mx-auto px-4 py-8">
-                <h1 class="text-3xl font-bold text-gray-900 mb-8">Dashboard</h1>
-                
-                <div class="grid md:grid-cols-3 gap-6 mb-8">
-                    <div class="bg-white rounded-xl shadow-md p-6">
-                        <div class="text-2xl font-bold text-purple-600" id="videos-count">0</div>
-                        <div class="text-sm text-gray-600">Videos Uploaded</div>
-                    </div>
-                    <div class="bg-white rounded-xl shadow-md p-6">
-                        <div class="text-2xl font-bold text-green-600" id="techniques-count">0</div>
-                        <div class="text-sm text-gray-600">Techniques Detected</div>
-                    </div>
-                    <div class="bg-white rounded-xl shadow-md p-6">
-                        <div class="text-2xl font-bold text-yellow-600">Free</div>
-                        <div class="text-sm text-gray-600">Current Plan</div>
-                    </div>
-                </div>
-                
-                <div class="bg-white rounded-xl shadow-md p-8 mb-8">
-                    <h2 class="text-xl font-semibold mb-4">Upload BJJ Training Video</h2>
-                    <div id="upload-area" class="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center cursor-pointer hover:border-purple-400 transition-colors">
-                        <div class="text-4xl mb-4">🎥</div>
-                        <p class="text-lg text-gray-600 mb-2">Click to upload or drag and drop your BJJ training video</p>
-                        <p class="text-sm text-gray-500">MP4, AVI, MOV supported (max 500MB)</p>
-                        <input type="file" id="video-input" accept=".mp4,.avi,.mov,.mkv,.webm" class="hidden">
-                        <div id="upload-progress" class="hidden mt-4">
-                            <div class="bg-gray-200 rounded-full h-2">
-                                <div id="progress-bar" class="bg-purple-600 h-2 rounded-full" style="width: 0%"></div>
-                            </div>
-                            <p class="text-sm text-gray-600 mt-2">Uploading and analyzing...</p>
-                        </div>
-                    </div>
-                </div>
-                
-                <div id="recent-videos" class="bg-white rounded-xl shadow-md p-8">
-                    <h2 class="text-xl font-semibold mb-4">Recent Analyses</h2>
-                    <div id="video-list" class="space-y-4">
-                        <p class="text-gray-500 text-center py-4">No videos uploaded yet. Upload your first BJJ training video to get started!</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-        
-        <script>
-        const uploadArea = document.getElementById('upload-area');
-        const videoInput = document.getElementById('video-input');
-        const uploadProgress = document.getElementById('upload-progress');
-        const progressBar = document.getElementById('progress-bar');
-        
-        // Click to upload
-        uploadArea.addEventListener('click', () => videoInput.click());
-        
-        // Drag and drop functionality
-        uploadArea.addEventListener('dragover', (e) => {
-            e.preventDefault();
-            uploadArea.classList.add('border-purple-400', 'bg-purple-50');
-        });
-        
-        uploadArea.addEventListener('dragleave', () => {
-            uploadArea.classList.remove('border-purple-400', 'bg-purple-50');
-        });
-        
-        uploadArea.addEventListener('drop', (e) => {
-            e.preventDefault();
-            uploadArea.classList.remove('border-purple-400', 'bg-purple-50');
-            const files = e.dataTransfer.files;
-            if (files.length > 0) {
-                handleFileUpload(files[0]);
-            }
-        });
-        
-        // File input change
-        videoInput.addEventListener('change', (e) => {
-            if (e.target.files.length > 0) {
-                handleFileUpload(e.target.files[0]);
-            }
-        });
-        
-        async function handleFileUpload(file) {
-            // Validate file
-            const allowedTypes = ['video/mp4', 'video/avi', 'video/mov', 'video/quicktime', 'video/x-msvideo', 'video/webm'];
-            if (!allowedTypes.includes(file.type)) {
-                alert('Please upload a valid video file (MP4, AVI, MOV, WEBM)');
-                return;
-            }
-            
-            if (file.size > 500 * 1024 * 1024) {
-                alert('File size must be less than 500MB');
-                return;
-            }
-            
-            // Show progress
-            uploadProgress.classList.remove('hidden');
-            uploadArea.style.display = 'none';
-            
-            const formData = new FormData();
-            formData.append('video', file);
-            
-            try {
-                // Simulate progress
-                let progress = 0;
-                const progressInterval = setInterval(() => {
-                    progress += Math.random() * 15;
-                    if (progress > 90) progress = 90;
-                    progressBar.style.width = progress + '%';
-                }, 500);
-                
-                const response = await fetch('/upload_video', {
-                    method: 'POST',
-                    body: formData
-                });
-                
-                clearInterval(progressInterval);
-                progressBar.style.width = '100%';
-                
-                const result = await response.json();
-                
-                if (result.success) {
-                    setTimeout(() => {
-                        window.location.href = '/analysis/' + result.video_id;
-                    }, 1000);
-                } else {
-                    alert('Upload failed: ' + result.message);
-                    resetUpload();
-                }
-            } catch (error) {
-                alert('Upload failed. Please try again.');
-                resetUpload();
-            }
-        }
-        
-        function resetUpload() {
-            uploadProgress.classList.add('hidden');
-            uploadArea.style.display = 'block';
-            progressBar.style.width = '0%';
-            videoInput.value = '';
-        }
-        </script>
-    </body>
-    </html>
-    '''
-
-@app.route('/upload_video', methods=['POST'])
-def upload_video():
-    """Handle video upload and analysis"""
-    try:
-        if 'user_id' not in session:
-            return jsonify({'success': False, 'message': 'Please log in first'})
-        
-        if 'video' not in request.files:
-            return jsonify({'success': False, 'message': 'No video file provided'})
-        
-        file = request.files['video']
-        if file.filename == '':
-            return jsonify({'success': False, 'message': 'No file selected'})
-        
-        if not allowed_file(file.filename):
-            return jsonify({'success': False, 'message': 'Invalid file type'})
-        
-        # Secure filename and save
-        filename = secure_filename(file.filename)
-        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S_')
-        unique_filename = timestamp + filename
-        filepath = os.path.join(app.config['UPLOAD_FOLDER'], unique_filename)
-        
-        file.save(filepath)
-        logger.info(f"Video saved: {filepath}")
-        
-        # Get user plan for analysis
-        user_id = session['user_id']
-        plan = session.get('plan', 'free')
-        
-        # Analyze video with BJJ AI
-        analysis_result = bjj_analyzer.analyze_video(filepath, plan, user_id)
-        
-        # Save to database
-        conn = get_db()
-        cursor = conn.cursor()
-        
-        cursor.execute('''
-            INSERT INTO videos (user_id, filename, original_filename, analysis_complete, 
-                              analysis_data, total_techniques, average_confidence, duration)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-        ''', (
-            user_id, unique_filename, filename, True,
-            json.dumps(analysis_result), analysis_result.get('total_techniques', 0),
-            analysis_result.get('average_confidence', 0.0), analysis_result.get('duration', 0.0)
-        ))
-        
-        video_id = cursor.lastrowid
-        
-        # Update user stats
-        cursor.execute('UPDATE users SET total_uploads = total_uploads + 1 WHERE id = ?', (user_id,))
-        
-        conn.commit()
-        conn.close()
-        
-        return jsonify({
-            'success': True, 
-            'message': 'Video analyzed successfully!',
-            'video_id': video_id,
-            'analysis': analysis_result
-        })
-        
-    except Exception as e:
-        logger.error(f"Upload error: {str(e)}")
-        return jsonify({'success': False, 'message': 'Upload failed. Please try again.'})
-
-@app.route('/analysis/<int:video_id>')
-def analysis_results(video_id):
-    """Display comprehensive analysis results with tabs"""
-    try:
-        if 'user_id' not in session:
-            return redirect(url_for('auth'))
-        
-        conn = get_db()
-        cursor = conn.cursor()
-        
-        # Get video and analysis data
-        cursor.execute('''
-            SELECT * FROM videos WHERE id = ? AND user_id = ?
-        ''', (video_id, session['user_id']))
-        
-        video = cursor.fetchone()
-        if not video:
-            return redirect(url_for('dashboard'))
-        
-        analysis_data = json.loads(video['analysis_data'])
-        conn.close()
-        
-        return f'''
-        <!DOCTYPE html>
-        <html>
-        <head>
-            <title>Analysis Results - BJJ AI Analyzer</title>
-            <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <script src="https://cdn.tailwindcss.com"></script>
-            <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-        </head>
-        <body class="bg-gray-50">
-            <div class="min-h-screen">
-                <nav class="bg-white shadow-lg">
-                    <div class="max-w-7xl mx-auto px-4">
-                        <div class="flex justify-between items-center h-16">
-                            <div class="flex items-center">
-                                <span class="text-xl font-bold text-gray-800">🥋 BJJ AI Analyzer</span>
-                            </div>
-                            <div class="flex items-center space-x-4">
-                                <a href="/dashboard" class="text-purple-600 hover:text-purple-800">← Back to Dashboard</a>
-                            </div>
-                        </div>
-                    </div>
-                </nav>
-                
-                <div class="max-w-7xl mx-auto px-4 py-8">
-                    <div class="mb-8">
-                        <h1 class="text-3xl font-bold text-gray-900 mb-2">Analysis Results</h1>
-                        <p class="text-gray-600">Video: {video['original_filename']}</p>
-                        <p class="text-sm text-gray-500">Analyzed on {video['upload_timestamp']}</p>
-                    </div>
-                    
-                    <!-- Summary Cards -->
-                    <div class="grid md:grid-cols-4 gap-6 mb-8">
-                        <div class="bg-white rounded-xl shadow-md p-6 text-center">
-                            <div class="text-3xl font-bold text-purple-600">{analysis_data.get('total_techniques', 0)}</div>
-                            <div class="text-sm text-gray-600">Total Techniques</div>
-                        </div>
-                        <div class="bg-white rounded-xl shadow-md p-6 text-center">
-                            <div class="text-3xl font-bold text-green-600">{analysis_data.get('average_confidence', 0):.1%}</div>
-                            <div class="text-sm text-gray-600">Avg Confidence</div>
-                        </div>
-                        <div class="bg-white rounded-xl shadow-md p-6 text-center">
-                            <div class="text-3xl font-bold text-blue-600">{analysis_data.get('duration', 0):.1f}s</div>
-                            <div class="text-sm text-gray-600">Video Duration</div>
-                        </div>
-                        <div class="bg-white rounded-xl shadow-md p-6 text-center">
-                            <div class="text-3xl font-bold text-yellow-600">{analysis_data.get('techniques_per_minute', 0):.1f}</div>
-                            <div class="text-sm text-gray-600">Techniques/Min</div>
-                        </div>
-                    </div>
-                    
-                    <!-- Tabs Navigation -->
-                    <div class="bg-white rounded-t-xl shadow-md">
-                        <div class="border-b border-gray-200">
-                            <nav class="flex space-x-8 px-6" aria-label="Tabs">
-                                <button onclick="showTab('overview')" class="tab-button active border-b-2 border-purple-500 py-4 px-1 text-sm font-medium text-purple-600">
-                                    Overview
-                                </button>
-                                <button onclick="showTab('submissions')" class="tab-button border-b-2 border-transparent py-4 px-1 text-sm font-medium text-gray-500 hover:text-gray-700">
-                                    Submissions
-                                </button>
-                                <button onclick="showTab('sweeps')" class="tab-button border-b-2 border-transparent py-4 px-1 text-sm font-medium text-gray-500 hover:text-gray-700">
-                                    Sweeps
-                                </button>
-                                <button onclick="showTab('takedowns')" class="tab-button border-b-2 border-transparent py-4 px-1 text-sm font-medium text-gray-500 hover:text-gray-700">
-                                    Takedowns
-                                </button>
-                                <button onclick="showTab('overall')" class="tab-button border-b-2 border-transparent py-4 px-1 text-sm font-medium text-gray-500 hover:text-gray-700">
-                                    Overall Stats
-                                </button>
-                            </nav>
-                        </div>
-                    </div>
-                    
-                    <!-- Tab Content -->
-                    <div class="bg-white rounded-b-xl shadow-md p-6">
-                        <!-- Overview Tab -->
-                        <div id="overview-tab" class="tab-content">
-                            <h2 class="text-2xl font-bold mb-6">Training Session Overview</h2>
-                            
-                            <div class="grid md:grid-cols-2 gap-8">
-                                <div>
-                                    <h3 class="text-lg font-semibold mb-4">Category Breakdown</h3>
-                                    <div class="space-y-3">
-                                        {app._generate_category_breakdown_html(analysis_data.get('category_breakdown', {}))}
-                                    </div>
-                                </div>
-                                
-                                <div>
+<div>
                                     <h3 class="text-lg font-semibold mb-4">Key Insights</h3>
                                     <div class="space-y-2">
-                                        {app._generate_insights_html(analysis_data.get('insights', []))}
+                                        {_generate_insights_html(analysis_data.get('insights', []))}
                                     </div>
                                 </div>
                             </div>
@@ -582,7 +9,7 @@ def analysis_results(video_id):
                             <div class="mt-8">
                                 <h3 class="text-lg font-semibold mb-4">Quality Metrics</h3>
                                 <div class="grid md:grid-cols-4 gap-4">
-                                    {app._generate_quality_metrics_html(analysis_data.get('quality_metrics', {}))}
+                                    {_generate_quality_metrics_html(analysis_data.get('quality_metrics', {}))}
                                 </div>
                             </div>
                         </div>
@@ -590,25 +17,25 @@ def analysis_results(video_id):
                         <!-- Submissions Tab -->
                         <div id="submissions-tab" class="tab-content hidden">
                             <h2 class="text-2xl font-bold mb-6">Submissions Analysis</h2>
-                            {app._generate_technique_category_html(analysis_data.get('techniques', []), 'submissions', analysis_data.get('success_analytics', {}), analysis_data.get('failure_analytics', {}))}
+                            {_generate_technique_category_html(analysis_data.get('techniques', []), 'submissions', analysis_data.get('success_analytics', {}), analysis_data.get('failure_analytics', {}), plan_used)}
                         </div>
                         
                         <!-- Sweeps Tab -->
                         <div id="sweeps-tab" class="tab-content hidden">
                             <h2 class="text-2xl font-bold mb-6">Sweeps Analysis</h2>
-                            {app._generate_technique_category_html(analysis_data.get('techniques', []), 'sweeps', analysis_data.get('success_analytics', {}), analysis_data.get('failure_analytics', {}))}
+                            {_generate_technique_category_html(analysis_data.get('techniques', []), 'sweeps', analysis_data.get('success_analytics', {}), analysis_data.get('failure_analytics', {}), plan_used)}
                         </div>
                         
                         <!-- Takedowns Tab -->
                         <div id="takedowns-tab" class="tab-content hidden">
                             <h2 class="text-2xl font-bold mb-6">Takedowns Analysis</h2>
-                            {app._generate_technique_category_html(analysis_data.get('techniques', []), 'takedowns', analysis_data.get('success_analytics', {}), analysis_data.get('failure_analytics', {}))}
+                            {_generate_technique_category_html(analysis_data.get('techniques', []), 'takedowns', analysis_data.get('success_analytics', {}), analysis_data.get('failure_analytics', {}), plan_used)}
                         </div>
                         
                         <!-- Overall Tab -->
                         <div id="overall-tab" class="tab-content hidden">
                             <h2 class="text-2xl font-bold mb-6">Complete Technique List</h2>
-                            {app._generate_all_techniques_html(analysis_data.get('techniques', []))}
+                            {_generate_all_techniques_html(analysis_data.get('techniques', []))}
                         </div>
                     </div>
                 </div>
@@ -643,6 +70,251 @@ def analysis_results(video_id):
         logger.error(f"Analysis display error: {str(e)}")
         return redirect(url_for('dashboard'))
 
+def _get_plan_color(plan):
+    """Get color scheme for plan badges"""
+    colors = {'free': 'gray', 'pro': 'purple', 'black_belt': 'yellow'}
+    return colors.get(plan, 'gray')
+
+def _generate_tier_analytics_display(analysis_data, plan):
+    """Generate tier-specific analytics display"""
+    if plan == 'free':
+        return _generate_free_analytics_display(analysis_data)
+    elif plan == 'pro':
+        return _generate_pro_analytics_display(analysis_data)
+    elif plan == 'black_belt':
+        return _generate_black_belt_analytics_display(analysis_data)
+    else:
+        return ''
+
+def _generate_free_analytics_display(analysis_data):
+    """Generate basic analytics display for free tier"""
+    free_analytics = analysis_data.get('free_analytics', {})
+    
+    return f'''
+    <!-- Free Tier Analytics -->
+    <div class="bg-gray-50 rounded-xl shadow-md p-6 mb-8">
+        <h3 class="text-lg font-semibold text-gray-800 mb-4">📊 Basic Performance Summary</h3>
+        <div class="grid md:grid-cols-3 gap-6">
+            <div class="text-center">
+                <div class="text-2xl font-bold text-green-600">{free_analytics.get('your_success_rate', 0)}%</div>
+                <div class="text-sm text-gray-600">Your Success Rate</div>
+            </div>
+            <div class="text-center">
+                <div class="text-2xl font-bold text-blue-600">{free_analytics.get('techniques_you_succeeded', 0)}</div>
+                <div class="text-sm text-gray-600">Successful Techniques</div>
+            </div>
+            <div class="text-center">
+                <div class="text-2xl font-bold text-red-600">{free_analytics.get('times_opponent_succeeded', 0)}</div>
+                <div class="text-sm text-gray-600">Times Caught</div>
+            </div>
+        </div>
+        
+        <div class="mt-6 p-4 bg-purple-100 rounded-lg">
+            <h4 class="font-semibold text-purple-800 mb-2">🚀 Unlock Advanced Analytics</h4>
+            <p class="text-sm text-purple-700 mb-3">Get detailed position analysis, friend challenges, and AI coaching with Pro or Black Belt plans.</p>
+            <a href="/upgrade" class="bg-purple-600 text-white px-4 py-2 rounded text-sm hover:bg-purple-700 transition-colors">
+                Upgrade Now
+            </a>
+        </div>
+    </div>
+    '''
+
+def _generate_pro_analytics_display(analysis_data):
+    """Generate advanced analytics display for pro tier"""
+    pro_analytics = analysis_data.get('pro_analytics', {})
+    free_analytics = analysis_data.get('free_analytics', {})
+    
+    position_breakdown = pro_analytics.get('position_breakdown', {})
+    weakest_positions = pro_analytics.get('weakest_positions', [])
+    
+    return f'''
+    <!-- Pro Tier Analytics -->
+    <div class="bg-blue-50 rounded-xl shadow-md p-6 mb-8">
+        <h3 class="text-lg font-semibold text-blue-800 mb-6">📈 Advanced Performance Analytics</h3>
+        
+        <div class="grid md:grid-cols-2 gap-8 mb-6">
+            <!-- Success Rate Overview -->
+            <div>
+                <h4 class="font-semibold mb-3">Performance Overview</h4>
+                <div class="space-y-2">
+                    <div class="flex justify-between">
+                        <span>Your Success Rate:</span>
+                        <strong class="text-green-600">{free_analytics.get('your_success_rate', 0)}%</strong>
+                    </div>
+                    <div class="flex justify-between">
+                        <span>Successful Techniques:</span>
+                        <strong>{free_analytics.get('techniques_you_succeeded', 0)}</strong>
+                    </div>
+                    <div class="flex justify-between">
+                        <span>Times Caught:</span>
+                        <strong class="text-red-600">{free_analytics.get('times_opponent_succeeded', 0)}</strong>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Position Analysis -->
+            <div>
+                <h4 class="font-semibold mb-3">Position Performance</h4>
+                <div class="space-y-2">
+                    {_generate_position_breakdown_html(position_breakdown)}
+                </div>
+            </div>
+        </div>
+        
+        <!-- Challenge Suggestions -->
+        <div class="bg-white rounded-lg p-4">
+            <h4 class="font-semibold text-green-800 mb-3">🏆 Recommended Challenges</h4>
+            <div class="grid md:grid-cols-3 gap-4">
+                {_generate_challenge_suggestions_html(pro_analytics.get('challenge_suggestions', []))}
+            </div>
+        </div>
+    </div>
+    '''
+
+def _generate_black_belt_analytics_display(analysis_data):
+    """Generate expert analytics display for black belt tier"""
+    black_belt_analytics = analysis_data.get('black_belt_analytics', {})
+    pro_analytics = analysis_data.get('pro_analytics', {})
+    
+    competition_readiness = black_belt_analytics.get('competition_readiness', {})
+    technique_sequences = black_belt_analytics.get('technique_sequences', [])
+    ai_predictions = black_belt_analytics.get('ai_predictions', [])
+    
+    return f'''
+    <!-- Black Belt Tier Analytics -->
+    <div class="bg-yellow-50 rounded-xl shadow-md p-6 mb-8">
+        <h3 class="text-lg font-semibold text-yellow-800 mb-6">🥇 Elite Performance Analytics</h3>
+        
+        <div class="grid md:grid-cols-3 gap-6 mb-6">
+            <!-- Competition Readiness -->
+            <div class="bg-white rounded-lg p-4">
+                <h4 class="font-semibold text-red-800 mb-3">🎯 Competition Readiness</h4>
+                <div class="text-center">
+                    <div class="text-3xl font-bold text-red-600">{competition_readiness.get('readiness_score', 0)}%</div>
+                    <div class="text-sm text-gray-600">{competition_readiness.get('readiness_level', 'Unknown')}</div>
+                </div>
+            </div>
+            
+            <!-- AI Predictions -->
+            <div class="bg-white rounded-lg p-4">
+                <h4 class="font-semibold text-purple-800 mb-3">🧠 AI Insights</h4>
+                <div class="space-y-2 text-sm">
+                    {_generate_ai_predictions_html(ai_predictions)}
+                </div>
+            </div>
+            
+            <!-- Technique Sequences -->
+            <div class="bg-white rounded-lg p-4">
+                <h4 class="font-semibold text-blue-800 mb-3">🔗 Best Sequences</h4>
+                <div class="space-y-2 text-sm">
+                    {_generate_sequences_html(technique_sequences)}
+                </div>
+            </div>
+        </div>
+        
+        <!-- Video Breakdown Points -->
+        <div class="bg-white rounded-lg p-4 mb-4">
+            <h4 class="font-semibold text-green-800 mb-3">📹 Frame-by-Frame Analysis</h4>
+            <div class="space-y-3">
+                {_generate_video_breakdown_html(black_belt_analytics.get('video_breakdown_points', []))}
+            </div>
+        </div>
+        
+        <!-- Master Coaching Recommendations -->
+        <div class="bg-gradient-to-r from-yellow-400 to-orange-500 rounded-lg p-4 text-white">
+            <h4 class="font-semibold mb-3">👨‍🏫 Master-Level Coaching</h4>
+            <div class="grid md:grid-cols-2 gap-4">
+                {_generate_coaching_recommendations_html(black_belt_analytics.get('coaching_recommendations', []))}
+            </div>
+        </div>
+    </div>
+    '''
+
+def _generate_position_breakdown_html(position_breakdown):
+    """Generate HTML for position performance breakdown"""
+    if not position_breakdown:
+        return '<p class="text-gray-500">No position data available</p>'
+    
+    html = ""
+    for position, stats in list(position_breakdown.items())[:3]:  # Top 3 positions
+        success_rate = (stats['your_success'] / max(stats['total'], 1)) * 100
+        html += f'''
+        <div class="flex justify-between items-center">
+            <span class="text-sm">{position}:</span>
+            <span class="font-medium {'text-green-600' if success_rate >= 50 else 'text-red-600'}">{success_rate:.0f}%</span>
+        </div>
+        '''
+    return html
+
+def _generate_challenge_suggestions_html(challenges):
+    """Generate HTML for challenge suggestions"""
+    html = ""
+    for challenge in challenges[:3]:  # Top 3 challenges
+        html += f'''
+        <div class="p-3 bg-green-50 rounded border-l-4 border-green-500">
+            <div class="text-sm font-medium">{challenge}</div>
+        </div>
+        '''
+    return html
+
+def _generate_ai_predictions_html(predictions):
+    """Generate HTML for AI predictions"""
+    if not predictions:
+        return '<p class="text-gray-500">Analyzing patterns...</p>'
+    
+    html = ""
+    for prediction in predictions:
+        html += f'<div class="text-purple-700">• {prediction}</div>'
+    return html
+
+def _generate_sequences_html(sequences):
+    """Generate HTML for technique sequences"""
+    if not sequences:
+        return '<p class="text-gray-500">No sequences detected</p>'
+    
+    html = ""
+    for seq in sequences[:3]:  # Top 3 sequences
+        html += f'''
+        <div class="border-l-4 border-blue-500 pl-2">
+            <div class="font-medium">{seq['first']} → {seq['second']}</div>
+            <div class="text-xs text-gray-600">{seq['success_rate']} success rate</div>
+        </div>
+        '''
+    return html
+
+def _generate_video_breakdown_html(breakdown_points):
+    """Generate HTML for video breakdown points"""
+    if not breakdown_points:
+        return '<p class="text-gray-500">No breakdown points available</p>'
+    
+    html = ""
+    for point in breakdown_points:
+        html += f'''
+        <div class="border rounded p-3 hover:bg-gray-50">
+            <div class="flex justify-between items-start">
+                <div>
+                    <span class="font-medium text-blue-600">{point['timestamp']}</span>
+                    <span class="ml-2">{point['technique']}</span>
+                </div>
+                <span class="text-xs text-gray-500">{point['analysis']}</span>
+            </div>
+            <div class="text-sm text-gray-600 mt-1">{point['improvement_note']}</div>
+        </div>
+        '''
+    return html
+
+def _generate_coaching_recommendations_html(recommendations):
+    """Generate HTML for coaching recommendations"""
+    html = ""
+    for rec in recommendations[:4]:  # Top 4 recommendations
+        html += f'''
+        <div class="bg-white bg-opacity-20 rounded p-3">
+            <div class="text-sm font-medium">• {rec}</div>
+        </div>
+        '''
+    return html
+
+# PRESERVED: All existing HTML generation methods
 def _generate_category_breakdown_html(category_breakdown):
     """Generate HTML for category breakdown"""
     html = ""
@@ -688,31 +360,47 @@ def _generate_quality_metrics_html(quality_metrics):
         '''
     return html
 
-def _generate_technique_category_html(techniques, category, success_analytics, failure_analytics):
-    """Generate HTML for specific technique category with success/failure analytics"""
+def _generate_technique_category_html(techniques, category, success_analytics, failure_analytics, plan='free'):
+    """Generate HTML for specific technique category with tier-aware features"""
     category_techniques = [t for t in techniques if t.get('category') == category]
     
     if not category_techniques:
         return f'<p class="text-gray-500 text-center py-8">No {category} detected in this video.</p>'
     
-    # Get success/failure data for this category
+    # Get success/failure data for this category (PRESERVED)
     success_data = success_analytics.get(category, [])
     failure_data = failure_analytics.get(category, [])
     
+    # Tier-specific success/failure charts
+    if plan != 'free':
+        analytics_section = f'''
+        <div class="grid md:grid-cols-2 gap-8 mb-8">
+            <!-- Your Success Rates -->
+            <div class="bg-green-50 rounded-lg p-6">
+                <h3 class="text-lg font-semibold text-green-800 mb-4">📈 Your Success Rates (Best to Worst)</h3>
+                {_generate_success_chart_html(success_data)}
+            </div>
+            
+            <!-- What You Get Caught With -->
+            <div class="bg-red-50 rounded-lg p-6">
+                <h3 class="text-lg font-semibold text-red-800 mb-4">🎯 Most Caught With (Defend Better)</h3>
+                {_generate_failure_chart_html(failure_data)}
+            </div>
+        </div>
+        '''
+    else:
+        analytics_section = f'''
+        <div class="bg-gray-100 rounded-lg p-6 mb-8">
+            <h3 class="text-lg font-semibold text-gray-800 mb-4">📊 {category.replace('_', ' ').title()} Summary</h3>
+            <p class="text-gray-600 mb-4">Upgrade to Pro or Black Belt for detailed success/failure analytics and position breakdowns.</p>
+            <a href="/upgrade" class="bg-purple-600 text-white px-4 py-2 rounded text-sm hover:bg-purple-700 transition-colors">
+                Unlock Advanced Analytics
+            </a>
+        </div>
+        '''
+    
     html = f'''
-    <div class="grid md:grid-cols-2 gap-8 mb-8">
-        <!-- Your Success Rates -->
-        <div class="bg-green-50 rounded-lg p-6">
-            <h3 class="text-lg font-semibold text-green-800 mb-4">📈 Your Success Rates (Best to Worst)</h3>
-            {_generate_success_chart_html(success_data)}
-        </div>
-        
-        <!-- What You Get Caught With -->
-        <div class="bg-red-50 rounded-lg p-6">
-            <h3 class="text-lg font-semibold text-red-800 mb-4">🎯 Most Caught With (Defend Better)</h3>
-            {_generate_failure_chart_html(failure_data)}
-        </div>
-    </div>
+    {analytics_section}
     
     <div class="mb-6">
         <div class="text-lg text-gray-600 mb-4">All {len(category_techniques)} {category} techniques detected</div>
@@ -727,7 +415,7 @@ def _generate_technique_category_html(techniques, category, success_analytics, f
         is_yours = tech.get('is_your_technique', True)
         outcome = tech.get('outcome', 'Unknown')
         
-        # Color coding based on who did it and outcome
+        # Color coding based on who did it and outcome (PRESERVED)
         if is_yours:
             outcome_class = 'bg-green-100 text-green-800' if outcome == 'Success' else 'bg-yellow-100 text-yellow-800'
             outcome_prefix = 'Your'
@@ -771,6 +459,7 @@ def _generate_technique_category_html(techniques, category, success_analytics, f
     html += '</div>'
     return html
 
+# PRESERVED: All existing chart generation methods
 def _generate_success_chart_html(success_data):
     """Generate HTML for success rate chart"""
     if not success_data:
@@ -935,6 +624,8 @@ app._generate_all_techniques_html = _generate_all_techniques_html
 app._generate_success_chart_html = _generate_success_chart_html
 app._generate_failure_chart_html = _generate_failure_chart_html
 app._get_rating_color = _get_rating_color
+app._get_plan_color = _get_plan_color
+app._generate_tier_analytics_display = _generate_tier_analytics_display
 
 # Initialize database on startup
 try:
@@ -944,4 +635,707 @@ except Exception as e:
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 8080))
-    app.run(debug=False, host='0.0.0.0', port=port)
+    app.run(debug=False, host='0.0.0.0', port=port)# PRESERVED: All existing analysis results route with tier enhancements
+@app.route('/analysis/<int:video_id>')
+def analysis_results(video_id):
+    """Display comprehensive analysis results with tier-specific features"""
+    try:
+        if 'user_id' not in session:
+            return redirect(url_for('auth'))
+        
+        conn = get_db()
+        cursor = conn.cursor()
+        
+        # Get video and analysis data
+        cursor.execute('''
+            SELECT * FROM videos WHERE id = ? AND user_id = ?
+        ''', (video_id, session['user_id']))
+        
+        video = cursor.fetchone()
+        if not video:
+            return redirect(url_for('dashboard'))
+        
+        analysis_data = json.loads(video['analysis_data'])
+        plan_used = video.get('plan_used', 'free')
+        conn.close()
+        
+        return f'''
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <title>Analysis Results - BJJ AI Analyzer</title>
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <script src="https://cdn.tailwindcss.com"></script>
+            <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+        </head>
+        <body class="bg-gray-50">
+            <div class="min-h-screen">
+                <nav class="bg-white shadow-lg">
+                    <div class="max-w-7xl mx-auto px-4">
+                        <div class="flex justify-between items-center h-16">
+                            <div class="flex items-center">
+                                <span class="text-xl font-bold text-gray-800">🥋 BJJ AI Analyzer</span>
+                            </div>
+                            <div class="flex items-center space-x-4">
+                                <span class="bg-{_get_plan_color(plan_used)}-100 text-{_get_plan_color(plan_used)}-800 px-3 py-1 rounded-full text-sm">
+                                    {TIER_PRICING[plan_used]['name']} Analysis
+                                </span>
+                                <a href="/dashboard" class="text-purple-600 hover:text-purple-800">← Back to Dashboard</a>
+                            </div>
+                        </div>
+                    </div>
+                </nav>
+                
+                <div class="max-w-7xl mx-auto px-4 py-8">
+                    <div class="mb-8">
+                        <h1 class="text-3xl font-bold text-gray-900 mb-2">Analysis Results</h1>
+                        <p class="text-gray-600">Video: {video['original_filename']}</p>
+                        <p class="text-sm text-gray-500">Analyzed on {video['upload_timestamp']} using {TIER_PRICING[plan_used]['name']} features</p>
+                    </div>
+                    
+                    <!-- Summary Cards -->
+                    <div class="grid md:grid-cols-4 gap-6 mb-8">
+                        <div class="bg-white rounded-xl shadow-md p-6 text-center">
+                            <div class="text-3xl font-bold text-purple-600">{analysis_data.get('total_techniques', 0)}</div>
+                            <div class="text-sm text-gray-600">Total Techniques</div>
+                        </div>
+                        <div class="bg-white rounded-xl shadow-md p-6 text-center">
+                            <div class="text-3xl font-bold text-green-600">{analysis_data.get('average_confidence', 0):.1%}</div>
+                            <div class="text-sm text-gray-600">Avg Confidence</div>
+                        </div>
+                        <div class="bg-white rounded-xl shadow-md p-6 text-center">
+                            <div class="text-3xl font-bold text-blue-600">{analysis_data.get('duration', 0):.1f}s</div>
+                            <div class="text-sm text-gray-600">Video Duration</div>
+                        </div>
+                        <div class="bg-white rounded-xl shadow-md p-6 text-center">
+                            <div class="text-3xl font-bold text-yellow-600">{analysis_data.get('techniques_per_minute', 0):.1f}</div>
+                            <div class="text-sm text-gray-600">Techniques/Min</div>
+                        </div>
+                    </div>
+                    
+                    <!-- Tier-Specific Analytics Section -->
+                    {_generate_tier_analytics_display(analysis_data, plan_used)}
+                    
+                    <!-- Tabs Navigation -->
+                    <div class="bg-white rounded-t-xl shadow-md">
+                        <div class="border-b border-gray-200">
+                            <nav class="flex space-x-8 px-6" aria-label="Tabs">
+                                <button onclick="showTab('overview')" class="tab-button active border-b-2 border-purple-500 py-4 px-1 text-sm font-medium text-purple-600">
+                                    Overview
+                                </button>
+                                <button onclick="showTab('submissions')" class="tab-button border-b-2 border-transparent py-4 px-1 text-sm font-medium text-gray-500 hover:text-gray-700">
+                                    Submissions
+                                </button>
+                                <button onclick="showTab('sweeps')" class="tab-button border-b-2 border-transparent py-4 px-1 text-sm font-medium text-gray-500 hover:text-gray-700">
+                                    Sweeps
+                                </button>
+                                <button onclick="showTab('takedowns')" class="tab-button border-b-2 border-transparent py-4 px-1 text-sm font-medium text-gray-500 hover:text-gray-700">
+                                    Takedowns
+                                </button>
+                                <button onclick="showTab('overall')" class="tab-button border-b-2 border-transparent py-4 px-1 text-sm font-medium text-gray-500 hover:text-gray-700">
+                                    Overall Stats
+                                </button>
+                            </nav>
+                        </div>
+                    </div>
+                    
+                    <!-- Tab Content -->
+                    <div class="bg-white rounded-b-xl shadow-md p-6">
+                        <!-- Overview Tab -->
+                        <div id="overview-tab" class="tab-content">
+                            <h2 class="text-2xl font-bold mb-6">Training Session Overview</h2>
+                            
+                            <div class="grid md:grid-cols-2 gap-8">
+                                <div>
+                                    <h3 class="text-lg font-semibold mb-4">Category Breakdown</h3>
+                                    <div class="space-y-3">
+                                        {_generate_category_breakdown_html(analysis_data.get('category_breakdown', {}))}
+                                    </div>
+                                </div>
+                                
+                                <div>
+                                    <hfrom flask import Flask, render_template, request, jsonify, session, redirect, url_for, flash
+from werkzeug.security import generate_password_hash, check_password_hash
+from werkzeug.utils import secure_filename
+import sqlite3
+import os
+import json
+import secrets
+import logging
+from datetime import datetime, timedelta
+from analyzer import BJJAnalyzer
+
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+app = Flask(__name__)
+app.secret_key = os.environ.get('SECRET_KEY', 'bjj-ai-analyzer-secret-key-2024')
+
+# Configuration
+UPLOAD_FOLDER = 'uploads'
+DATABASE = 'bjj_analyzer.db'
+ALLOWED_EXTENSIONS = {'mp4', 'avi', 'mov', 'mkv', 'webm'}
+
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+app.config['MAX_CONTENT_LENGTH'] = 500 * 1024 * 1024  # 500MB
+
+# Ensure directories exist
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+
+# Initialize BJJ Analyzer
+bjj_analyzer = BJJAnalyzer()
+
+# NEW: Tier pricing configuration
+TIER_PRICING = {
+    'free': {'price': 0, 'uploads_per_month': 1, 'name': 'Free'},
+    'pro': {'price': 19.99, 'uploads_per_month': 4, 'name': 'Pro'},
+    'black_belt': {'price': 49.99, 'uploads_per_month': 12, 'name': 'Black Belt'}
+}
+
+def init_database():
+    """Initialize SQLite database with tier system"""
+    conn = sqlite3.connect(DATABASE)
+    cursor = conn.cursor()
+    
+    # Enhanced Users table with tier tracking
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS users (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            username TEXT UNIQUE NOT NULL,
+            email TEXT UNIQUE NOT NULL,
+            password_hash TEXT NOT NULL,
+            plan TEXT DEFAULT 'free',
+            plan_expires TIMESTAMP NULL,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            total_uploads INTEGER DEFAULT 0,
+            uploads_this_month INTEGER DEFAULT 0,
+            last_upload_reset TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            points INTEGER DEFAULT 0,
+            friend_code TEXT UNIQUE,
+            friends TEXT DEFAULT '[]',
+            challenges_completed INTEGER DEFAULT 0
+        )
+    ''')
+    
+    # Enhanced Videos table (PRESERVED all existing fields)
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS videos (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER NOT NULL,
+            filename TEXT,
+            original_filename TEXT,
+            upload_timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            analysis_complete BOOLEAN DEFAULT FALSE,
+            analysis_data TEXT,
+            total_techniques INTEGER DEFAULT 0,
+            average_confidence REAL DEFAULT 0.0,
+            duration REAL DEFAULT 0.0,
+            plan_used TEXT DEFAULT 'free',
+            FOREIGN KEY (user_id) REFERENCES users (id)
+        )
+    ''')
+    
+    # NEW: Challenges table for Pro/Black Belt features
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS challenges (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER NOT NULL,
+            challenge_type TEXT NOT NULL,
+            challenge_data TEXT,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            completed_at TIMESTAMP NULL,
+            points_awarded INTEGER DEFAULT 0,
+            FOREIGN KEY (user_id) REFERENCES users (id)
+        )
+    ''')
+    
+    # NEW: Friend connections table
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS friend_connections (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER NOT NULL,
+            friend_id INTEGER NOT NULL,
+            connected_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (user_id) REFERENCES users (id),
+            FOREIGN KEY (friend_id) REFERENCES users (id)
+        )
+    ''')
+    
+    conn.commit()
+    conn.close()
+    logger.info("Database initialized successfully with tier system")
+
+def get_db():
+    """Get database connection"""
+    conn = sqlite3.connect(DATABASE)
+    conn.row_factory = sqlite3.Row
+    return conn
+
+def allowed_file(filename):
+    """Check if file extension is allowed"""
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+def check_upload_limit(user_id, plan):
+    """Check if user has reached their monthly upload limit"""
+    conn = get_db()
+    cursor = conn.cursor()
+    
+    # Get user's upload data
+    cursor.execute('''
+        SELECT uploads_this_month, last_upload_reset, plan 
+        FROM users WHERE id = ?
+    ''', (user_id,))
+    
+    user_data = cursor.fetchone()
+    if not user_data:
+        conn.close()
+        return False, "User not found"
+    
+    uploads_this_month = user_data['uploads_this_month']
+    last_reset = datetime.fromisoformat(user_data['last_upload_reset']) if user_data['last_upload_reset'] else datetime.now()
+    current_plan = user_data['plan']
+    
+    # Check if we need to reset monthly counter
+    now = datetime.now()
+    if now.month != last_reset.month or now.year != last_reset.year:
+        # Reset monthly counter
+        cursor.execute('''
+            UPDATE users SET uploads_this_month = 0, last_upload_reset = ? 
+            WHERE id = ?
+        ''', (now.isoformat(), user_id))
+        uploads_this_month = 0
+        conn.commit()
+    
+    conn.close()
+    
+    # Check limits based on plan
+    plan_limits = TIER_PRICING.get(current_plan, TIER_PRICING['free'])
+    monthly_limit = plan_limits['uploads_per_month']
+    
+    if uploads_this_month >= monthly_limit:
+        return False, f"Monthly upload limit reached ({monthly_limit} uploads for {plan_limits['name']} plan)"
+    
+    return True, f"{uploads_this_month + 1}/{monthly_limit} uploads this month"
+
+def increment_upload_count(user_id):
+    """Increment user's monthly upload count"""
+    conn = get_db()
+    cursor = conn.cursor()
+    
+    cursor.execute('''
+        UPDATE users SET 
+            uploads_this_month = uploads_this_month + 1,
+            total_uploads = total_uploads + 1
+        WHERE id = ?
+    ''', (user_id,))
+    
+    conn.commit()
+    conn.close()
+
+def generate_friend_code():
+    """Generate unique friend code"""
+    import string
+    import random
+    
+    while True:
+        code = ''.join(random.choices(string.ascii_uppercase + string.digits, k=8))
+        conn = get_db()
+        cursor = conn.cursor()
+        cursor.execute('SELECT id FROM users WHERE friend_code = ?', (code,))
+        if not cursor.fetchone():
+            conn.close()
+            return code
+        conn.close()
+
+def login_required(f):
+    """Decorator to require login"""
+    from functools import wraps
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if 'user_id' not in session:
+            return redirect(url_for('auth'))
+        return f(*args, **kwargs)
+    return decorated_function
+
+# Routes (PRESERVED all existing routes)
+@app.route('/')
+def index():
+    """Enhanced landing page with tier information"""
+    return '''
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <title>BJJ AI Analyzer</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <script src="https://cdn.tailwindcss.com"></script>
+    </head>
+    <body class="bg-gray-50">
+        <div class="min-h-screen">
+            <!-- Hero Section -->
+            <div class="flex items-center justify-center py-20">
+                <div class="max-w-4xl w-full text-center px-4">
+                    <h1 class="text-5xl font-bold text-gray-900 mb-4">🥋 BJJ AI Analyzer</h1>
+                    <p class="text-xl text-gray-600 mb-8">Professional Brazilian Jiu-Jitsu Video Analysis with 100+ Techniques</p>
+                    <a href="/auth" class="bg-purple-600 text-white px-8 py-4 rounded-lg hover:bg-purple-700 transition-colors text-lg">
+                        Start Free Trial
+                    </a>
+                </div>
+            </div>
+            
+            <!-- Pricing Tiers -->
+            <div class="max-w-7xl mx-auto px-4 py-16">
+                <h2 class="text-3xl font-bold text-center mb-12">Choose Your Plan</h2>
+                <div class="grid md:grid-cols-3 gap-8">
+                    
+                    <!-- Free Tier -->
+                    <div class="bg-white rounded-xl shadow-lg p-8 border-2 border-gray-200">
+                        <div class="text-center">
+                            <h3 class="text-2xl font-bold text-gray-900 mb-2">Free</h3>
+                            <div class="text-4xl font-bold text-gray-600 mb-4">$0<span class="text-lg">/month</span></div>
+                            <p class="text-gray-600 mb-6">Perfect for trying out BJJ analysis</p>
+                        </div>
+                        <ul class="space-y-3 mb-8">
+                            <li class="flex items-center"><span class="text-green-500 mr-2">✓</span>1 video upload per month</li>
+                            <li class="flex items-center"><span class="text-green-500 mr-2">✓</span>Basic technique detection</li>
+                            <li class="flex items-center"><span class="text-green-500 mr-2">✓</span>Simple success/failure stats</li>
+                            <li class="flex items-center"><span class="text-green-500 mr-2">✓</span>8 techniques analyzed</li>
+                        </ul>
+                        <a href="/auth" class="block w-full bg-gray-600 text-white text-center py-3 rounded-lg hover:bg-gray-700 transition-colors">
+                            Get Started Free
+                        </a>
+                    </div>
+                    
+                    <!-- Pro Tier -->
+                    <div class="bg-white rounded-xl shadow-lg p-8 border-2 border-purple-500 relative">
+                        <div class="absolute -top-4 left-1/2 transform -translate-x-1/2">
+                            <span class="bg-purple-500 text-white px-4 py-1 rounded-full text-sm">POPULAR</span>
+                        </div>
+                        <div class="text-center">
+                            <h3 class="text-2xl font-bold text-gray-900 mb-2">Pro</h3>
+                            <div class="text-4xl font-bold text-purple-600 mb-4">$19.99<span class="text-lg">/month</span></div>
+                            <p class="text-gray-600 mb-6">For serious BJJ practitioners</p>
+                        </div>
+                        <ul class="space-y-3 mb-8">
+                            <li class="flex items-center"><span class="text-green-500 mr-2">✓</span>4 video uploads per month</li>
+                            <li class="flex items-center"><span class="text-green-500 mr-2">✓</span>Advanced position analysis</li>
+                            <li class="flex items-center"><span class="text-green-500 mr-2">✓</span>Friend connections & challenges</li>
+                            <li class="flex items-center"><span class="text-green-500 mr-2">✓</span>Progress tracking</li>
+                            <li class="flex items-center"><span class="text-green-500 mr-2">✓</span>20 techniques analyzed</li>
+                            <li class="flex items-center"><span class="text-green-500 mr-2">✓</span>Daily/Weekly challenges</li>
+                        </ul>
+                        <a href="/auth" class="block w-full bg-purple-600 text-white text-center py-3 rounded-lg hover:bg-purple-700 transition-colors">
+                            Start Pro Trial
+                        </a>
+                    </div>
+                    
+                    <!-- Black Belt Tier -->
+                    <div class="bg-white rounded-xl shadow-lg p-8 border-2 border-yellow-500">
+                        <div class="text-center">
+                            <h3 class="text-2xl font-bold text-gray-900 mb-2">Black Belt</h3>
+                            <div class="text-4xl font-bold text-yellow-600 mb-4">$49.99<span class="text-lg">/month</span></div>
+                            <p class="text-gray-600 mb-6">Elite analysis for competitors</p>
+                        </div>
+                        <ul class="space-y-3 mb-8">
+                            <li class="flex items-center"><span class="text-green-500 mr-2">✓</span>12 video uploads per month</li>
+                            <li class="flex items-center"><span class="text-green-500 mr-2">✓</span>AI technique sequences</li>
+                            <li class="flex items-center"><span class="text-green-500 mr-2">✓</span>Competition readiness</li>
+                            <li class="flex items-center"><span class="text-green-500 mr-2">✓</span>Master-level coaching</li>
+                            <li class="flex items-center"><span class="text-green-500 mr-2">✓</span>40 techniques analyzed</li>
+                            <li class="flex items-center"><span class="text-green-500 mr-2">✓</span>Video breakdowns</li>
+                        </ul>
+                        <a href="/auth" class="block w-full bg-yellow-600 text-white text-center py-3 rounded-lg hover:bg-yellow-700 transition-colors">
+                            Go Black Belt
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </body>
+    </html>
+    '''
+
+@app.route('/auth')
+def auth():
+    """Authentication page (PRESERVED)"""
+    return '''
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <title>Login - BJJ AI Analyzer</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <script src="https://cdn.tailwindcss.com"></script>
+    </head>
+    <body class="bg-gray-50">
+        <div class="min-h-screen flex items-center justify-center">
+            <div class="max-w-md w-full bg-white rounded-lg shadow-xl p-8">
+                <h2 class="text-2xl font-bold text-center mb-6">BJJ AI Analyzer</h2>
+                
+                <!-- Signup Form -->
+                <form id="signup-form" class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Username</label>
+                        <input type="text" name="username" required class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Email</label>
+                        <input type="email" name="email" required class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Password</label>
+                        <input type="password" name="password" required class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Plan</label>
+                        <select name="plan" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md">
+                            <option value="free">Free - $0/month</option>
+                            <option value="pro">Pro - $19.99/month</option>
+                            <option value="black_belt">Black Belt - $49.99/month</option>
+                        </select>
+                    </div>
+                    <button type="submit" class="w-full bg-purple-600 text-white py-2 px-4 rounded-md hover:bg-purple-700">
+                        Create Account
+                    </button>
+                </form>
+                
+                <div class="mt-4 text-center">
+                    <a href="/dashboard" class="text-purple-600 hover:text-purple-800">Already have an account? Go to Dashboard</a>
+                </div>
+            </div>
+        </div>
+        
+        <script>
+        document.getElementById('signup-form').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const formData = new FormData(this);
+            
+            try {
+                const response = await fetch('/signup', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify(Object.fromEntries(formData))
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    alert('Account created successfully!');
+                    window.location.href = '/dashboard';
+                } else {
+                    alert(result.message);
+                }
+            } catch (error) {
+                alert('Signup failed. Please try again.');
+            }
+        });
+        </script>
+    </body>
+    </html>
+    '''
+
+@app.route('/signup', methods=['POST'])
+def signup():
+    """Enhanced user registration with tier selection"""
+    try:
+        data = request.get_json()
+        username = data.get('username', '').strip()
+        email = data.get('email', '').strip().lower()
+        password = data.get('password', '')
+        plan = data.get('plan', 'free')
+        
+        if not username or not email or not password:
+            return jsonify({'success': False, 'message': 'All fields required'})
+        
+        if plan not in TIER_PRICING:
+            plan = 'free'
+        
+        conn = get_db()
+        cursor = conn.cursor()
+        
+        # Check if user exists
+        cursor.execute('SELECT id FROM users WHERE username = ? OR email = ?', (username, email))
+        if cursor.fetchone():
+            conn.close()
+            return jsonify({'success': False, 'message': 'Username or email already exists'})
+        
+        # Generate friend code
+        friend_code = generate_friend_code()
+        
+        # Create user with tier information
+        password_hash = generate_password_hash(password)
+        plan_expires = None
+        if plan != 'free':
+            plan_expires = (datetime.now() + timedelta(days=30)).isoformat()
+        
+        cursor.execute('''
+            INSERT INTO users (username, email, password_hash, plan, plan_expires, friend_code)
+            VALUES (?, ?, ?, ?, ?, ?)
+        ''', (username, email, password_hash, plan, plan_expires, friend_code))
+        
+        user_id = cursor.lastrowid
+        conn.commit()
+        conn.close()
+        
+        # Set session
+        session['user_id'] = user_id
+        session['username'] = username
+        session['plan'] = plan
+        session['friend_code'] = friend_code
+        
+        return jsonify({'success': True, 'message': f'Account created successfully with {TIER_PRICING[plan]["name"]} plan!'})
+        
+    except Exception as e:
+        logger.error(f"Signup error: {str(e)}")
+        return jsonify({'success': False, 'message': 'Registration failed'})
+
+@app.route('/dashboard')
+def dashboard():
+    """Enhanced dashboard with tier-specific features and upload limits"""
+    if 'user_id' not in session:
+        return redirect(url_for('auth'))
+    
+    # Get user data including upload limits
+    conn = get_db()
+    cursor = conn.cursor()
+    cursor.execute('''
+        SELECT username, plan, uploads_this_month, total_uploads, friend_code, friends
+        FROM users WHERE id = ?
+    ''', (session['user_id'],))
+    
+    user_data = cursor.fetchone()
+    if not user_data:
+        conn.close()
+        return redirect(url_for('auth'))
+    
+    plan = user_data['plan']
+    uploads_this_month = user_data['uploads_this_month']
+    total_uploads = user_data['total_uploads']
+    friend_code = user_data['friend_code']
+    
+    # Get plan limits
+    plan_info = TIER_PRICING.get(plan, TIER_PRICING['free'])
+    monthly_limit = plan_info['uploads_per_month']
+    uploads_remaining = monthly_limit - uploads_this_month
+    
+    conn.close()
+    
+    return f'''
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <title>Dashboard - BJJ AI Analyzer</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <script src="https://cdn.tailwindcss.com"></script>
+    </head>
+    <body class="bg-gray-50">
+        <div class="min-h-screen">
+            <nav class="bg-white shadow-lg">
+                <div class="max-w-7xl mx-auto px-4">
+                    <div class="flex justify-between items-center h-16">
+                        <div class="flex items-center">
+                            <span class="text-xl font-bold text-gray-800">🥋 BJJ AI Analyzer</span>
+                        </div>
+                        <div class="flex items-center space-x-4">
+                            <span class="text-sm text-gray-600">Plan: {plan_info['name']}</span>
+                            {('<a href="/upgrade" class="bg-purple-600 text-white px-4 py-2 rounded text-sm hover:bg-purple-700">Upgrade</a>' if plan == 'free' else '')}
+                            <a href="/friends" class="text-purple-600 hover:text-purple-800">Friends</a>
+                            <span class="text-sm text-gray-600">Welcome, {user_data['username']}!</span>
+                        </div>
+                    </div>
+                </div>
+            </nav>
+            
+            <div class="max-w-7xl mx-auto px-4 py-8">
+                <h1 class="text-3xl font-bold text-gray-900 mb-8">Dashboard</h1>
+                
+                <!-- Tier Status & Upload Limits -->
+                <div class="grid md:grid-cols-4 gap-6 mb-8">
+                    <div class="bg-white rounded-xl shadow-md p-6">
+                        <div class="text-2xl font-bold text-purple-600">{total_uploads}</div>
+                        <div class="text-sm text-gray-600">Total Videos</div>
+                    </div>
+                    <div class="bg-white rounded-xl shadow-md p-6">
+                        <div class="text-2xl font-bold text-{'green' if uploads_remaining > 0 else 'red'}-600">{uploads_remaining}</div>
+                        <div class="text-sm text-gray-600">Uploads Remaining</div>
+                    </div>
+                    <div class="bg-white rounded-xl shadow-md p-6">
+                        <div class="text-2xl font-bold text-blue-600">{uploads_this_month}/{monthly_limit}</div>
+                        <div class="text-sm text-gray-600">This Month</div>
+                    </div>
+                    <div class="bg-white rounded-xl shadow-md p-6">
+                        <div class="text-2xl font-bold text-yellow-600">{plan_info['name']}</div>
+                        <div class="text-sm text-gray-600">Current Plan</div>
+                    </div>
+                </div>
+                
+                <!-- Upload Section -->
+                <div class="bg-white rounded-xl shadow-md p-8 mb-8">
+                    <h2 class="text-xl font-semibold mb-4">Upload BJJ Training Video</h2>
+                    
+                    {f'<div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">You have reached your monthly upload limit of {monthly_limit} videos. <a href="/upgrade" class="underline">Upgrade your plan</a> for more uploads.</div>' if uploads_remaining <= 0 else ''}
+                    
+                    <div id="upload-area" class="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center cursor-pointer hover:border-purple-400 transition-colors {'opacity-50 cursor-not-allowed' if uploads_remaining <= 0 else ''}">
+                        <div class="text-4xl mb-4">🎥</div>
+                        <p class="text-lg text-gray-600 mb-2">
+                            {'Upload limit reached - upgrade to continue' if uploads_remaining <= 0 else 'Click to upload or drag and drop your BJJ training video'}
+                        </p>
+                        <p class="text-sm text-gray-500">MP4, AVI, MOV supported (max 500MB)</p>
+                        <input type="file" id="video-input" accept=".mp4,.avi,.mov,.mkv,.webm" class="hidden" {'disabled' if uploads_remaining <= 0 else ''}>
+                        <div id="upload-progress" class="hidden mt-4">
+                            <div class="bg-gray-200 rounded-full h-2">
+                                <div id="progress-bar" class="bg-purple-600 h-2 rounded-full" style="width: 0%"></div>
+                            </div>
+                            <p class="text-sm text-gray-600 mt-2">Uploading and analyzing...</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Pro/Black Belt Features -->
+                {_generate_tier_features_html(plan, friend_code) if plan != 'free' else _generate_upgrade_prompt_html()}
+                
+                <div id="recent-videos" class="bg-white rounded-xl shadow-md p-8">
+                    <h2 class="text-xl font-semibold mb-4">Recent Analyses</h2>
+                    <div id="video-list" class="space-y-4">
+                        <p class="text-gray-500 text-center py-4">No videos uploaded yet. Upload your first BJJ training video to get started!</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <script>
+        const uploadArea = document.getElementById('upload-area');
+        const videoInput = document.getElementById('video-input');
+        const uploadProgress = document.getElementById('upload-progress');
+        const progressBar = document.getElementById('progress-bar');
+        const uploadsRemaining = {uploads_remaining};
+        
+        if (uploadsRemaining > 0) {{
+            // Click to upload
+            uploadArea.addEventListener('click', () => videoInput.click());
+            
+            // Drag and drop functionality
+            uploadArea.addEventListener('dragover', (e) => {{
+                e.preventDefault();
+                uploadArea.classList.add('border-purple-400', 'bg-purple-50');
+            }});
+            
+            uploadArea.addEventListener('dragleave', () => {{
+                uploadArea.classList.remove('border-purple-400', 'bg-purple-50');
+            }});
+            
+            uploadArea.addEventListener('drop', (e) => {{
+                e.preventDefault();
+                uploadArea.classList.remove('border-purple-400', 'bg-purple-50');
+                const files = e.dataTransfer.files;
+                if (files.length > 0) {{
+                    handleFileUpload(files[0]);
+                }}
+            }});
+            
+            // File input change
+            videoInput.addEventListener('change', (e) => {{
+                if (e.target.files.length > 0) {{
+                    handleFileUpload(e.target.files[0]);
+                }}
+            }});
+        }}
